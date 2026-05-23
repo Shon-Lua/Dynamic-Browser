@@ -1,8 +1,10 @@
-const { app, BrowserWindow, screen, ipcMain, Tray, Menu, nativeImage } = require('electron');
+const { app, BrowserWindow, screen, ipcMain, Tray, Menu, nativeImage, powerMonitor } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const https = require('https');
 const activeWin = require('active-win');
-const { uIOhook, UiohookMouseEvent } = require('uiohook-napi');
+const { uIOhook } = require('uiohook-napi');
+const keyboardLayout = require('keyboard-layout');
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
@@ -12,6 +14,8 @@ if (!gotLock) {
 
 let mainWindow;
 let tray = null;
+let leftBarWindow = null;
+let rightBarWindow = null;
 let isExpanded = false;
 let currentAnimation = null;
 let fullscreenActive = false;
@@ -20,10 +24,11 @@ let isQuitting = false;
 let previousActiveWindow = null;
 let currentDisplay = null;
 let isAnimating = false;
+let dockPanelEnabled = false;
 
 const configPath = path.join(app.getPath('userData'), 'dock-position.json');
 const settingsPath = path.join(app.getPath('userData'), 'app-settings.json');
-let appSettings = { runAtStartup: false, hoverToOpen: false, savedLinks: [] };
+let appSettings = { runAtStartup: false, hoverToOpen: false, savedLinks: [], startupAnimationEnabled: true, autoUpdateEnabled: false, dockPanelEnabled: false };
 const COLLAPSED_WIDTH = 180;
 const COLLAPSED_HEIGHT = 36;
 const EXPANDED_WIDTH = 800;
@@ -56,6 +61,9 @@ function loadSettings() {
       appSettings = JSON.parse(data);
       if (typeof appSettings.runAtStartup !== 'boolean') appSettings.runAtStartup = false;
       if (typeof appSettings.hoverToOpen !== 'boolean') appSettings.hoverToOpen = false;
+      if (typeof appSettings.startupAnimationEnabled !== 'boolean') appSettings.startupAnimationEnabled = true;
+      if (typeof appSettings.autoUpdateEnabled !== 'boolean') appSettings.autoUpdateEnabled = false;
+      if (typeof appSettings.dockPanelEnabled !== 'boolean') appSettings.dockPanelEnabled = false;
       if (!Array.isArray(appSettings.savedLinks)) appSettings.savedLinks = [];
       appSettings.savedLinks = appSettings.savedLinks.map(item => {
         if (typeof item === 'string') {
@@ -66,7 +74,7 @@ function loadSettings() {
       });
     }
   } catch (e) {
-    appSettings = { runAtStartup: false, hoverToOpen: false, savedLinks: [] };
+    appSettings = { runAtStartup: false, hoverToOpen: false, savedLinks: [], startupAnimationEnabled: true, autoUpdateEnabled: false, dockPanelEnabled: false };
   }
 }
 
@@ -112,6 +120,184 @@ function getXForDock(width, position, display) {
   if (position === 'left') return display.bounds.x;
   if (position === 'right') return display.bounds.x + screenWidth - width;
   return display.bounds.x + Math.round((screenWidth - width) / 2);
+}
+
+function destroyBarWindows() {
+  if (leftBarWindow && !leftBarWindow.isDestroyed()) leftBarWindow.close();
+  if (rightBarWindow && !rightBarWindow.isDestroyed()) rightBarWindow.close();
+  leftBarWindow = null;
+  rightBarWindow = null;
+}
+
+function createBarWindow(x, y, width, height, side) {
+  const win = new BrowserWindow({
+    x, y, width, height,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    minimizable: false,
+    shadow: false,
+    backgroundColor: '#00000000',
+    show: false,
+    webPreferences: { nodeIntegration: true, contextIsolation: false }
+  });
+  win.setAlwaysOnTop(true, 'screen-saver');
+  win.setVisibleOnAllWorkspaces(true);
+  win.setIgnoreMouseEvents(true, { forward: true });
+
+  const barHtml = `
+  <!DOCTYPE html>
+  <html style="margin:0;padding:0;background:transparent;">
+  <head>
+    <meta charset="UTF-8">
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; user-select:none; }
+      html, body { width:100%; height:100%; background: #000000; overflow:hidden; font-family:'Inter', sans-serif; }
+      body { display:flex; align-items:center; color:white; font-size:12px; padding:0 8px; }
+      .left-side { display:flex; align-items:center; gap:8px; }
+      .right-side { display:flex; align-items:center; gap:8px; margin-left:auto; }
+      .kb-layout { background:#1a1a1a; border-radius:4px; padding:2px 6px; }
+      .time { font-weight:600; }
+      .battery { display:flex; align-items:center; gap:4px; }
+      .app-icon { width:20px; height:20px; border-radius:4px; background:#333; display:flex; align-items:center; justify-content:center; font-size:14px; }
+    </style>
+  </head>
+  <body>
+    <div class="left-side">
+      <div class="kb-layout" id="layout">EN</div>
+      <div class="time" id="time">00:00</div>
+    </div>
+    <div class="right-side">
+      <div class="battery" id="battery">🔋 100%</div>
+      <div class="app-icon">A</div>
+      <div class="app-icon">B</div>
+    </div>
+    <script>
+      const { ipcRenderer } = require('electron');
+      function updateTime() {
+        const now = new Date();
+        const h = now.getHours().toString().padStart(2,'0');
+        const m = now.getMinutes().toString().padStart(2,'0');
+        document.getElementById('time').textContent = h + ':' + m;
+      }
+      setInterval(updateTime, 60000);
+      updateTime();
+
+      if (navigator.getBattery) {
+        navigator.getBattery().then(battery => {
+          const updateBattery = () => {
+            const level = Math.round(battery.level * 100);
+            document.getElementById('battery').textContent = (battery.charging ? '⚡' : '🔋') + ' ' + level + '%';
+          };
+          updateBattery();
+          battery.addEventListener('levelchange', updateBattery);
+          battery.addEventListener('chargingchange', updateBattery);
+        });
+      }
+
+      ipcRenderer.on('keyboard-layout', (event, layout) => {
+        document.getElementById('layout').textContent = layout;
+      });
+      ipcRenderer.send('get-keyboard-layout');
+    </script>
+  </body>
+  </html>
+  `;
+  win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(barHtml)}`);
+  win.once('ready-to-show', () => win.show());
+  return win;
+}
+
+function updateBarWindows() {
+  if (!dockPanelEnabled) {
+    destroyBarWindows();
+    return;
+  }
+  updateCurrentDisplay();
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const islandBounds = mainWindow.getBounds();
+  const display = currentDisplay;
+  const screenLeft = display.bounds.x;
+  const screenRight = display.bounds.x + display.workAreaSize.width;
+  const islandLeft = islandBounds.x;
+  const islandRight = islandBounds.x + islandBounds.width;
+  const barHeight = COLLAPSED_HEIGHT;
+  const topY = display.bounds.y;
+
+  const leftWidth = islandLeft - screenLeft;
+  const rightWidth = screenRight - islandRight;
+
+  if (leftWidth > 0) {
+    if (leftBarWindow && !leftBarWindow.isDestroyed()) {
+      leftBarWindow.setBounds({ x: screenLeft, y: topY, width: leftWidth, height: barHeight });
+    } else {
+      leftBarWindow = createBarWindow(screenLeft, topY, leftWidth, barHeight, 'left');
+    }
+  } else {
+    if (leftBarWindow && !leftBarWindow.isDestroyed()) leftBarWindow.close();
+    leftBarWindow = null;
+  }
+
+  if (rightWidth > 0) {
+    if (rightBarWindow && !rightBarWindow.isDestroyed()) {
+      rightBarWindow.setBounds({ x: islandRight, y: topY, width: rightWidth, height: barHeight });
+    } else {
+      rightBarWindow = createBarWindow(islandRight, topY, rightWidth, barHeight, 'right');
+    }
+  } else {
+    if (rightBarWindow && !rightBarWindow.isDestroyed()) rightBarWindow.close();
+    rightBarWindow = null;
+  }
+}
+
+function toggleDockPanel(enable) {
+  appSettings.dockPanelEnabled = enable;
+  dockPanelEnabled = enable;
+  saveSettings();
+  if (enable) {
+    updateBarWindows();
+  } else {
+    destroyBarWindows();
+  }
+}
+
+function performUpdate() {
+  return new Promise((resolve) => {
+    const updateUrl = 'https://raw.githubusercontent.com/Shon-Lua/Dynamic-Browser/refs/heads/main/Dynamic%20Browser.js';
+    const targetPath = path.join(__dirname, 'index.js');
+    let localContent = '';
+    try {
+      if (fs.existsSync(targetPath)) {
+        localContent = fs.readFileSync(targetPath, 'utf-8');
+      }
+    } catch (e) {}
+    https.get(updateUrl, (res) => {
+      if (res.statusCode !== 200) {
+        resolve();
+        return;
+      }
+      let remoteData = '';
+      res.on('data', chunk => remoteData += chunk);
+      res.on('end', () => {
+        if (remoteData.trim() === localContent.trim()) {
+          resolve();
+          return;
+        }
+        try {
+          fs.writeFileSync(targetPath, remoteData, 'utf-8');
+        } catch (err) {
+          resolve();
+          return;
+        }
+        app.relaunch();
+        app.exit();
+      });
+    }).on('error', () => {
+      resolve();
+    });
+  });
 }
 
 function createWindow() {
@@ -182,6 +368,14 @@ function createWindow() {
     });
   });
 
+  let logoDataUri = '';
+  try {
+    const logoBuffer = fs.readFileSync(path.join(__dirname, 'Logo.ico'));
+    logoDataUri = 'data:image/x-icon;base64,' + logoBuffer.toString('base64');
+  } catch (e) {}
+
+  const startupAnimFlag = appSettings.startupAnimationEnabled;
+
   const html = `
   <!DOCTYPE html>
   <html style="margin:0;padding:0;background:transparent;">
@@ -191,7 +385,7 @@ function createWindow() {
       @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
       * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
       html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; }
-      body { display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+      body { display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; position: relative; }
       .dynamic-island {
         width: 100%; height: 100%;
         background: #000000;
@@ -457,10 +651,44 @@ function createWindow() {
       .modal-btn.cancel:hover { background: #666; }
       .webview-container { flex: 1; position: relative; background: #000000; }
       webview { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000000; }
+      .startup-overlay {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: transparent; border-radius: 12px;
+        z-index: 9999; pointer-events: none;
+      }
+      .startup-logo {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        width: 24px; height: 24px; object-fit: contain;
+        opacity: 0;
+        transition: opacity 0.5s ease, transform 0.5s ease, left 0.6s ease, margin-left 0.6s ease;
+      }
+      .startup-logo.show {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      .startup-logo.move-left {
+        left: 14px;
+        transform: translate(0, -50%) scale(1);
+      }
+      .startup-text {
+        position: absolute;
+        top: 50%; left: 46px;
+        transform: translateY(-50%) translateX(20px);
+        color: white; font-size: 13px; font-weight: 600;
+        opacity: 0;
+        transition: opacity 0.6s ease, transform 0.6s ease;
+        white-space: nowrap;
+      }
+      .startup-text.show-text {
+        opacity: 1;
+        transform: translateY(-50%) translateX(0);
+      }
     </style>
   </head>
   <body>
-    <div class="dynamic-island" id="island">
+    <div class="dynamic-island" id="island" style="opacity:0;">
       <div class="browser-container" id="browserContainer" style="display: none;">
         <div class="tabs-bar" id="tabsBar">
           <div class="tabs-scroll" id="tabsScroll"></div>
@@ -503,6 +731,10 @@ function createWindow() {
       </div>
     </div>
     <script>
+      window.__STARTUP_ANIMATION = ${startupAnimFlag};
+      window.__LOGO_DATA_URI = "${logoDataUri.replace(/"/g, '\\"')}";
+    </script>
+    <script>
       const { ipcRenderer } = require('electron');
       const island = document.getElementById('island');
       const browserContainer = document.getElementById('browserContainer');
@@ -534,6 +766,7 @@ function createWindow() {
       let hoverModeEnabled = false;
       let savedLinks = [];
       let currentContextLink = null;
+      let startupOverlay = null;
 
       function normalizeUrl(input) {
         input = input.trim();
@@ -1034,6 +1267,51 @@ function createWindow() {
         loadSavedLinks();
       });
 
+      function removeStartupOverlay() {
+        if (startupOverlay && startupOverlay.parentNode) {
+          startupOverlay.parentNode.removeChild(startupOverlay);
+          startupOverlay = null;
+        }
+      }
+
+      ipcRenderer.on('hide-startup-overlay', () => {
+        removeStartupOverlay();
+      });
+
+      (function initStartup() {
+        const startupEnabled = window.__STARTUP_ANIMATION;
+        if (startupEnabled) {
+          startupOverlay = document.createElement('div');
+          startupOverlay.className = 'startup-overlay';
+          const logoImg = document.createElement('img');
+          logoImg.className = 'startup-logo';
+          logoImg.src = window.__LOGO_DATA_URI || '';
+          const textSpan = document.createElement('span');
+          textSpan.className = 'startup-text';
+          textSpan.textContent = 'Dynamic Browser';
+          startupOverlay.appendChild(logoImg);
+          startupOverlay.appendChild(textSpan);
+          island.parentNode.appendChild(startupOverlay);
+          requestAnimationFrame(() => {
+            logoImg.classList.add('show');
+          });
+          setTimeout(() => {
+            logoImg.classList.add('move-left');
+          }, 800);
+          setTimeout(() => {
+            textSpan.classList.add('show-text');
+          }, 1000);
+          setTimeout(() => {
+            startupOverlay.style.transition = 'opacity 0.5s ease';
+            startupOverlay.style.opacity = '0';
+            setTimeout(() => {
+              removeStartupOverlay();
+            }, 500);
+          }, 3000);
+        }
+      })();
+
+      addTab('https://www.google.com', true);
       loadSavedLinks();
     </script>
   </body>
@@ -1075,6 +1353,7 @@ function animateResize(fromW, fromH, toW, toH, duration = 220) {
         currentAnimation = null;
         isAnimating = false;
         resolve();
+        updateBarWindows();
       }
     };
     step();
@@ -1107,6 +1386,7 @@ function stopGlobalMouseHook() {
 
 async function expandIsland() {
   if (isAnimating || isExpanded || fullscreenActive) return;
+  mainWindow.webContents.send('hide-startup-overlay');
   try {
     const activeWindow = await activeWin.getActiveWindow();
     if (activeWindow && activeWindow.id !== mainWindow.id) previousActiveWindow = activeWindow;
@@ -1144,6 +1424,7 @@ function moveIsland(direction) {
   const bounds = mainWindow.getBounds();
   const x = getXForDock(bounds.width, direction, currentDisplay);
   mainWindow.setBounds({ width: bounds.width, height: bounds.height, x, y: currentDisplay.bounds.y });
+  updateBarWindows();
 }
 
 function createTray() {
@@ -1152,6 +1433,14 @@ function createTray() {
   const menuTemplate = [
     { label: 'Запускать при запуске системы', type: 'checkbox', checked: appSettings.runAtStartup, click: (menuItem) => { setAutoLaunch(menuItem.checked); menuItem.checked = appSettings.runAtStartup; } },
     { label: 'Открывать по наведению', type: 'checkbox', checked: appSettings.hoverToOpen, click: (menuItem) => { setHoverToOpen(menuItem.checked); menuItem.checked = appSettings.hoverToOpen; } },
+    { label: 'Анимация при запуске', type: 'checkbox', checked: appSettings.startupAnimationEnabled, click: (menuItem) => { appSettings.startupAnimationEnabled = menuItem.checked; saveSettings(); } },
+    { type: 'separator' },
+    { label: 'Обновить', click: performUpdate },
+    { label: 'Обновлять при запуске', type: 'checkbox', checked: appSettings.autoUpdateEnabled, click: (menuItem) => { appSettings.autoUpdateEnabled = menuItem.checked; saveSettings(); } },
+    { type: 'separator' },
+    { label: 'Док-панель', type: 'checkbox', checked: appSettings.dockPanelEnabled, click: (menuItem) => toggleDockPanel(menuItem.checked) },
+    { type: 'separator' },
+    { label: 'Перезапустить', click: () => { app.relaunch(); app.exit(); } },
     { type: 'separator' },
     { label: 'Переместить в:', submenu: [ { label: 'Право', click: () => moveIsland('right') }, { label: 'Лево', click: () => moveIsland('left') }, { label: 'Центр', click: () => moveIsland('center') } ] },
     { type: 'separator' },
@@ -1188,27 +1477,44 @@ ipcMain.on('fullscreen-leave', async () => {
 ipcMain.on('get-hover-mode', (event) => { event.returnValue = appSettings.hoverToOpen; });
 ipcMain.on('get-saved-links', (event) => { event.returnValue = appSettings.savedLinks || []; });
 ipcMain.on('save-saved-links', (event, links) => { appSettings.savedLinks = links; saveSettings(); });
+ipcMain.on('get-keyboard-layout', (event) => {
+  try {
+    const layout = keyboardLayout.getCurrentKeyboardLayout();
+    event.reply('keyboard-layout', layout ? layout.langCode.toUpperCase() : 'EN');
+  } catch (e) {
+    event.reply('keyboard-layout', 'EN');
+  }
+});
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   if (process.platform === 'win32') app.setAppUserModelId('com.electron.dynamicbrowser');
   const cursorPoint = screen.getCursorScreenPoint();
   currentDisplay = screen.getDisplayNearestPoint(cursorPoint);
   loadDockPosition();
   loadSettings();
+  dockPanelEnabled = appSettings.dockPanelEnabled;
   if (appSettings.runAtStartup) setAutoLaunch(true);
+  if (appSettings.autoUpdateEnabled) {
+    await performUpdate();
+  }
   createWindow();
   createTray();
+  if (dockPanelEnabled) {
+    updateBarWindows();
+  }
   screen.on('display-metrics-changed', () => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
     updateCurrentDisplay();
     const bounds = mainWindow.getBounds();
     const x = getXForDock(bounds.width, dockPosition, currentDisplay);
     mainWindow.setBounds({ x: x, y: currentDisplay.bounds.y });
+    updateBarWindows();
   });
 });
 
 app.on('before-quit', () => {
   stopGlobalMouseHook();
+  destroyBarWindows();
 });
 
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
