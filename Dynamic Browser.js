@@ -137,10 +137,15 @@ function destroyNotification(animate = false) {
   }
   if (notificationWindow && !notificationWindow.isDestroyed()) {
     if (animate) {
-      notificationWindow.webContents.executeJavaScript(`
-        document.querySelector('.notification').classList.add('closing');
-        setTimeout(() => { require('electron').ipcRenderer.send('close-notification'); }, 300);
-      `);
+      try {
+        notificationWindow.webContents.executeJavaScript(`
+          const el = document.querySelector('.notification');
+          if (el) el.classList.add('closing');
+          setTimeout(() => { require('electron').ipcRenderer.send('close-notification'); }, 300);
+        `);
+      } catch (e) {
+        notificationWindow.close();
+      }
     } else {
       notificationWindow.close();
     }
@@ -196,7 +201,6 @@ function showNotification(message) {
         font-size: 14px;
         font-weight: 500;
         white-space: nowrap;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.6);
         border: 0.5px solid #333333;
         display: flex;
         align-items: center;
@@ -1285,6 +1289,7 @@ function createWindow() {
 
       ipcRenderer.on('hide-startup-overlay', () => {
         removeStartupOverlay();
+        if (collapsedTime) collapsedTime.classList.add('visible');
       });
 
       (function initStartup() {
