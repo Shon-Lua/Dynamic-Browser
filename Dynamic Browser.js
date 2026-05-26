@@ -144,10 +144,10 @@ function destroyNotification(animate = false) {
           setTimeout(() => { require('electron').ipcRenderer.send('close-notification'); }, 300);
         `);
       } catch (e) {
-        notificationWindow.close();
+        notificationWindow.destroy();
       }
     } else {
-      notificationWindow.close();
+      notificationWindow.destroy();
     }
   }
   notificationWindow = null;
@@ -176,6 +176,7 @@ function showNotification(message) {
     resizable: false,
     minimizable: false,
     shadow: false,
+    thickFrame: false,
     backgroundColor: '#00000000',
     show: false,
     webPreferences: { nodeIntegration: true, contextIsolation: false }
@@ -207,6 +208,7 @@ function showNotification(message) {
         opacity: 0;
         transform: translateY(-8px);
         animation: slideDown 0.3s ease forwards;
+        box-shadow: none !important;
       }
       .notification.closing {
         animation: fadeOut 0.3s ease forwards;
@@ -1424,6 +1426,7 @@ async function collapseIsland() {
   await animateResize(b.width, b.height, COLLAPSED_WIDTH, COLLAPSED_HEIGHT, 220);
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
   mainWindow.blur();
+  mainWindow.webContents.executeJavaScript(`if (document.getElementById('collapsedTime')) document.getElementById('collapsedTime').classList.add('visible');`);
   if (previousActiveWindow) {
     try { await activeWin.activateWindow(previousActiveWindow); } catch (err) {}
     previousActiveWindow = null;
