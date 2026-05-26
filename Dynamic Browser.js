@@ -1,10 +1,9 @@
-const { app, BrowserWindow, screen, ipcMain, Tray, Menu, nativeImage, powerMonitor } = require('electron');
+const { app, BrowserWindow, screen, ipcMain, Tray, Menu, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
 const activeWin = require('active-win');
 const { uIOhook } = require('uiohook-napi');
-const keyboardLayout = require('keyboard-layout');
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
@@ -14,8 +13,8 @@ if (!gotLock) {
 
 let mainWindow;
 let tray = null;
-let leftBarWindow = null;
-let rightBarWindow = null;
+let notificationWindow = null;
+let notificationTimeout = null;
 let isExpanded = false;
 let currentAnimation = null;
 let fullscreenActive = false;
@@ -24,15 +23,16 @@ let isQuitting = false;
 let previousActiveWindow = null;
 let currentDisplay = null;
 let isAnimating = false;
-let dockPanelEnabled = false;
+let notificationsEnabled = true;
 
 const configPath = path.join(app.getPath('userData'), 'dock-position.json');
 const settingsPath = path.join(app.getPath('userData'), 'app-settings.json');
-let appSettings = { runAtStartup: false, hoverToOpen: false, savedLinks: [], startupAnimationEnabled: true, autoUpdateEnabled: false, dockPanelEnabled: false };
+let appSettings = { runAtStartup: false, hoverToOpen: false, savedLinks: [], startupAnimationEnabled: true, autoUpdateEnabled: false, notificationsEnabled: true };
 const COLLAPSED_WIDTH = 180;
 const COLLAPSED_HEIGHT = 36;
 const EXPANDED_WIDTH = 800;
 const EXPANDED_HEIGHT = 520;
+const NOTIFICATION_HEIGHT = 32;
 
 function loadDockPosition() {
   try {
@@ -63,7 +63,7 @@ function loadSettings() {
       if (typeof appSettings.hoverToOpen !== 'boolean') appSettings.hoverToOpen = false;
       if (typeof appSettings.startupAnimationEnabled !== 'boolean') appSettings.startupAnimationEnabled = true;
       if (typeof appSettings.autoUpdateEnabled !== 'boolean') appSettings.autoUpdateEnabled = false;
-      if (typeof appSettings.dockPanelEnabled !== 'boolean') appSettings.dockPanelEnabled = false;
+      if (typeof appSettings.notificationsEnabled !== 'boolean') appSettings.notificationsEnabled = true;
       if (!Array.isArray(appSettings.savedLinks)) appSettings.savedLinks = [];
       appSettings.savedLinks = appSettings.savedLinks.map(item => {
         if (typeof item === 'string') {
@@ -74,8 +74,9 @@ function loadSettings() {
       });
     }
   } catch (e) {
-    appSettings = { runAtStartup: false, hoverToOpen: false, savedLinks: [], startupAnimationEnabled: true, autoUpdateEnabled: false, dockPanelEnabled: false };
+    appSettings = { runAtStartup: false, hoverToOpen: false, savedLinks: [], startupAnimationEnabled: true, autoUpdateEnabled: false, notificationsEnabled: true };
   }
+  notificationsEnabled = appSettings.notificationsEnabled;
 }
 
 function saveSettings() {
@@ -101,6 +102,12 @@ function setHoverToOpen(value) {
   }
 }
 
+function setNotificationsEnabled(value) {
+  appSettings.notificationsEnabled = value;
+  notificationsEnabled = value;
+  saveSettings();
+}
+
 function getCurrentDisplayForWindow() {
   if (!mainWindow || mainWindow.isDestroyed()) return screen.getPrimaryDisplay();
   const bounds = mainWindow.getBounds();
@@ -122,16 +129,32 @@ function getXForDock(width, position, display) {
   return display.bounds.x + Math.round((screenWidth - width) / 2);
 }
 
-function destroyBarWindows() {
-  if (leftBarWindow && !leftBarWindow.isDestroyed()) leftBarWindow.close();
-  if (rightBarWindow && !rightBarWindow.isDestroyed()) rightBarWindow.close();
-  leftBarWindow = null;
-  rightBarWindow = null;
+function destroyNotification() {
+  if (notificationTimeout) {
+    clearTimeout(notificationTimeout);
+    notificationTimeout = null;
+  }
+  if (notificationWindow && !notificationWindow.isDestroyed()) {
+    notificationWindow.close();
+  }
+  notificationWindow = null;
 }
 
-function createBarWindow(x, y, width, height, side) {
-  const win = new BrowserWindow({
-    x, y, width, height,
+function showNotification(message) {
+  if (!notificationsEnabled) return;
+  destroyNotification();
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const islandBounds = mainWindow.getBounds();
+  const display = currentDisplay || screen.getPrimaryDisplay();
+  const islandCenterX = islandBounds.x + islandBounds.width / 2;
+  const notificationWidth = Math.min(300, islandBounds.width + 40);
+  const x = Math.round(islandCenterX - notificationWidth / 2);
+  const y = islandBounds.y + islandBounds.height;
+  
+  notificationWindow = new BrowserWindow({
+    x, y,
+    width: notificationWidth,
+    height: NOTIFICATION_HEIGHT,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -143,124 +166,42 @@ function createBarWindow(x, y, width, height, side) {
     show: false,
     webPreferences: { nodeIntegration: true, contextIsolation: false }
   });
-  win.setAlwaysOnTop(true, 'screen-saver');
-  win.setVisibleOnAllWorkspaces(true);
-  win.setIgnoreMouseEvents(true, { forward: true });
+  notificationWindow.setAlwaysOnTop(true, 'screen-saver');
+  notificationWindow.setVisibleOnAllWorkspaces(true);
+  notificationWindow.setIgnoreMouseEvents(false);
 
-  const barHtml = `
+  const html = `
   <!DOCTYPE html>
   <html style="margin:0;padding:0;background:transparent;">
   <head>
     <meta charset="UTF-8">
     <style>
       * { margin:0; padding:0; box-sizing:border-box; user-select:none; }
-      html, body { width:100%; height:100%; background: #000000; overflow:hidden; font-family:'Inter', sans-serif; }
-      body { display:flex; align-items:center; color:white; font-size:12px; padding:0 8px; }
-      .left-side { display:flex; align-items:center; gap:8px; }
-      .right-side { display:flex; align-items:center; gap:8px; margin-left:auto; }
-      .kb-layout { background:#1a1a1a; border-radius:4px; padding:2px 6px; }
-      .time { font-weight:600; }
-      .battery { display:flex; align-items:center; gap:4px; }
-      .app-icon { width:20px; height:20px; border-radius:4px; background:#333; display:flex; align-items:center; justify-content:center; font-size:14px; }
+      html, body { width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Inter', sans-serif; }
+      body { display:flex; align-items:center; justify-content:center; }
+      .notification {
+        background: #1a1a1a; border-radius: 8px; padding: 6px 16px;
+        color: white; font-size: 13px; white-space: nowrap;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        border: 0.5px solid #333333;
+        display: flex; align-items: center;
+        pointer-events: auto;
+      }
     </style>
   </head>
   <body>
-    <div class="left-side">
-      <div class="kb-layout" id="layout">EN</div>
-      <div class="time" id="time">00:00</div>
-    </div>
-    <div class="right-side">
-      <div class="battery" id="battery">🔋 100%</div>
-      <div class="app-icon">A</div>
-      <div class="app-icon">B</div>
-    </div>
+    <div class="notification">${message}</div>
     <script>
-      const { ipcRenderer } = require('electron');
-      function updateTime() {
-        const now = new Date();
-        const h = now.getHours().toString().padStart(2,'0');
-        const m = now.getMinutes().toString().padStart(2,'0');
-        document.getElementById('time').textContent = h + ':' + m;
-      }
-      setInterval(updateTime, 60000);
-      updateTime();
-
-      if (navigator.getBattery) {
-        navigator.getBattery().then(battery => {
-          const updateBattery = () => {
-            const level = Math.round(battery.level * 100);
-            document.getElementById('battery').textContent = (battery.charging ? '⚡' : '🔋') + ' ' + level + '%';
-          };
-          updateBattery();
-          battery.addEventListener('levelchange', updateBattery);
-          battery.addEventListener('chargingchange', updateBattery);
-        });
-      }
-
-      ipcRenderer.on('keyboard-layout', (event, layout) => {
-        document.getElementById('layout').textContent = layout;
+      document.body.addEventListener('click', () => {
+        require('electron').ipcRenderer.send('close-notification');
       });
-      ipcRenderer.send('get-keyboard-layout');
     </script>
   </body>
   </html>
   `;
-  win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(barHtml)}`);
-  win.once('ready-to-show', () => win.show());
-  return win;
-}
-
-function updateBarWindows() {
-  if (!dockPanelEnabled) {
-    destroyBarWindows();
-    return;
-  }
-  updateCurrentDisplay();
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  const islandBounds = mainWindow.getBounds();
-  const display = currentDisplay;
-  const screenLeft = display.bounds.x;
-  const screenRight = display.bounds.x + display.workAreaSize.width;
-  const islandLeft = islandBounds.x;
-  const islandRight = islandBounds.x + islandBounds.width;
-  const barHeight = COLLAPSED_HEIGHT;
-  const topY = display.bounds.y;
-
-  const leftWidth = islandLeft - screenLeft;
-  const rightWidth = screenRight - islandRight;
-
-  if (leftWidth > 0) {
-    if (leftBarWindow && !leftBarWindow.isDestroyed()) {
-      leftBarWindow.setBounds({ x: screenLeft, y: topY, width: leftWidth, height: barHeight });
-    } else {
-      leftBarWindow = createBarWindow(screenLeft, topY, leftWidth, barHeight, 'left');
-    }
-  } else {
-    if (leftBarWindow && !leftBarWindow.isDestroyed()) leftBarWindow.close();
-    leftBarWindow = null;
-  }
-
-  if (rightWidth > 0) {
-    if (rightBarWindow && !rightBarWindow.isDestroyed()) {
-      rightBarWindow.setBounds({ x: islandRight, y: topY, width: rightWidth, height: barHeight });
-    } else {
-      rightBarWindow = createBarWindow(islandRight, topY, rightWidth, barHeight, 'right');
-    }
-  } else {
-    if (rightBarWindow && !rightBarWindow.isDestroyed()) rightBarWindow.close();
-    rightBarWindow = null;
-  }
-}
-
-function toggleDockPanel(enable) {
-  appSettings.dockPanelEnabled = enable;
-  dockPanelEnabled = enable;
-  saveSettings();
-  if (enable) {
-    updateBarWindows();
-  } else {
-    destroyBarWindows();
-  }
+  notificationWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+  notificationWindow.once('ready-to-show', () => notificationWindow.show());
+  notificationTimeout = setTimeout(() => destroyNotification(), 3000);
 }
 
 function performUpdate() {
@@ -282,6 +223,7 @@ function performUpdate() {
       res.on('data', chunk => remoteData += chunk);
       res.on('end', () => {
         if (remoteData.trim() === localContent.trim()) {
+          showNotification('Обновлений нет');
           resolve();
           return;
         }
@@ -414,11 +356,32 @@ function createWindow() {
         border-bottom-left-radius: 20px;
         border-bottom-right-radius: 20px;
       }
+      .collapsed-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        height: 100%;
+        color: white;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 0 12px;
+      }
+      .collapsed-time {
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+      .collapsed-time.visible {
+        opacity: 1;
+      }
       .browser-container {
         width: 100%; height: 100%; opacity: 0; transition: opacity 0.2s ease;
-        display: flex; flex-direction: column; min-width: 0; min-height: 0; position: relative;
+        display: none; flex-direction: column; min-width: 0; min-height: 0; position: relative;
       }
-      .expanded .browser-container { opacity: 1; }
+      .expanded .browser-container { display: flex; opacity: 1; }
+      .expanded .collapsed-content { display: none; }
       .tabs-bar {
         display: flex; align-items: stretch; padding: 6px 8px 0 8px; background: #111111;
         border-bottom: 0.5px solid #222222; flex-shrink: 0; min-height: 32px;
@@ -689,7 +652,10 @@ function createWindow() {
   </head>
   <body>
     <div class="dynamic-island" id="island" style="opacity:0;">
-      <div class="browser-container" id="browserContainer" style="display: none;">
+      <div class="collapsed-content">
+        <span class="collapsed-time" id="collapsedTime">00:00</span>
+      </div>
+      <div class="browser-container" id="browserContainer">
         <div class="tabs-bar" id="tabsBar">
           <div class="tabs-scroll" id="tabsScroll"></div>
           <div class="add-tab" id="addTabBtn">+</div>
@@ -759,6 +725,7 @@ function createWindow() {
       const confirmModal = document.getElementById('confirmModal');
       const modalYes = document.getElementById('modalYes');
       const modalNo = document.getElementById('modalNo');
+      const collapsedTime = document.getElementById('collapsedTime');
 
       let tabs = [];
       let activeTabId = null;
@@ -767,6 +734,21 @@ function createWindow() {
       let savedLinks = [];
       let currentContextLink = null;
       let startupOverlay = null;
+
+      function updateTime() {
+        const now = new Date();
+        const h = now.getHours().toString().padStart(2,'0');
+        const m = now.getMinutes().toString().padStart(2,'0');
+        if (collapsedTime) collapsedTime.textContent = h + ':' + m;
+      }
+      setInterval(updateTime, 60000);
+      updateTime();
+
+      if (window.__STARTUP_ANIMATION) {
+        collapsedTime.classList.remove('visible');
+      } else {
+        collapsedTime.classList.add('visible');
+      }
 
       function normalizeUrl(input) {
         input = input.trim();
@@ -1306,6 +1288,7 @@ function createWindow() {
             startupOverlay.style.opacity = '0';
             setTimeout(() => {
               removeStartupOverlay();
+              if (collapsedTime) collapsedTime.classList.add('visible');
             }, 500);
           }, 3000);
         }
@@ -1353,7 +1336,6 @@ function animateResize(fromW, fromH, toW, toH, duration = 220) {
         currentAnimation = null;
         isAnimating = false;
         resolve();
-        updateBarWindows();
       }
     };
     step();
@@ -1424,7 +1406,6 @@ function moveIsland(direction) {
   const bounds = mainWindow.getBounds();
   const x = getXForDock(bounds.width, direction, currentDisplay);
   mainWindow.setBounds({ width: bounds.width, height: bounds.height, x, y: currentDisplay.bounds.y });
-  updateBarWindows();
 }
 
 function createTray() {
@@ -1438,7 +1419,7 @@ function createTray() {
     { label: 'Обновить', click: performUpdate },
     { label: 'Обновлять при запуске', type: 'checkbox', checked: appSettings.autoUpdateEnabled, click: (menuItem) => { appSettings.autoUpdateEnabled = menuItem.checked; saveSettings(); } },
     { type: 'separator' },
-    { label: 'Док-панель', type: 'checkbox', checked: appSettings.dockPanelEnabled, click: (menuItem) => toggleDockPanel(menuItem.checked) },
+    { label: 'Уведомления', type: 'checkbox', checked: notificationsEnabled, click: (menuItem) => { setNotificationsEnabled(menuItem.checked); menuItem.checked = notificationsEnabled; } },
     { type: 'separator' },
     { label: 'Перезапустить', click: () => { app.relaunch(); app.exit(); } },
     { type: 'separator' },
@@ -1477,14 +1458,7 @@ ipcMain.on('fullscreen-leave', async () => {
 ipcMain.on('get-hover-mode', (event) => { event.returnValue = appSettings.hoverToOpen; });
 ipcMain.on('get-saved-links', (event) => { event.returnValue = appSettings.savedLinks || []; });
 ipcMain.on('save-saved-links', (event, links) => { appSettings.savedLinks = links; saveSettings(); });
-ipcMain.on('get-keyboard-layout', (event) => {
-  try {
-    const layout = keyboardLayout.getCurrentKeyboardLayout();
-    event.reply('keyboard-layout', layout ? layout.langCode.toUpperCase() : 'EN');
-  } catch (e) {
-    event.reply('keyboard-layout', 'EN');
-  }
-});
+ipcMain.on('close-notification', () => destroyNotification());
 
 app.whenReady().then(async () => {
   if (process.platform === 'win32') app.setAppUserModelId('com.electron.dynamicbrowser');
@@ -1492,29 +1466,24 @@ app.whenReady().then(async () => {
   currentDisplay = screen.getDisplayNearestPoint(cursorPoint);
   loadDockPosition();
   loadSettings();
-  dockPanelEnabled = appSettings.dockPanelEnabled;
   if (appSettings.runAtStartup) setAutoLaunch(true);
   if (appSettings.autoUpdateEnabled) {
     await performUpdate();
   }
   createWindow();
   createTray();
-  if (dockPanelEnabled) {
-    updateBarWindows();
-  }
   screen.on('display-metrics-changed', () => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
     updateCurrentDisplay();
     const bounds = mainWindow.getBounds();
     const x = getXForDock(bounds.width, dockPosition, currentDisplay);
     mainWindow.setBounds({ x: x, y: currentDisplay.bounds.y });
-    updateBarWindows();
   });
 });
 
 app.on('before-quit', () => {
   stopGlobalMouseHook();
-  destroyBarWindows();
+  destroyNotification();
 });
 
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
