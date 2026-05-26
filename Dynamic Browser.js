@@ -32,7 +32,8 @@ const COLLAPSED_WIDTH = 180;
 const COLLAPSED_HEIGHT = 36;
 const EXPANDED_WIDTH = 800;
 const EXPANDED_HEIGHT = 520;
-const NOTIFICATION_HEIGHT = 32;
+const NOTIFICATION_WIDTH = 320;
+const NOTIFICATION_HEIGHT = 44;
 
 function loadDockPosition() {
   try {
@@ -129,31 +130,39 @@ function getXForDock(width, position, display) {
   return display.bounds.x + Math.round((screenWidth - width) / 2);
 }
 
-function destroyNotification() {
+function destroyNotification(animate = false) {
   if (notificationTimeout) {
     clearTimeout(notificationTimeout);
     notificationTimeout = null;
   }
   if (notificationWindow && !notificationWindow.isDestroyed()) {
-    notificationWindow.close();
+    if (animate) {
+      notificationWindow.webContents.executeJavaScript(`
+        document.querySelector('.notification').classList.add('closing');
+        setTimeout(() => { require('electron').ipcRenderer.send('close-notification'); }, 300);
+      `);
+    } else {
+      notificationWindow.close();
+    }
   }
   notificationWindow = null;
 }
 
 function showNotification(message) {
   if (!notificationsEnabled) return;
-  destroyNotification();
+  if (notificationWindow && !notificationWindow.isDestroyed()) {
+    destroyNotification();
+  }
   if (!mainWindow || mainWindow.isDestroyed()) return;
   const islandBounds = mainWindow.getBounds();
   const display = currentDisplay || screen.getPrimaryDisplay();
   const islandCenterX = islandBounds.x + islandBounds.width / 2;
-  const notificationWidth = Math.min(300, islandBounds.width + 40);
-  const x = Math.round(islandCenterX - notificationWidth / 2);
-  const y = islandBounds.y + islandBounds.height;
-  
+  const x = Math.round(islandCenterX - NOTIFICATION_WIDTH / 2);
+  const y = islandBounds.y + islandBounds.height + 4;
+
   notificationWindow = new BrowserWindow({
     x, y,
-    width: notificationWidth,
+    width: NOTIFICATION_WIDTH,
     height: NOTIFICATION_HEIGHT,
     frame: false,
     transparent: true,
@@ -180,20 +189,38 @@ function showNotification(message) {
       html, body { width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Inter', sans-serif; }
       body { display:flex; align-items:center; justify-content:center; }
       .notification {
-        background: #1a1a1a; border-radius: 8px; padding: 6px 16px;
-        color: white; font-size: 13px; white-space: nowrap;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        background: #000000;
+        border-radius: 12px;
+        padding: 10px 24px;
+        color: white;
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.6);
         border: 0.5px solid #333333;
-        display: flex; align-items: center;
-        pointer-events: auto;
+        display: flex;
+        align-items: center;
+        opacity: 0;
+        transform: translateY(-8px);
+        animation: slideDown 0.3s ease forwards;
+      }
+      .notification.closing {
+        animation: fadeOut 0.3s ease forwards;
+      }
+      @keyframes slideDown {
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes fadeOut {
+        to { opacity: 0; transform: translateY(-8px); }
       }
     </style>
   </head>
   <body>
     <div class="notification">${message}</div>
     <script>
-      document.body.addEventListener('click', () => {
-        require('electron').ipcRenderer.send('close-notification');
+      const { ipcRenderer } = require('electron');
+      document.querySelector('.notification').addEventListener('click', () => {
+        ipcRenderer.send('close-notification-animated');
       });
     </script>
   </body>
@@ -201,7 +228,7 @@ function showNotification(message) {
   `;
   notificationWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
   notificationWindow.once('ready-to-show', () => notificationWindow.show());
-  notificationTimeout = setTimeout(() => destroyNotification(), 3000);
+  notificationTimeout = setTimeout(() => destroyNotification(true), 3000);
 }
 
 function performUpdate() {
@@ -1458,7 +1485,8 @@ ipcMain.on('fullscreen-leave', async () => {
 ipcMain.on('get-hover-mode', (event) => { event.returnValue = appSettings.hoverToOpen; });
 ipcMain.on('get-saved-links', (event) => { event.returnValue = appSettings.savedLinks || []; });
 ipcMain.on('save-saved-links', (event, links) => { appSettings.savedLinks = links; saveSettings(); });
-ipcMain.on('close-notification', () => destroyNotification());
+ipcMain.on('close-notification', () => destroyNotification(false));
+ipcMain.on('close-notification-animated', () => destroyNotification(true));
 
 app.whenReady().then(async () => {
   if (process.platform === 'win32') app.setAppUserModelId('com.electron.dynamicbrowser');
