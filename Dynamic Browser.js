@@ -184,6 +184,7 @@ function showNotification(message) {
   notificationWindow.setAlwaysOnTop(true, 'screen-saver');
   notificationWindow.setVisibleOnAllWorkspaces(true);
   notificationWindow.setIgnoreMouseEvents(false);
+  notificationWindow.setHasShadow(false);
 
   const html = `
   <!DOCTYPE html>
