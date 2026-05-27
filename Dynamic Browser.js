@@ -187,6 +187,8 @@ function showNotification(message) {
   notificationWindow.setIgnoreMouseEvents(false);
   notificationWindow.setHasShadow(false);
 
+  const notificationSoundPath = 'file:///' + path.join(__dirname, 'Notification.wav').replace(/\\/g, '/');
+
   const notifHtml = `
   <!DOCTYPE html>
   <html style="margin:0;padding:0;background:transparent;">
@@ -224,6 +226,7 @@ function showNotification(message) {
     </style>
   </head>
   <body>
+    <audio src="${notificationSoundPath}" autoplay></audio>
     <div class="notification">${message}</div>
     <script>
       const { ipcRenderer } = require('electron');
@@ -1192,7 +1195,6 @@ function createWindow(wallpaperPath) {
         tabEl.appendChild(titleSpan);
         tabEl.appendChild(closeSpan);
         tabEl.addEventListener('click', () => {
-          playClick();
           switchToTab(tab.id);
         });
         tab.element = tabEl;
@@ -1281,6 +1283,35 @@ function createWindow(wallpaperPath) {
         tab.element = newEl;
         if (activeTabId === tabId) {
           switchToTab(tabId);
+        }
+      }
+
+      function convertWebToHome(tabId) {
+        const tab = tabs.find(t => t.id === tabId);
+        if (!tab || tab.type !== 'web') return;
+        if (tab.webview) tab.webview.remove();
+        tab.type = 'home';
+        tab.title = 'Главная';
+        tab.favicon = window.__LOGO_DATA_URI || '';
+        tab.originalUrl = '';
+        tab.displayUrl = '';
+        tab.webview = null;
+        if (tab.element && tab.element.parentNode) {
+          tab.element.parentNode.removeChild(tab.element);
+        }
+        const newEl = createTabElement(tab);
+        tabsScroll.appendChild(newEl);
+        tab.element = newEl;
+        if (activeTabId === tabId) {
+          homeScreen.style.display = 'flex';
+          homeSearchInput.value = '';
+          urlInput.value = '';
+          webviewContainer.querySelectorAll('webview').forEach(wv => wv.style.display = 'none');
+          island.classList.add('home-active');
+          updateNavButtons();
+          reloadBtn.textContent = '⟳';
+          const activeEl = tabsScroll.querySelector(\`.tab[data-id='\${tabId}']\`);
+          if (activeEl) activeEl.classList.add('active');
         }
       }
 
@@ -1390,7 +1421,6 @@ function createWindow(wallpaperPath) {
           });
 
           card.addEventListener('click', () => {
-            playClick();
             const normalized = normalizeUrl(linkObj.url);
             if (!normalized) return;
             const activeTab = tabs.find(t => t.id === activeTabId);
@@ -1567,7 +1597,6 @@ function createWindow(wallpaperPath) {
           return;
         }
         e.stopPropagation();
-        playClick();
         if (!island.classList.contains('expanded') && !hoverModeEnabled) ipcRenderer.send('expand-island');
       });
 
@@ -1578,7 +1607,13 @@ function createWindow(wallpaperPath) {
       backBtn.addEventListener('click', () => {
         playClick();
         const tab = tabs.find(t => t.id === activeTabId);
-        if (tab && tab.type === 'web' && tab.webview && tab.webview.canGoBack()) tab.webview.goBack();
+        if (tab && tab.type === 'web') {
+          if (tab.webview && tab.webview.canGoBack()) {
+            tab.webview.goBack();
+          } else {
+            convertWebToHome(tab.id);
+          }
+        }
       });
       forwardBtn.addEventListener('click', () => {
         playClick();
