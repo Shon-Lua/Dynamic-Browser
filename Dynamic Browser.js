@@ -34,7 +34,7 @@ const COLLAPSED_HEIGHT = 36;
 const EXPANDED_WIDTH = 800;
 const EXPANDED_HEIGHT = 520;
 const NOTIFICATION_WIDTH = 320;
-const NOTIFICATION_HEIGHT = 44;
+const NOTIFICATION_HEIGHT = 56;
 
 function loadDockPosition() {
   try {
@@ -159,12 +159,9 @@ function showNotification(message) {
   if (notificationWindow && !notificationWindow.isDestroyed()) {
     destroyNotification();
   }
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  const islandBounds = mainWindow.getBounds();
   const display = currentDisplay || screen.getPrimaryDisplay();
-  const islandCenterX = islandBounds.x + islandBounds.width / 2;
-  const x = Math.round(islandCenterX - NOTIFICATION_WIDTH / 2);
-  const y = islandBounds.y + islandBounds.height + 4;
+  const x = display.workArea.x + display.workArea.width - NOTIFICATION_WIDTH - 16;
+  const y = display.workArea.y + display.workArea.height - NOTIFICATION_HEIGHT - 16;
 
   notificationWindow = new BrowserWindow({
     x, y,
@@ -187,7 +184,7 @@ function showNotification(message) {
   notificationWindow.setIgnoreMouseEvents(false);
   notificationWindow.setHasShadow(false);
 
-  const notificationSoundPath = 'file:///' + path.join(__dirname, 'Notification.wav').replace(/\\/g, '/');
+  const notifSoundPath = 'file:///' + path.join(__dirname, 'Notification.wav').replace(/\\/g, '/');
 
   const notifHtml = `
   <!DOCTYPE html>
@@ -197,42 +194,43 @@ function showNotification(message) {
     <style>
       * { margin:0; padding:0; box-sizing:border-box; user-select:none; }
       html, body { width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Inter', sans-serif; }
-      body { display:flex; align-items:center; justify-content:center; }
+      body { display:flex; align-items:center; justify-content:flex-end; }
       .notification {
-        background: #000000;
+        background: #1a1a1a;
         border-radius: 12px;
-        padding: 10px 24px;
+        padding: 12px 20px;
         color: white;
         font-size: 14px;
         font-weight: 500;
-        white-space: nowrap;
         border: 0.5px solid #333333;
         display: flex;
         align-items: center;
         opacity: 0;
-        transform: translateY(-8px);
-        animation: slideDown 0.3s ease forwards;
-        box-shadow: none !important;
+        transform: translateX(100%);
+        animation: slideInRight 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        max-width: 100%;
       }
       .notification.closing {
-        animation: fadeOut 0.3s ease forwards;
+        animation: slideOutRight 0.25s ease forwards;
       }
-      @keyframes slideDown {
-        to { opacity: 1; transform: translateY(0); }
+      @keyframes slideInRight {
+        to { opacity: 1; transform: translateX(0); }
       }
-      @keyframes fadeOut {
-        to { opacity: 0; transform: translateY(-8px); }
+      @keyframes slideOutRight {
+        to { opacity: 0; transform: translateX(100%); }
       }
     </style>
   </head>
   <body>
-    <audio src="${notificationSoundPath}" autoplay></audio>
+    <audio id="notifSound" src="${notifSoundPath}" preload="auto"></audio>
     <div class="notification">${message}</div>
     <script>
       const { ipcRenderer } = require('electron');
       const notifEl = document.querySelector('.notification');
+      const notifSound = document.getElementById('notifSound');
+      try { notifSound.play().catch(() => {}); } catch(e) {}
       notifEl.addEventListener('click', () => {
-        try { new Audio('file:///${path.join(__dirname, 'Click.wav').replace(/\\/g, '/')}').play().catch(()=>{}); } catch(e) {}
         ipcRenderer.send('close-notification-animated');
       });
     </script>
@@ -240,7 +238,9 @@ function showNotification(message) {
   </html>
   `;
   notificationWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(notifHtml)}`);
-  notificationWindow.once('ready-to-show', () => notificationWindow.show());
+  notificationWindow.once('ready-to-show', () => {
+    notificationWindow.show();
+  });
   notificationTimeout = setTimeout(() => destroyNotification(true), 3000);
 }
 
