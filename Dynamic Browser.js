@@ -411,6 +411,9 @@ function createWindow() {
         white-space: nowrap;
         opacity: 0;
         transition: opacity 0.5s ease;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
       }
       .collapsed-time.visible {
         opacity: 1;
