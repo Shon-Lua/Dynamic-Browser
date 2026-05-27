@@ -186,7 +186,7 @@ function showNotification(message) {
   notificationWindow.setIgnoreMouseEvents(false);
   notificationWindow.setHasShadow(false);
 
-  const html = `
+  const notifHtml = `
   <!DOCTYPE html>
   <html style="margin:0;padding:0;background:transparent;">
   <head>
@@ -226,14 +226,16 @@ function showNotification(message) {
     <div class="notification">${message}</div>
     <script>
       const { ipcRenderer } = require('electron');
-      document.querySelector('.notification').addEventListener('click', () => {
+      const notifEl = document.querySelector('.notification');
+      notifEl.addEventListener('click', () => {
+        try { new Audio('file:///${path.join(__dirname, 'Click.wav').replace(/\\/g, '/')}').play().catch(()=>{}); } catch(e) {}
         ipcRenderer.send('close-notification-animated');
       });
     </script>
   </body>
   </html>
   `;
-  notificationWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+  notificationWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(notifHtml)}`);
   notificationWindow.once('ready-to-show', () => notificationWindow.show());
   notificationTimeout = setTimeout(() => destroyNotification(true), 3000);
 }
@@ -351,6 +353,9 @@ function createWindow() {
   } catch (e) {}
 
   const startupAnimFlag = appSettings.startupAnimationEnabled;
+  const clickSoundPath = 'file:///' + path.join(__dirname, 'Click.wav').replace(/\\/g, '/');
+  const startupSoundPath = 'file:///' + path.join(__dirname, 'StartUp.wav').replace(/\\/g, '/');
+  const questionSoundPath = 'file:///' + path.join(__dirname, 'Question.wav').replace(/\\/g, '/');
 
   const html = `
   <!DOCTYPE html>
@@ -543,18 +548,35 @@ function createWindow() {
         flex: 1; min-width: 0; display: flex; align-items: center;
         background: #0a0a0a; border: 0.5px solid #333333; border-radius: 32px;
         padding: 0 12px; transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+        position: relative; overflow: hidden;
       }
       .url-input-wrapper:focus-within {
         background: #151515; border-color: #4a8ad0;
         box-shadow: 0 0 6px rgba(70, 150, 255, 0.3);
       }
       .url-input-wrapper .security-icon {
-        font-size: 16px; margin-right: 6px; line-height: 1; flex-shrink: 0;
+        font-size: 16px; margin-right: 6px; line-height: 1; flex-shrink: 0; z-index: 2;
       }
       .url-input-wrapper .url-input {
         flex: 1; min-width: 0; background: transparent; border: none; outline: none;
         font-family: 'Inter', sans-serif; font-size: 13px; color: white; font-weight: 500;
-        padding: 6px 0;
+        padding: 6px 0; z-index: 2;
+      }
+      .load-progress {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 0%;
+        background: rgba(74, 138, 208, 0.25);
+        z-index: 1;
+        border-radius: 32px;
+        opacity: 1;
+        transition: width 0.3s linear, opacity 0.5s ease;
+      }
+      .load-progress.done {
+        opacity: 0;
+        width: 100%;
       }
       .menu-btn {
         background: #1a1a1a; border: 0.5px solid #333333;
@@ -685,6 +707,9 @@ function createWindow() {
     </style>
   </head>
   <body>
+    <audio id="clickSound" src="${clickSoundPath}" preload="auto"></audio>
+    <audio id="startupSound" src="${startupSoundPath}" preload="auto"></audio>
+    <audio id="questionSound" src="${questionSoundPath}" preload="auto"></audio>
     <div class="dynamic-island" id="island" style="opacity:0;">
       <div class="collapsed-content">
         <span class="collapsed-time" id="collapsedTime">00:00</span>
@@ -701,6 +726,7 @@ function createWindow() {
           <div class="url-input-wrapper" id="urlInputWrapper">
             <span id="securityIcon" class="security-icon"></span>
             <input type="text" class="url-input" id="urlInput" placeholder="URL или поиск">
+            <div class="load-progress" id="loadProgress"></div>
           </div>
           <div style="position:relative;">
             <button class="menu-btn" id="menuBtn">⋮</button>
@@ -747,6 +773,7 @@ function createWindow() {
       const webviewContainer = document.getElementById('webviewContainer');
       const securityIcon = document.getElementById('securityIcon');
       const urlInputWrapper = document.getElementById('urlInputWrapper');
+      const loadProgress = document.getElementById('loadProgress');
       const menuBtn = document.getElementById('menuBtn');
       const menuDropdown = document.getElementById('menuDropdown');
       const addLinkInput = document.getElementById('addLinkInput');
@@ -760,6 +787,13 @@ function createWindow() {
       const modalYes = document.getElementById('modalYes');
       const modalNo = document.getElementById('modalNo');
       const collapsedTime = document.getElementById('collapsedTime');
+      const clickSound = document.getElementById('clickSound');
+      const startupSound = document.getElementById('startupSound');
+      const questionSound = document.getElementById('questionSound');
+
+      function playClick() {
+        try { clickSound.currentTime = 0; clickSound.play().catch(() => {}); } catch(e) {}
+      }
 
       let tabs = [];
       let activeTabId = null;
@@ -768,6 +802,10 @@ function createWindow() {
       let savedLinks = [];
       let currentContextLink = null;
       let startupOverlay = null;
+      let progressInterval = null;
+      let progressTarget = 0;
+      let progressValue = 0;
+      let progressResetTimeout = null;
 
       function updateTime() {
         const now = new Date();
@@ -826,9 +864,21 @@ function createWindow() {
         ipcRenderer.send('save-saved-links', savedLinks);
       }
 
-      function showNoInternetMessage(webview, failedUrl) {
+      function showErrorMessage(webview, failedUrl, errorCode) {
         const escapedUrl = failedUrl.replace(/'/g, "\\\\'");
-        const errorHtml = \`<html style="background:#000000; color:white; display:flex; align-items:center; justify-content:center; height:100%; font-family:'Inter',sans-serif;"><body style="text-align:center; margin:0;"><div style="padding:20px;"><div style="font-size:48px; margin-bottom:16px;">🌐</div><div style="font-size:18px; font-weight:600; margin-bottom:8px;">Нет подключения к интернету</div><div style="font-size:14px; color:#aaa;">Проверьте соединение и попробуйте снова</div><button onclick="location.href='\${escapedUrl}'" style="margin-top:20px; padding:8px 20px; background:#2a5a9a; border:none; border-radius:20px; color:white; cursor:pointer; font-family:'Inter',sans-serif; font-weight:500;">Повторить</button></div></body></html>\`;
+        let title = 'Не удалось загрузить страницу';
+        let description = 'Проверьте адрес и попробуйте снова';
+        if (errorCode === -105) {
+          title = 'Проблема с подключением к сайту';
+          description = 'Не удалось найти сервер по этому адресу';
+        } else if (errorCode === -106) {
+          title = 'Нет подключения к интернету';
+          description = 'Проверьте соединение и попробуйте снова';
+        } else if (errorCode === -7 || errorCode === -102 || errorCode === -118) {
+          title = 'Сайт не отвечает';
+          description = 'Возможно, сервер недоступен или перегружен';
+        }
+        const errorHtml = \`<html style="background:#000000; color:white; display:flex; align-items:center; justify-content:center; height:100%; font-family:'Inter',sans-serif;"><body style="text-align:center; margin:0;"><div style="padding:20px;"><div style="font-size:48px; margin-bottom:16px;">⚠️</div><div style="font-size:18px; font-weight:600; margin-bottom:8px;">\${title}</div><div style="font-size:14px; color:#aaa;">\${description}</div><button onclick="location.href='\${escapedUrl}'" style="margin-top:20px; padding:8px 20px; background:#2a5a9a; border:none; border-radius:20px; color:white; cursor:pointer; font-family:'Inter',sans-serif; font-weight:500;">Повторить</button></div></body></html>\`;
         webview.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(errorHtml));
       }
 
@@ -860,9 +910,10 @@ function createWindow() {
       function updateUrlInput() {
         const activeTab = tabs.find(t => t.id === activeTabId);
         if (!activeTab) return;
-        const urlToShow = (activeTab.displayUrl && !isErrorPage(activeTab.displayUrl)) 
-          ? activeTab.displayUrl 
-          : (activeTab.originalUrl || '');
+        let urlToShow = activeTab.displayUrl;
+        if (isErrorPage(urlToShow)) {
+          urlToShow = activeTab.originalUrl || '';
+        }
         urlInput.value = urlToShow;
         updateSecurityIcon(urlToShow);
       }
@@ -881,6 +932,73 @@ function createWindow() {
         return scrollWidth - addBtnWidth - tabsWidth >= newTabMinWidth;
       }
 
+      function clearProgressInterval() {
+        if (progressInterval) {
+          clearInterval(progressInterval);
+          progressInterval = null;
+        }
+      }
+
+      function clearProgressResetTimeout() {
+        if (progressResetTimeout) {
+          clearTimeout(progressResetTimeout);
+          progressResetTimeout = null;
+        }
+      }
+
+      function forceResetProgressBar() {
+        clearProgressResetTimeout();
+        loadProgress.style.transition = 'none';
+        loadProgress.style.width = '0%';
+        loadProgress.classList.remove('done');
+        loadProgress.style.opacity = '1';
+        void loadProgress.offsetWidth;
+        loadProgress.style.transition = '';
+        progressValue = 0;
+        progressTarget = 0;
+      }
+
+      function startSimulatedProgress() {
+        clearProgressInterval();
+        forceResetProgressBar();
+        progressTarget = 85;
+        progressInterval = setInterval(() => {
+          if (progressValue < progressTarget) {
+            progressValue += Math.random() * 10 + 5;
+            if (progressValue > progressTarget) progressValue = progressTarget;
+            loadProgress.style.width = progressValue + '%';
+          } else {
+            clearProgressInterval();
+            progressInterval = setInterval(() => {
+              if (progressValue < 95) {
+                progressValue += 0.5;
+                loadProgress.style.width = progressValue + '%';
+              } else {
+                clearProgressInterval();
+                progressInterval = null;
+              }
+            }, 200);
+          }
+        }, 120);
+      }
+
+      function finishSimulatedProgress() {
+        clearProgressInterval();
+        clearProgressResetTimeout();
+        progressValue = 100;
+        loadProgress.style.width = '100%';
+        loadProgress.classList.add('done');
+        progressResetTimeout = setTimeout(() => {
+          loadProgress.style.transition = 'none';
+          loadProgress.style.width = '0%';
+          loadProgress.classList.remove('done');
+          loadProgress.style.opacity = '1';
+          void loadProgress.offsetWidth;
+          loadProgress.style.transition = '';
+          progressResetTimeout = null;
+        }, 550);
+      }
+
       function createWebview(url, id) {
         const startUrl = url || 'https://www.google.com';
         const webview = document.createElement('webview');
@@ -894,20 +1012,29 @@ function createWindow() {
             const failed = e.validatedURL || startUrl;
             const tab = tabs.find(t => t.id === id);
             if (tab && !isErrorPage(webview.src)) tab.originalUrl = failed;
-            showNoInternetMessage(webview, failed);
+            showErrorMessage(webview, failed, e.errorCode);
           }
         });
         webview.addEventListener('did-start-loading', () => {
           const tab = tabs.find(t => t.id === id);
-          if (tab && activeTabId === id) reloadBtn.textContent = '⛔';
+          if (tab && activeTabId === id) {
+            reloadBtn.textContent = '⛔';
+            startSimulatedProgress();
+          }
         });
         webview.addEventListener('did-navigate', () => {
           const tab = tabs.find(t => t.id === id);
-          if (tab && activeTabId === id) { tab.displayUrl = webview.src; updateUrlInput(); }
+          if (tab && activeTabId === id) {
+            if (!isErrorPage(webview.src)) tab.displayUrl = webview.src;
+            updateUrlInput();
+          }
         });
         webview.addEventListener('did-navigate-in-page', () => {
           const tab = tabs.find(t => t.id === id);
-          if (tab && activeTabId === id) { tab.displayUrl = webview.src; updateUrlInput(); }
+          if (tab && activeTabId === id) {
+            if (!isErrorPage(webview.src)) tab.displayUrl = webview.src;
+            updateUrlInput();
+          }
         });
         webview.addEventListener('page-title-updated', (e) => {
           const tab = tabs.find(t => t.id === id);
@@ -934,8 +1061,9 @@ function createWindow() {
           const tab = tabs.find(t => t.id === id);
           if (tab && activeTabId === id) {
             reloadBtn.textContent = '⟳';
-            tab.displayUrl = webview.src;
+            if (!isErrorPage(webview.src)) tab.displayUrl = webview.src;
             updateUrlInput();
+            finishSimulatedProgress();
           }
           if (tab && !isErrorPage(webview.src) && (!tab.originalUrl || isErrorPage(tab.originalUrl))) {
             tab.originalUrl = webview.src;
@@ -961,11 +1089,18 @@ function createWindow() {
         const closeSpan = document.createElement('span');
         closeSpan.className = 'tab-close';
         closeSpan.textContent = '×';
-        closeSpan.addEventListener('click', (e) => { e.stopPropagation(); closeTabWithAnimation(tab.id); });
+        closeSpan.addEventListener('click', (e) => {
+          e.stopPropagation();
+          playClick();
+          closeTabWithAnimation(tab.id);
+        });
         tabEl.appendChild(img);
         tabEl.appendChild(titleSpan);
         tabEl.appendChild(closeSpan);
-        tabEl.addEventListener('click', () => switchToTab(tab.id));
+        tabEl.addEventListener('click', () => {
+          playClick();
+          switchToTab(tab.id);
+        });
         tab.element = tabEl;
         return tabEl;
       }
@@ -991,7 +1126,12 @@ function createWindow() {
           }
           activeTabId = id;
           updateUrlInput();
-          reloadBtn.textContent = webview.isLoading() ? '⛔' : '⟳';
+          if (webview.isLoading()) {
+            reloadBtn.textContent = '⛔';
+            startSimulatedProgress();
+          } else {
+            reloadBtn.textContent = '⟳';
+          }
         } else {
           webview.style.display = 'none';
         }
@@ -1013,10 +1153,17 @@ function createWindow() {
         if (tab.webview) tab.webview.style.display = 'flex';
         const activeWebview = tab.webview;
         if (activeWebview) {
-          const urlToShow = (tab.displayUrl && !isErrorPage(tab.displayUrl)) ? tab.displayUrl : (tab.originalUrl || '');
+          let urlToShow = tab.displayUrl;
+          if (isErrorPage(urlToShow)) urlToShow = tab.originalUrl || '';
           urlInput.value = urlToShow;
           updateSecurityIcon(urlToShow);
-          reloadBtn.textContent = activeWebview.isLoading() ? '⛔' : '⟳';
+          if (activeWebview.isLoading()) {
+            reloadBtn.textContent = '⛔';
+            startSimulatedProgress();
+          } else {
+            reloadBtn.textContent = '⟳';
+            finishSimulatedProgress();
+          }
         }
       }
 
@@ -1065,6 +1212,7 @@ function createWindow() {
           li.appendChild(titleSpan);
           li.addEventListener('click', (e) => {
             e.stopPropagation();
+            playClick();
             menuDropdown.classList.remove('active');
             const normalized = normalizeUrl(linkObj.url);
             if (!normalized) return;
@@ -1080,6 +1228,7 @@ function createWindow() {
           li.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            playClick();
             currentContextLink = linkObj;
             const rect = island.getBoundingClientRect();
             let left = e.clientX - rect.left;
@@ -1099,10 +1248,14 @@ function createWindow() {
       }
 
       function hideContextMenu() { contextMenu.classList.remove('active'); }
-      function showConfirmModal() { confirmModal.classList.add('active'); }
+      function showConfirmModal() {
+        try { questionSound.currentTime = 0; questionSound.play().catch(() => {}); } catch(e) {}
+        confirmModal.classList.add('active');
+      }
       function hideConfirmModal() { confirmModal.classList.remove('active'); currentContextLink = null; }
 
       ctxCopy.addEventListener('click', () => {
+        playClick();
         if (currentContextLink) {
           const textArea = document.createElement('textarea');
           textArea.value = currentContextLink.url;
@@ -1115,11 +1268,13 @@ function createWindow() {
       });
 
       ctxDelete.addEventListener('click', () => {
+        playClick();
         if (currentContextLink) showConfirmModal();
         hideContextMenu();
       });
 
       modalYes.addEventListener('click', () => {
+        playClick();
         if (currentContextLink) {
           savedLinks = savedLinks.filter(l => l.url !== currentContextLink.url);
           saveLinksToStorage();
@@ -1128,7 +1283,10 @@ function createWindow() {
         hideConfirmModal();
       });
 
-      modalNo.addEventListener('click', hideConfirmModal);
+      modalNo.addEventListener('click', () => {
+        playClick();
+        hideConfirmModal();
+      });
       confirmModal.addEventListener('click', (e) => { if (e.target === confirmModal) hideConfirmModal(); });
 
       document.addEventListener('click', (e) => { if (!contextMenu.contains(e.target)) hideContextMenu(); });
@@ -1188,10 +1346,11 @@ function createWindow() {
         renderSavedLinks();
       }
 
-      addLinkBtn.addEventListener('click', addLinkFromInput);
-      addLinkInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addLinkFromInput(); });
+      addLinkBtn.addEventListener('click', () => { playClick(); addLinkFromInput(); });
+      addLinkInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { playClick(); addLinkFromInput(); } });
 
       saveCurrentBtn.addEventListener('click', () => {
+        playClick();
         const activeTab = tabs.find(t => t.id === activeTabId);
         if (activeTab) {
           const url = activeTab.displayUrl || activeTab.originalUrl;
@@ -1217,6 +1376,7 @@ function createWindow() {
 
       menuBtn.addEventListener('click', (e) => {
         e.stopPropagation();
+        playClick();
         menuDropdown.classList.toggle('active');
       });
 
@@ -1231,14 +1391,17 @@ function createWindow() {
       });
 
       backBtn.addEventListener('click', () => {
+        playClick();
         const tab = tabs.find(t => t.id === activeTabId);
         if (tab && tab.webview && tab.webview.canGoBack()) tab.webview.goBack();
       });
       forwardBtn.addEventListener('click', () => {
+        playClick();
         const tab = tabs.find(t => t.id === activeTabId);
         if (tab && tab.webview && tab.webview.canGoForward()) tab.webview.goForward();
       });
       reloadBtn.addEventListener('click', () => {
+        playClick();
         const tab = tabs.find(t => t.id === activeTabId);
         if (tab && tab.webview) {
           if (tab.webview.isLoading()) tab.webview.stop();
@@ -1247,6 +1410,7 @@ function createWindow() {
       });
       urlInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
+          playClick();
           const url = normalizeUrl(urlInput.value);
           if (url) {
             const tab = tabs.find(t => t.id === activeTabId);
@@ -1257,7 +1421,7 @@ function createWindow() {
           }
         }
       });
-      addTabBtn.addEventListener('click', () => addTab('https://www.google.com', true));
+      addTabBtn.addEventListener('click', () => { playClick(); addTab('https://www.google.com', true); });
 
       window.addEventListener('online', () => reloadAllErrorPages());
       window.addEventListener('resize', () => { if (tabs.length === 0) addTab('https://www.google.com', true); });
@@ -1272,12 +1436,23 @@ function createWindow() {
       island.addEventListener('click', e => {
         if (e.target === urlInput || e.target === backBtn || e.target === forwardBtn || e.target === reloadBtn || e.target.closest('.tab') || e.target === addTabBtn || e.target.closest('.add-tab') || e.target === menuBtn || menuDropdown.contains(e.target) || e.target.closest('.url-input-wrapper')) return;
         e.stopPropagation();
+        playClick();
         if (!island.classList.contains('expanded') && !hoverModeEnabled) ipcRenderer.send('expand-island');
       });
 
-      ipcRenderer.on('clear-search-reset', () => { browserContainer.style.display = 'none'; });
+      ipcRenderer.on('clear-search-reset', () => {
+        browserContainer.style.display = 'none';
+        if (collapsedTime) {
+          collapsedTime.style.display = '';
+          collapsedTime.classList.add('visible');
+        }
+      });
       ipcRenderer.on('show-browser', () => {
         browserContainer.style.display = 'flex';
+        if (collapsedTime) {
+          collapsedTime.style.display = 'none';
+          collapsedTime.classList.remove('visible');
+        }
         if (tabs.length === 0) addTab('https://www.google.com', true);
         else if (activeTabId === null && tabs.length) switchToTab(tabs[0].id);
         loadSavedLinks();
@@ -1292,12 +1467,16 @@ function createWindow() {
 
       ipcRenderer.on('hide-startup-overlay', () => {
         removeStartupOverlay();
-        if (collapsedTime) collapsedTime.classList.add('visible');
+        if (collapsedTime) {
+          collapsedTime.classList.add('visible');
+          collapsedTime.style.display = '';
+        }
       });
 
       (function initStartup() {
         const startupEnabled = window.__STARTUP_ANIMATION;
         if (startupEnabled) {
+          try { startupSound.currentTime = 0; startupSound.play().catch(() => {}); } catch(e) {}
           startupOverlay = document.createElement('div');
           startupOverlay.className = 'startup-overlay';
           const logoImg = document.createElement('img');
@@ -1323,7 +1502,10 @@ function createWindow() {
             startupOverlay.style.opacity = '0';
             setTimeout(() => {
               removeStartupOverlay();
-              if (collapsedTime) collapsedTime.classList.add('visible');
+              if (collapsedTime) {
+                collapsedTime.classList.add('visible');
+                collapsedTime.style.display = '';
+              }
             }, 500);
           }, 3000);
         }
@@ -1389,9 +1571,15 @@ function startGlobalMouseHook() {
     if (isAnimating) return;
     if (isExpanded && !fullscreenActive) {
       const clickPoint = { x: e.x, y: e.y };
-      if (!isPointInsideWindow(clickPoint)) {
-        collapseIsland();
+      if (isPointInsideWindow(clickPoint)) return;
+      if (notificationWindow && !notificationWindow.isDestroyed()) {
+        const notifBounds = notificationWindow.getBounds();
+        if (clickPoint.x >= notifBounds.x && clickPoint.x <= notifBounds.x + notifBounds.width &&
+            clickPoint.y >= notifBounds.y && clickPoint.y <= notifBounds.y + notifBounds.height) {
+          return;
+        }
       }
+      collapseIsland();
     }
   });
   uIOhook.start();
@@ -1427,7 +1615,7 @@ async function collapseIsland() {
   await animateResize(b.width, b.height, COLLAPSED_WIDTH, COLLAPSED_HEIGHT, 220);
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
   mainWindow.blur();
-  mainWindow.webContents.executeJavaScript(`if (document.getElementById('collapsedTime')) document.getElementById('collapsedTime').classList.add('visible');`);
+  mainWindow.webContents.executeJavaScript(`if (document.getElementById('collapsedTime')) { document.getElementById('collapsedTime').classList.add('visible'); document.getElementById('collapsedTime').style.display = ''; }`);
   if (previousActiveWindow) {
     try { await activeWin.activateWindow(previousActiveWindow); } catch (err) {}
     previousActiveWindow = null;
