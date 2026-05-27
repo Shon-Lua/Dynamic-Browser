@@ -2,6 +2,7 @@ const { app, BrowserWindow, screen, ipcMain, Tray, Menu, nativeImage } = require
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
+const url = require('url');
 const activeWin = require('active-win');
 const { uIOhook } = require('uiohook-napi');
 
@@ -278,7 +279,7 @@ function performUpdate() {
   });
 }
 
-function createWindow() {
+function createWindow(wallpaperPath) {
   updateCurrentDisplay();
   const windowWidth = COLLAPSED_WIDTH;
   const windowHeight = COLLAPSED_HEIGHT;
@@ -356,6 +357,7 @@ function createWindow() {
   const clickSoundPath = 'file:///' + path.join(__dirname, 'Click.wav').replace(/\\/g, '/');
   const startupSoundPath = 'file:///' + path.join(__dirname, 'StartUp.wav').replace(/\\/g, '/');
   const questionSoundPath = 'file:///' + path.join(__dirname, 'Question.wav').replace(/\\/g, '/');
+  const wallpaperUrl = wallpaperPath ? url.pathToFileURL(wallpaperPath).href : '';
 
   const html = `
   <!DOCTYPE html>
@@ -366,7 +368,7 @@ function createWindow() {
       @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
       * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
       html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; }
-      body { display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; position: relative; }
+      body { display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; position: relative; overflow-x: hidden; }
       .dynamic-island {
         width: 100%; height: 100%;
         background: #000000;
@@ -388,8 +390,11 @@ function createWindow() {
         0% { opacity: 0; transform: scale(0.92); }
         100% { opacity: 1; transform: scale(1); }
       }
-      .dynamic-island:hover {
+      .dynamic-island:not(.home-active):hover {
         background: #111111;
+      }
+      .dynamic-island.home-active {
+        background-color: #000000;
       }
       .dynamic-island.expanded {
         border-bottom-left-radius: 20px;
@@ -421,12 +426,14 @@ function createWindow() {
       .browser-container {
         width: 100%; height: 100%; opacity: 0; transition: opacity 0.2s ease;
         display: none; flex-direction: column; min-width: 0; min-height: 0; position: relative;
+        overflow: hidden;
       }
       .expanded .browser-container { display: flex; opacity: 1; }
       .expanded .collapsed-content { display: none; }
       .tabs-bar {
         display: flex; align-items: stretch; padding: 6px 8px 0 8px; background: #111111;
         border-bottom: 0.5px solid #222222; flex-shrink: 0; min-height: 32px;
+        overflow-x: auto; overflow-y: hidden;
       }
       .tabs-scroll {
         flex: 1 1 auto; overflow-x: auto; display: flex; gap: 4px; min-width: 0;
@@ -539,6 +546,7 @@ function createWindow() {
       .nav-area {
         display: flex; gap: 6px; align-items: center; padding: 6px 8px;
         background: #111111; border-bottom: 0.5px solid #222222; flex-shrink: 0;
+        overflow-x: hidden;
       }
       .nav-btn {
         background: #1a1a1a; border: 0.5px solid #333333;
@@ -547,6 +555,7 @@ function createWindow() {
         font-weight: 500;
       }
       .nav-btn:hover { background: #2a5a9a; transform: scale(0.97); }
+      .nav-btn:disabled { opacity: 0.4; pointer-events: none; }
       .url-input-wrapper {
         flex: 1; min-width: 0; display: flex; align-items: center;
         background: #0a0a0a; border: 0.5px solid #333333; border-radius: 32px;
@@ -581,60 +590,13 @@ function createWindow() {
         opacity: 0;
         width: 100%;
       }
-      .menu-btn {
+      .save-page-btn {
         background: #1a1a1a; border: 0.5px solid #333333;
         border-radius: 24px; padding: 5px 10px; font-family: 'Inter', sans-serif; font-size: 16px;
         color: white; cursor: pointer; transition: 0.15s; min-width: 32px; text-align: center;
-        font-weight: 500; position: relative;
+        font-weight: 500; flex-shrink: 0;
       }
-      .menu-btn:hover { background: #2a5a9a; }
-      .menu-dropdown {
-        position: absolute; right: 8px; top: 100%; margin-top: 4px;
-        background: #1a1a1a; border: 0.5px solid #333333; border-radius: 12px;
-        min-width: 260px; padding: 8px; z-index: 200; flex-direction: column;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-        opacity: 0; transform: translateY(-8px); pointer-events: none;
-        transition: opacity 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1), transform 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-        display: flex;
-      }
-      .menu-dropdown.active {
-        opacity: 1; transform: translateY(0); pointer-events: auto;
-      }
-      .menu-dropdown .add-link-area {
-        display: flex; gap: 4px; margin-bottom: 8px; align-items: center;
-      }
-      .menu-dropdown .add-link-input {
-        flex: 1; background: #0a0a0a; border: 0.5px solid #333333; border-radius: 16px;
-        padding: 4px 10px; font-family: 'Inter', sans-serif; font-size: 12px; color: white; outline: none;
-      }
-      .menu-dropdown .add-link-btn {
-        background: #2a5a9a; border: none; border-radius: 16px; color: white; padding: 4px 10px;
-        font-weight: bold; cursor: pointer; font-size: 18px; line-height: 1;
-      }
-      .menu-dropdown .save-current-btn {
-        background: #1a1a1a; border: 0.5px solid #333333; border-radius: 16px;
-        color: white; padding: 4px 8px; font-size: 14px; cursor: pointer; line-height: 1;
-        display: flex; align-items: center; justify-content: center;
-      }
-      .menu-dropdown .save-current-btn:hover { background: #2a5a9a; }
-      .menu-dropdown .saved-links-list {
-        list-style: none; max-height: 200px; overflow-y: auto;
-      }
-      .saved-links-list::-webkit-scrollbar { width: 6px; }
-      .saved-links-list::-webkit-scrollbar-track { background: transparent; }
-      .saved-links-list::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
-      .saved-links-list::-webkit-scrollbar-thumb:hover { background: #555; }
-      .menu-dropdown .saved-link-item {
-        display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px;
-        cursor: pointer; font-size: 13px; color: white; position: relative;
-      }
-      .menu-dropdown .saved-link-item:hover { background: #333333; }
-      .menu-dropdown .saved-link-favicon {
-        width: 16px; height: 16px; border-radius: 2px; object-fit: contain; flex-shrink: 0;
-      }
-      .menu-dropdown .saved-link-title {
-        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-      }
+      .save-page-btn:hover { background: #2a5a9a; }
       .context-menu {
         position: absolute; background: #2a2a2a; border: 0.5px solid #555; border-radius: 8px;
         padding: 4px 0; z-index: 300; display: none; box-shadow: 0 2px 10px rgba(0,0,0,0.7);
@@ -671,8 +633,95 @@ function createWindow() {
       .modal-btn:hover { background: #1e4a8a; }
       .modal-btn.cancel { background: #555; }
       .modal-btn.cancel:hover { background: #666; }
-      .webview-container { flex: 1; position: relative; background: #000000; }
+      .webview-container { flex: 1; position: relative; background: #000000; overflow: hidden; }
       webview { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000000; }
+      .home-screen {
+        display: none; flex-direction: column; align-items: center;
+        width: 100%; height: 100%; padding: 40px 20px 20px;
+        overflow: hidden; position: relative;
+      }
+      .home-search-area {
+        width: 100%; max-width: 600px; margin-bottom: 20px; flex-shrink: 0;
+      }
+      .home-search-input {
+        width: 100%; background: #0a0a0a; border: 0.5px solid #333333; border-radius: 24px;
+        padding: 8px 16px; font-family: 'Inter', sans-serif; font-size: 14px; color: white;
+        outline: none; transition: border-color 0.15s;
+      }
+      .home-search-input:focus { border-color: #4a8ad0; }
+      .home-links-scroll {
+        flex: 1 1 auto; overflow-y: auto; min-height: 0; width: 100%;
+        overflow-x: hidden;
+      }
+      .home-links-container {
+        display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-content: flex-start;
+        padding: 5px;
+      }
+      .home-link-card {
+        width: 100px;
+        height: 100px;
+        border-radius: 12px;
+        background-color: #1a1a1a;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        position: relative;
+        cursor: pointer;
+        transition: transform 0.15s, box-shadow 0.15s;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        flex-shrink: 0;
+      }
+      .home-link-card:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+        z-index: 2;
+      }
+      .home-link-title {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 4px 4px;
+        background: rgba(0,0,0,0.75);
+        color: white;
+        font-size: 10px;
+        font-weight: 500;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.2;
+      }
+      .home-add-link-area {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        z-index: 10;
+      }
+      .home-add-btn {
+        background: #2a5a9a; border: none; border-radius: 50%; width: 40px; height: 40px;
+        font-size: 24px; color: white; cursor: pointer; display: flex; align-items: center;
+        justify-content: center; transition: background 0.15s, transform 0.1s;
+      }
+      .home-add-btn:hover { background: #1e4a8a; transform: scale(1.1); }
+      .add-link-popup {
+        position: absolute; bottom: 50px; right: 0;
+        background: #1e1e1e; border: 1px solid #444; border-radius: 12px; padding: 12px;
+        display: none; flex-direction: column; gap: 8px; z-index: 300;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+        width: 250px;
+      }
+      .add-link-popup.active { display: flex; }
+      .popup-input {
+        background: #0a0a0a; border: 0.5px solid #333; border-radius: 8px;
+        padding: 6px 10px; color: white; font-family: 'Inter', sans-serif; font-size: 13px;
+        outline: none; width: 100%;
+      }
+      .popup-add-btn {
+        background: #2a5a9a; border: none; border-radius: 8px; padding: 6px;
+        color: white; cursor: pointer; font-weight: 500;
+      }
       .startup-overlay {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background: transparent; border-radius: 12px;
@@ -707,6 +756,22 @@ function createWindow() {
         opacity: 1;
         transform: translateY(-50%) translateX(0);
       }
+      ${wallpaperUrl ? `
+      .dynamic-island {
+        background-image: url('${wallpaperUrl.replace(/'/g, "\\'")}');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-color: transparent !important;
+      }
+      .dynamic-island.home-active {
+        background-color: transparent !important;
+      }
+      .dynamic-island:not(.home-active):hover {
+        background-color: rgba(0,0,0,0.5) !important;
+        background-blend-mode: darken;
+      }
+      ` : ''}
     </style>
   </head>
   <body>
@@ -722,7 +787,7 @@ function createWindow() {
           <div class="tabs-scroll" id="tabsScroll"></div>
           <div class="add-tab" id="addTabBtn">+</div>
         </div>
-        <div class="nav-area">
+        <div class="nav-area" id="navArea">
           <button class="nav-btn" id="backBtn">◀</button>
           <button class="nav-btn" id="forwardBtn">▶</button>
           <button class="nav-btn" id="reloadBtn">⟳</button>
@@ -731,15 +796,20 @@ function createWindow() {
             <input type="text" class="url-input" id="urlInput" placeholder="URL или поиск">
             <div class="load-progress" id="loadProgress"></div>
           </div>
-          <div style="position:relative;">
-            <button class="menu-btn" id="menuBtn">⋮</button>
-            <div class="menu-dropdown" id="menuDropdown">
-              <div class="add-link-area">
-                <input type="text" class="add-link-input" id="addLinkInput" placeholder="URL для сохранения">
-                <button class="add-link-btn" id="addLinkBtn">+</button>
-                <button class="save-current-btn" id="saveCurrentBtn" title="Сохранить текущую страницу">📌</button>
-              </div>
-              <ul class="saved-links-list" id="savedLinksList"></ul>
+          <button class="save-page-btn" id="savePageBtn">💾</button>
+        </div>
+        <div class="home-screen" id="homeScreen">
+          <div class="home-search-area">
+            <input type="text" class="home-search-input" id="homeSearchInput" placeholder="Поиск в Google">
+          </div>
+          <div class="home-links-scroll">
+            <div class="home-links-container" id="homeLinksContainer"></div>
+          </div>
+          <div class="home-add-link-area">
+            <button class="home-add-btn" id="homeAddBtn">+</button>
+            <div class="add-link-popup" id="addLinkPopup">
+              <input type="text" class="popup-input" id="popupLinkInput" placeholder="Введите URL">
+              <button class="popup-add-btn" id="popupAddBtn">Добавить</button>
             </div>
           </div>
         </div>
@@ -777,12 +847,7 @@ function createWindow() {
       const securityIcon = document.getElementById('securityIcon');
       const urlInputWrapper = document.getElementById('urlInputWrapper');
       const loadProgress = document.getElementById('loadProgress');
-      const menuBtn = document.getElementById('menuBtn');
-      const menuDropdown = document.getElementById('menuDropdown');
-      const addLinkInput = document.getElementById('addLinkInput');
-      const addLinkBtn = document.getElementById('addLinkBtn');
-      const saveCurrentBtn = document.getElementById('saveCurrentBtn');
-      const savedLinksList = document.getElementById('savedLinksList');
+      const savePageBtn = document.getElementById('savePageBtn');
       const contextMenu = document.getElementById('contextMenu');
       const ctxCopy = document.getElementById('ctxCopy');
       const ctxDelete = document.getElementById('ctxDelete');
@@ -790,6 +855,14 @@ function createWindow() {
       const modalYes = document.getElementById('modalYes');
       const modalNo = document.getElementById('modalNo');
       const collapsedTime = document.getElementById('collapsedTime');
+      const navArea = document.getElementById('navArea');
+      const homeScreen = document.getElementById('homeScreen');
+      const homeSearchInput = document.getElementById('homeSearchInput');
+      const homeLinksContainer = document.getElementById('homeLinksContainer');
+      const homeAddBtn = document.getElementById('homeAddBtn');
+      const addLinkPopup = document.getElementById('addLinkPopup');
+      const popupLinkInput = document.getElementById('popupLinkInput');
+      const popupAddBtn = document.getElementById('popupAddBtn');
       const clickSound = document.getElementById('clickSound');
       const startupSound = document.getElementById('startupSound');
       const questionSound = document.getElementById('questionSound');
@@ -809,6 +882,7 @@ function createWindow() {
       let progressTarget = 0;
       let progressValue = 0;
       let progressResetTimeout = null;
+      let draggedIndex = null;
 
       function updateTime() {
         const now = new Date();
@@ -843,24 +917,24 @@ function createWindow() {
         try { return new URL(url).hostname; } catch (e) { return url; }
       }
 
-      function getFaviconUrl(url) {
+      function getFaviconUrl(url, size = 16) {
         const hostname = getHostnameFromUrl(url);
-        return 'https://www.google.com/s2/favicons?domain=' + hostname;
+        return 'https://www.google.com/s2/favicons?domain=' + hostname + '&sz=' + size;
       }
 
       function normalizeLinkObject(item) {
         if (typeof item === 'string') {
           const hostname = getHostnameFromUrl(item);
-          return { url: item, title: hostname, favicon: getFaviconUrl(item) };
+          return { url: item, title: hostname, favicon: getFaviconUrl(item, 16) };
         }
         if (!item.title) item.title = getHostnameFromUrl(item.url);
-        if (!item.favicon) item.favicon = getFaviconUrl(item.url);
+        if (!item.favicon) item.favicon = getFaviconUrl(item.url, 16);
         return item;
       }
 
       function loadSavedLinks() {
         savedLinks = ipcRenderer.sendSync('get-saved-links').map(normalizeLinkObject);
-        renderSavedLinks();
+        renderHomeLinks();
       }
 
       function saveLinksToStorage() {
@@ -912,13 +986,30 @@ function createWindow() {
 
       function updateUrlInput() {
         const activeTab = tabs.find(t => t.id === activeTabId);
-        if (!activeTab) return;
+        if (!activeTab || activeTab.type !== 'web') {
+          urlInput.value = '';
+          updateSecurityIcon('');
+          return;
+        }
         let urlToShow = activeTab.displayUrl;
         if (isErrorPage(urlToShow)) {
           urlToShow = activeTab.originalUrl || '';
         }
         urlInput.value = urlToShow;
         updateSecurityIcon(urlToShow);
+      }
+
+      function updateNavButtons() {
+        const activeTab = tabs.find(t => t.id === activeTabId);
+        if (activeTab && activeTab.type === 'web') {
+          backBtn.disabled = false;
+          forwardBtn.disabled = false;
+          reloadBtn.disabled = false;
+        } else {
+          backBtn.disabled = true;
+          forwardBtn.disabled = true;
+          reloadBtn.disabled = true;
+        }
       }
 
       function canAddTab() {
@@ -1020,21 +1111,21 @@ function createWindow() {
         });
         webview.addEventListener('did-start-loading', () => {
           const tab = tabs.find(t => t.id === id);
-          if (tab && activeTabId === id) {
+          if (tab && activeTabId === id && tab.type === 'web') {
             reloadBtn.textContent = '⛔';
             startSimulatedProgress();
           }
         });
         webview.addEventListener('did-navigate', () => {
           const tab = tabs.find(t => t.id === id);
-          if (tab && activeTabId === id) {
+          if (tab && activeTabId === id && tab.type === 'web') {
             if (!isErrorPage(webview.src)) tab.displayUrl = webview.src;
             updateUrlInput();
           }
         });
         webview.addEventListener('did-navigate-in-page', () => {
           const tab = tabs.find(t => t.id === id);
-          if (tab && activeTabId === id) {
+          if (tab && activeTabId === id && tab.type === 'web') {
             if (!isErrorPage(webview.src)) tab.displayUrl = webview.src;
             updateUrlInput();
           }
@@ -1062,7 +1153,7 @@ function createWindow() {
         });
         webview.addEventListener('did-stop-loading', () => {
           const tab = tabs.find(t => t.id === id);
-          if (tab && activeTabId === id) {
+          if (tab && activeTabId === id && tab.type === 'web') {
             reloadBtn.textContent = '⟳';
             if (!isErrorPage(webview.src)) tab.displayUrl = webview.src;
             updateUrlInput();
@@ -1111,63 +1202,122 @@ function createWindow() {
       function addTab(url, activate = true) {
         if (!canAddTab()) return false;
         const id = nextTabId++;
-        const webview = createWebview(url, id);
-        webview.setAttribute('data-id', id);
-        webviewContainer.appendChild(webview);
-        const newTab = { id, title: 'Загрузка...', favicon: '', originalUrl: url || 'https://www.google.com', displayUrl: url || 'https://www.google.com', webview, element: null };
-        tabs.push(newTab);
-        const tabEl = createTabElement(newTab);
-        tabsScroll.appendChild(tabEl);
-        if (activate) {
-          tabEl.classList.add('active');
-          webview.style.display = 'flex';
-          if (activeTabId !== null) {
-            const prevTab = tabs.find(t => t.id === activeTabId);
-            if (prevTab && prevTab.element) prevTab.element.classList.remove('active');
-            const prevWebview = prevTab?.webview;
-            if (prevWebview) prevWebview.style.display = 'none';
-          }
-          activeTabId = id;
-          updateUrlInput();
-          if (webview.isLoading()) {
-            reloadBtn.textContent = '⛔';
-            startSimulatedProgress();
+        if (url) {
+          const webview = createWebview(url, id);
+          webview.setAttribute('data-id', id);
+          webviewContainer.appendChild(webview);
+          const newTab = { id, type: 'web', title: 'Загрузка...', favicon: '', originalUrl: url, displayUrl: url, webview, element: null };
+          tabs.push(newTab);
+          const tabEl = createTabElement(newTab);
+          tabsScroll.appendChild(tabEl);
+          if (activate) {
+            tabEl.classList.add('active');
+            if (activeTabId !== null) {
+              const prevTab = tabs.find(t => t.id === activeTabId);
+              if (prevTab && prevTab.element) prevTab.element.classList.remove('active');
+              const prevWebview = prevTab?.webview;
+              if (prevWebview) prevWebview.style.display = 'none';
+            }
+            activeTabId = id;
+            webview.style.display = 'flex';
+            homeScreen.style.display = 'none';
+            island.classList.remove('home-active');
+            updateNavButtons();
+            if (webview.isLoading()) {
+              reloadBtn.textContent = '⛔';
+              startSimulatedProgress();
+            } else {
+              reloadBtn.textContent = '⟳';
+            }
           } else {
+            webview.style.display = 'none';
+          }
+          tabEl.classList.add('tab-adding');
+          tabEl.addEventListener('animationend', () => tabEl.classList.remove('tab-adding'), { once: true });
+          return true;
+        } else {
+          const homeTab = { id, type: 'home', title: 'Главная', favicon: window.__LOGO_DATA_URI || '', originalUrl: '', displayUrl: '', webview: null, element: null };
+          tabs.push(homeTab);
+          const tabEl = createTabElement(homeTab);
+          tabsScroll.appendChild(tabEl);
+          if (activate) {
+            tabEl.classList.add('active');
+            if (activeTabId !== null) {
+              const prevTab = tabs.find(t => t.id === activeTabId);
+              if (prevTab && prevTab.element) prevTab.element.classList.remove('active');
+              if (prevTab && prevTab.webview) prevTab.webview.style.display = 'none';
+            }
+            activeTabId = id;
+            homeScreen.style.display = 'flex';
+            homeSearchInput.value = '';
+            urlInput.value = '';
+            webviewContainer.querySelectorAll('webview').forEach(wv => wv.style.display = 'none');
+            island.classList.add('home-active');
+            updateNavButtons();
             reloadBtn.textContent = '⟳';
           }
-        } else {
-          webview.style.display = 'none';
+          tabEl.classList.add('tab-adding');
+          tabEl.addEventListener('animationend', () => tabEl.classList.remove('tab-adding'), { once: true });
+          return true;
         }
-        tabEl.classList.add('tab-adding');
-        tabEl.addEventListener('animationend', () => tabEl.classList.remove('tab-adding'), { once: true });
-        return true;
+      }
+
+      function convertTabToWeb(tabId, url) {
+        const tab = tabs.find(t => t.id === tabId);
+        if (!tab || tab.type === 'web') return;
+        const webview = createWebview(url, tabId);
+        webviewContainer.appendChild(webview);
+        tab.webview = webview;
+        tab.type = 'web';
+        tab.originalUrl = url;
+        tab.displayUrl = url;
+        tab.favicon = getFaviconUrl(url, 16);
+        tab.title = getHostnameFromUrl(url);
+        if (tab.element && tab.element.parentNode) {
+          tab.element.parentNode.removeChild(tab.element);
+        }
+        const newEl = createTabElement(tab);
+        tabsScroll.appendChild(newEl);
+        tab.element = newEl;
+        if (activeTabId === tabId) {
+          switchToTab(tabId);
+        }
       }
 
       function switchToTab(id) {
         const tab = tabs.find(t => t.id === id);
         if (!tab) return;
+        webviewContainer.querySelectorAll('webview').forEach(wv => wv.style.display = 'none');
+        homeScreen.style.display = 'none';
         if (activeTabId !== null) {
           const prevTab = tabs.find(t => t.id === activeTabId);
           if (prevTab && prevTab.element) prevTab.element.classList.remove('active');
-          if (prevTab && prevTab.webview) prevTab.webview.style.display = 'none';
         }
         activeTabId = id;
         if (tab.element) tab.element.classList.add('active');
-        if (tab.webview) tab.webview.style.display = 'flex';
-        const activeWebview = tab.webview;
-        if (activeWebview) {
-          let urlToShow = tab.displayUrl;
-          if (isErrorPage(urlToShow)) urlToShow = tab.originalUrl || '';
-          urlInput.value = urlToShow;
-          updateSecurityIcon(urlToShow);
-          if (activeWebview.isLoading()) {
-            reloadBtn.textContent = '⛔';
-            startSimulatedProgress();
-          } else {
-            reloadBtn.textContent = '⟳';
-            finishSimulatedProgress();
+        if (tab.type === 'home') {
+          homeScreen.style.display = 'flex';
+          homeSearchInput.value = '';
+          urlInput.value = '';
+          island.classList.add('home-active');
+        } else {
+          island.classList.remove('home-active');
+          if (tab.webview) {
+            tab.webview.style.display = 'flex';
+            let urlToShow = tab.displayUrl;
+            if (isErrorPage(urlToShow)) urlToShow = tab.originalUrl || '';
+            urlInput.value = urlToShow;
+            updateSecurityIcon(urlToShow);
+            if (tab.webview.isLoading()) {
+              reloadBtn.textContent = '⛔';
+              startSimulatedProgress();
+            } else {
+              reloadBtn.textContent = '⟳';
+              finishSimulatedProgress();
+            }
           }
         }
+        updateNavButtons();
       }
 
       function closeTabWithAnimation(id) {
@@ -1189,46 +1339,68 @@ function createWindow() {
         const tab = tabs[index];
         if (tab.webview) tab.webview.remove();
         tabs.splice(index, 1);
-        if (tabs.length === 0) addTab('https://www.google.com', true);
+        if (tabs.length === 0) addTab(null, true);
         else if (activeTabId === id) switchToTab(tabs[Math.min(index, tabs.length - 1)].id);
       }
 
-      function isGoogleHomepage(url) {
-        return url === 'https://www.google.com' || url === 'https://www.google.com/';
-      }
-
-      function renderSavedLinks() {
-        if (!savedLinksList) return;
-        savedLinksList.innerHTML = '';
-        savedLinks.forEach((linkObj) => {
-          const li = document.createElement('li');
-          li.className = 'saved-link-item';
-          li.dataset.url = linkObj.url;
-          const img = document.createElement('img');
-          img.className = 'saved-link-favicon';
-          img.src = linkObj.favicon || '';
-          img.onerror = () => { img.style.display = 'none'; };
+      function renderHomeLinks() {
+        if (!homeLinksContainer) return;
+        const oldCards = [...homeLinksContainer.querySelectorAll('.home-link-card')];
+        const oldRectsMap = new Map();
+        oldCards.forEach(card => {
+          oldRectsMap.set(card.dataset.index, card.getBoundingClientRect());
+        });
+        homeLinksContainer.innerHTML = '';
+        savedLinks.forEach((linkObj, index) => {
+          const card = document.createElement('div');
+          card.className = 'home-link-card';
+          const cardFaviconUrl = getFaviconUrl(linkObj.url, 128);
+          card.style.backgroundImage = \`url(\${cardFaviconUrl})\`;
+          card.title = linkObj.title || getHostnameFromUrl(linkObj.url);
+          card.setAttribute('draggable', 'true');
+          card.dataset.index = index;
           const titleSpan = document.createElement('span');
-          titleSpan.className = 'saved-link-title';
+          titleSpan.className = 'home-link-title';
           titleSpan.textContent = linkObj.title || getHostnameFromUrl(linkObj.url);
-          li.appendChild(img);
-          li.appendChild(titleSpan);
-          li.addEventListener('click', (e) => {
-            e.stopPropagation();
+          card.appendChild(titleSpan);
+
+          card.addEventListener('dragstart', (e) => {
+            draggedIndex = parseInt(e.currentTarget.dataset.index, 10);
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', '');
+            e.currentTarget.style.opacity = '0.5';
+          });
+          card.addEventListener('dragend', (e) => {
+            e.currentTarget.style.opacity = '1';
+            draggedIndex = null;
+          });
+          card.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+          });
+          card.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const targetIndex = parseInt(e.currentTarget.dataset.index, 10);
+            if (draggedIndex !== null && draggedIndex !== targetIndex) {
+              const movedItem = savedLinks.splice(draggedIndex, 1)[0];
+              savedLinks.splice(targetIndex, 0, movedItem);
+              saveLinksToStorage();
+              renderHomeLinks();
+            }
+          });
+
+          card.addEventListener('click', () => {
             playClick();
-            menuDropdown.classList.remove('active');
             const normalized = normalizeUrl(linkObj.url);
             if (!normalized) return;
             const activeTab = tabs.find(t => t.id === activeTabId);
-            const currentUrl = activeTab ? (activeTab.displayUrl || activeTab.originalUrl) : '';
-            if (activeTab && isGoogleHomepage(currentUrl)) {
-              activeTab.webview.src = normalized;
-              activeTab.originalUrl = normalized;
+            if (activeTab && activeTab.type === 'home') {
+              convertTabToWeb(activeTabId, normalized);
             } else {
               addTab(normalized, true);
             }
           });
-          li.addEventListener('contextmenu', (e) => {
+          card.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             e.stopPropagation();
             playClick();
@@ -1246,7 +1418,28 @@ function createWindow() {
             contextMenu.style.top = top + 'px';
             contextMenu.classList.add('active');
           });
-          savedLinksList.appendChild(li);
+          homeLinksContainer.appendChild(card);
+        });
+
+        requestAnimationFrame(() => {
+          const newCards = [...homeLinksContainer.querySelectorAll('.home-link-card')];
+          newCards.forEach(card => {
+            const idx = card.dataset.index;
+            const oldRect = oldRectsMap.get(idx);
+            if (oldRect) {
+              const newRect = card.getBoundingClientRect();
+              const deltaX = oldRect.left - newRect.left;
+              const deltaY = oldRect.top - newRect.top;
+              if (deltaX !== 0 || deltaY !== 0) {
+                card.style.transition = 'none';
+                card.style.transform = \`translate(\${deltaX}px, \${deltaY}px)\`;
+                requestAnimationFrame(() => {
+                  card.style.transition = 'transform 0.2s ease';
+                  card.style.transform = '';
+                });
+              }
+            }
+          });
         });
       }
 
@@ -1281,7 +1474,7 @@ function createWindow() {
         if (currentContextLink) {
           savedLinks = savedLinks.filter(l => l.url !== currentContextLink.url);
           saveLinksToStorage();
-          renderSavedLinks();
+          renderHomeLinks();
         }
         hideConfirmModal();
       });
@@ -1292,101 +1485,90 @@ function createWindow() {
       });
       confirmModal.addEventListener('click', (e) => { if (e.target === confirmModal) hideConfirmModal(); });
 
-      document.addEventListener('click', (e) => { if (!contextMenu.contains(e.target)) hideContextMenu(); });
-
-      async function fetchSiteInfo(url) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
-          const response = await fetch(url, { signal: controller.signal });
-          clearTimeout(timeoutId);
-          if (!response.ok) throw new Error('Status ' + response.status);
-          const html = await response.text();
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          let title = doc.title || getHostnameFromUrl(url);
-          let favicon = '';
-          const iconLink = doc.querySelector('link[rel="icon"], link[rel="shortcut icon"]');
-          if (iconLink) {
-            favicon = iconLink.getAttribute('href');
-            if (favicon && !favicon.startsWith('http')) {
-              favicon = new URL(favicon, url).href;
-            }
-          }
-          if (!favicon) favicon = getFaviconUrl(url);
-          return { title, favicon };
-        } catch (e) {
-          return { title: getHostnameFromUrl(url), favicon: getFaviconUrl(url) };
+      document.addEventListener('click', (e) => {
+        if (!contextMenu.contains(e.target)) hideContextMenu();
+        if (addLinkPopup.classList.contains('active') && !addLinkPopup.contains(e.target) && e.target !== homeAddBtn) {
+          addLinkPopup.classList.remove('active');
         }
-      }
+      });
 
-      function updateSavedLinkData(existingLink, newData) {
-        existingLink.title = newData.title;
-        existingLink.favicon = newData.favicon;
-        saveLinksToStorage();
-        renderSavedLinks();
-      }
-
-      async function addLinkFromInput() {
-        const rawUrl = addLinkInput.value.trim();
-        if (!rawUrl) return;
-        const normalized = normalizeUrl(rawUrl) || rawUrl;
-        const existing = savedLinks.find(l => l.url === normalized);
-        if (existing) {
-          const info = await fetchSiteInfo(normalized);
-          updateSavedLinkData(existing, info);
-          addLinkInput.value = '';
-          return;
-        }
-        const tempObj = { url: normalized, title: 'Загрузка...', favicon: '' };
-        savedLinks.push(tempObj);
-        saveLinksToStorage();
-        renderSavedLinks();
-        addLinkInput.value = '';
-        const info = await fetchSiteInfo(normalized);
-        Object.assign(tempObj, info);
-        saveLinksToStorage();
-        renderSavedLinks();
-      }
-
-      addLinkBtn.addEventListener('click', () => { playClick(); addLinkFromInput(); });
-      addLinkInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { playClick(); addLinkFromInput(); } });
-
-      saveCurrentBtn.addEventListener('click', () => {
+      savePageBtn.addEventListener('click', () => {
         playClick();
         const activeTab = tabs.find(t => t.id === activeTabId);
-        if (activeTab) {
+        if (activeTab && activeTab.type === 'web') {
           const url = activeTab.displayUrl || activeTab.originalUrl;
           if (url && !url.startsWith('data:') && !url.startsWith('javascript:') && url !== 'about:blank') {
             const existing = savedLinks.find(l => l.url === url);
             if (existing) {
               existing.title = activeTab.title || getHostnameFromUrl(url);
-              existing.favicon = activeTab.favicon || getFaviconUrl(url);
-              saveLinksToStorage();
-              renderSavedLinks();
+              existing.favicon = activeTab.favicon || getFaviconUrl(url, 16);
             } else {
               savedLinks.push({
                 url: url,
                 title: activeTab.title || getHostnameFromUrl(url),
-                favicon: activeTab.favicon || getFaviconUrl(url)
+                favicon: activeTab.favicon || getFaviconUrl(url, 16)
               });
-              saveLinksToStorage();
-              renderSavedLinks();
             }
+            saveLinksToStorage();
+            renderHomeLinks();
           }
         }
       });
 
-      menuBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        playClick();
-        menuDropdown.classList.toggle('active');
+      homeSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          playClick();
+          const query = homeSearchInput.value.trim();
+          if (!query) return;
+          const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(query);
+          const activeTab = tabs.find(t => t.id === activeTabId);
+          if (activeTab && activeTab.type === 'home') {
+            convertTabToWeb(activeTabId, searchUrl);
+            homeSearchInput.value = '';
+          } else {
+            addTab(searchUrl, true);
+          }
+        }
       });
 
-      document.addEventListener('click', (e) => {
-        if (!menuDropdown.contains(e.target) && e.target !== menuBtn) {
-          menuDropdown.classList.remove('active');
+      homeAddBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playClick();
+        addLinkPopup.classList.toggle('active');
+      });
+
+      popupAddBtn.addEventListener('click', () => {
+        playClick();
+        const rawUrl = popupLinkInput.value.trim();
+        if (!rawUrl) return;
+        const normalized = normalizeUrl(rawUrl) || rawUrl;
+        const existing = savedLinks.find(l => l.url === normalized);
+        if (existing) {
+          popupLinkInput.value = '';
+          addLinkPopup.classList.remove('active');
+          return;
         }
+        const tempObj = { url: normalized, title: getHostnameFromUrl(normalized), favicon: getFaviconUrl(normalized, 16) };
+        savedLinks.push(tempObj);
+        saveLinksToStorage();
+        renderHomeLinks();
+        popupLinkInput.value = '';
+        addLinkPopup.classList.remove('active');
+      });
+
+      island.addEventListener('click', (e) => {
+        if (e.target === urlInput || e.target === backBtn || e.target === forwardBtn || e.target === reloadBtn || e.target.closest('.tab') || e.target === addTabBtn || e.target.closest('.add-tab') || e.target.closest('.url-input-wrapper') || e.target === savePageBtn) return;
+        if (contextMenu.classList.contains('active') && !contextMenu.contains(e.target)) {
+          hideContextMenu();
+          return;
+        }
+        if (addLinkPopup.classList.contains('active') && !addLinkPopup.contains(e.target) && e.target !== homeAddBtn) {
+          addLinkPopup.classList.remove('active');
+          return;
+        }
+        e.stopPropagation();
+        playClick();
+        if (!island.classList.contains('expanded') && !hoverModeEnabled) ipcRenderer.send('expand-island');
       });
 
       ipcRenderer.on('open-new-tab', (e, url) => {
@@ -1396,17 +1578,17 @@ function createWindow() {
       backBtn.addEventListener('click', () => {
         playClick();
         const tab = tabs.find(t => t.id === activeTabId);
-        if (tab && tab.webview && tab.webview.canGoBack()) tab.webview.goBack();
+        if (tab && tab.type === 'web' && tab.webview && tab.webview.canGoBack()) tab.webview.goBack();
       });
       forwardBtn.addEventListener('click', () => {
         playClick();
         const tab = tabs.find(t => t.id === activeTabId);
-        if (tab && tab.webview && tab.webview.canGoForward()) tab.webview.goForward();
+        if (tab && tab.type === 'web' && tab.webview && tab.webview.canGoForward()) tab.webview.goForward();
       });
       reloadBtn.addEventListener('click', () => {
         playClick();
         const tab = tabs.find(t => t.id === activeTabId);
-        if (tab && tab.webview) {
+        if (tab && tab.type === 'web' && tab.webview) {
           if (tab.webview.isLoading()) tab.webview.stop();
           else tab.webview.reload();
         }
@@ -1417,17 +1599,19 @@ function createWindow() {
           const url = normalizeUrl(urlInput.value);
           if (url) {
             const tab = tabs.find(t => t.id === activeTabId);
-            if (tab && tab.webview) {
+            if (tab && tab.type === 'home') {
+              convertTabToWeb(activeTabId, url);
+            } else if (tab && tab.type === 'web' && tab.webview) {
               tab.webview.src = url;
               tab.originalUrl = url;
             }
           }
         }
       });
-      addTabBtn.addEventListener('click', () => { playClick(); addTab('https://www.google.com', true); });
+      addTabBtn.addEventListener('click', () => { playClick(); addTab(null, true); });
 
       window.addEventListener('online', () => reloadAllErrorPages());
-      window.addEventListener('resize', () => { if (tabs.length === 0) addTab('https://www.google.com', true); });
+      window.addEventListener('resize', () => { if (tabs.length === 0) addTab(null, true); });
 
       ipcRenderer.on('hover-mode-changed', (event, enabled) => { hoverModeEnabled = enabled; });
       hoverModeEnabled = ipcRenderer.sendSync('get-hover-mode');
@@ -1436,19 +1620,8 @@ function createWindow() {
         if (hoverModeEnabled && !island.classList.contains('expanded')) ipcRenderer.send('expand-island');
       });
 
-      island.addEventListener('click', e => {
-        if (e.target === urlInput || e.target === backBtn || e.target === forwardBtn || e.target === reloadBtn || e.target.closest('.tab') || e.target === addTabBtn || e.target.closest('.add-tab') || e.target === menuBtn || menuDropdown.contains(e.target) || e.target.closest('.url-input-wrapper')) return;
-        e.stopPropagation();
-        playClick();
-        if (!island.classList.contains('expanded') && !hoverModeEnabled) ipcRenderer.send('expand-island');
-      });
-
       ipcRenderer.on('clear-search-reset', () => {
         browserContainer.style.display = 'none';
-        if (collapsedTime) {
-          collapsedTime.style.display = '';
-          collapsedTime.classList.add('visible');
-        }
       });
       ipcRenderer.on('show-browser', () => {
         browserContainer.style.display = 'flex';
@@ -1456,7 +1629,7 @@ function createWindow() {
           collapsedTime.style.display = 'none';
           collapsedTime.classList.remove('visible');
         }
-        if (tabs.length === 0) addTab('https://www.google.com', true);
+        if (tabs.length === 0) addTab(null, true);
         else if (activeTabId === null && tabs.length) switchToTab(tabs[0].id);
         loadSavedLinks();
       });
@@ -1514,7 +1687,7 @@ function createWindow() {
         }
       })();
 
-      addTab('https://www.google.com', true);
+      addTab(null, true);
       loadSavedLinks();
     </script>
   </body>
@@ -1618,7 +1791,12 @@ async function collapseIsland() {
   await animateResize(b.width, b.height, COLLAPSED_WIDTH, COLLAPSED_HEIGHT, 220);
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
   mainWindow.blur();
-  mainWindow.webContents.executeJavaScript(`if (document.getElementById('collapsedTime')) { document.getElementById('collapsedTime').classList.add('visible'); document.getElementById('collapsedTime').style.display = ''; }`);
+  mainWindow.webContents.executeJavaScript(`
+    if (document.getElementById('collapsedTime')) {
+      document.getElementById('collapsedTime').classList.add('visible');
+      document.getElementById('collapsedTime').style.display = '';
+    }
+  `);
   if (previousActiveWindow) {
     try { await activeWin.activateWindow(previousActiveWindow); } catch (err) {}
     previousActiveWindow = null;
@@ -1698,7 +1876,12 @@ app.whenReady().then(async () => {
   if (appSettings.autoUpdateEnabled) {
     await performUpdate();
   }
-  createWindow();
+  let wallpaperPath = '';
+  const bgPath = path.join(__dirname, 'Background.jpg');
+  if (fs.existsSync(bgPath)) {
+    wallpaperPath = bgPath;
+  }
+  createWindow(wallpaperPath);
   createTray();
   screen.on('display-metrics-changed', () => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
