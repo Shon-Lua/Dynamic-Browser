@@ -27,7 +27,6 @@ let currentDisplay = null;
 let isAnimating = false;
 let notificationsEnabled = true;
 let runningAppsInterval = null;
-let runningAppHandleMap = new Map();
 
 const configPath = path.join(app.getPath('userData'), 'dock-position.json');
 const settingsPath = path.join(app.getPath('userData'), 'app-settings.json');
@@ -364,76 +363,15 @@ function uninstallApp(targetPath) {
   shell.openPath('appwiz.cpl');
 }
 
-function getWindowHandleByExe(exePath) {
-  return runningAppHandleMap.get(exePath.toLowerCase());
-}
-
-async function toggleAppWindow(exePath) {
-  try {
-    const activeWindow = await activeWin();
-    if (activeWindow && activeWindow.owner && activeWindow.owner.path && activeWindow.owner.path.toLowerCase() === exePath.toLowerCase()) {
-      const hwnd = activeWindow.id;
-      await minimizeWindow(hwnd);
-    } else {
-      const hwnd = getWindowHandleByExe(exePath);
-      if (hwnd) {
-        await restoreAndFocusWindow(hwnd);
-      } else {
-        shell.openPath(exePath);
-      }
-    }
-  } catch (e) {}
-}
-
-async function minimizeWindow(hwnd) {
-  return new Promise(resolve => {
-    child_process.exec(`powershell -Command "Add-Type -Name Win32 -Namespace Console -MemberDefinition '[DllImport(\\"user32.dll\\")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);'; [Console.Win32]::ShowWindow(${hwnd}, 6)"`, (err) => {
-      resolve();
-    });
-  });
-}
-
-async function restoreAndFocusWindow(hwnd) {
-  return new Promise(resolve => {
-    child_process.exec(`powershell -Command "Add-Type -Name Win32 -Namespace Console -MemberDefinition '[DllImport(\\"user32.dll\\")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow); [DllImport(\\"user32.dll\\")] public static extern bool SetForegroundWindow(IntPtr hWnd);'; [Console.Win32]::ShowWindow(${hwnd}, 9); [Console.Win32]::SetForegroundWindow(${hwnd})"`, (err) => {
-      resolve();
-    });
-  });
-}
-
-async function endTask(exePath) {
-  const hwnd = getWindowHandleByExe(exePath);
-  if (hwnd) {
-    child_process.exec(`powershell -Command "$id = (Get-Process | Where-Object { $_.MainWindowHandle -eq ${hwnd} }).Id; if ($id) { Stop-Process -Id $id -Force }"`);
-  }
-}
-
-async function closeWindow(exePath) {
-  const hwnd = getWindowHandleByExe(exePath);
-  if (hwnd) {
-    child_process.exec(`powershell -Command "Add-Type -Name Win32 -Namespace Console -MemberDefinition '[DllImport(\\"user32.dll\\")] public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);'; [Console.Win32]::PostMessage(${hwnd}, 0x0010, 0, 0)"`);
-  }
-}
-
 const runningAppIconCache = new Map();
 
 async function updateRunningApps() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   try {
     const windows = await activeWin.getOpenWindows();
-    const handleMap = new Map();
-    const exeSet = new Set();
-    windows.forEach(win => {
-      if (win.owner && win.owner.path && win.owner.path !== process.execPath) {
-        const key = win.owner.path.toLowerCase();
-        if (!handleMap.has(key)) {
-          handleMap.set(key, win.id);
-        }
-        exeSet.add(win.owner.path);
-      }
-    });
-    runningAppHandleMap = handleMap;
-    const uniquePaths = [...exeSet];
+    const uniquePaths = [...new Set(
+      windows.map(win => win.owner.path).filter(p => p && p !== process.execPath)
+    )];
 
     const runningApps = [];
     for (const exePath of uniquePaths) {
@@ -980,34 +918,30 @@ function createWindow(wallpaperPath) {
         height: 28px;
         cursor: pointer;
         border-radius: 6px;
-        transition: transform 0.1s, background 0.2s, opacity 0.25s, filter 0.2s;
+        transition: transform 0.15s, background-color 0.2s, opacity 0.25s, transform 0.25s;
         object-fit: contain;
         background: transparent;
         display: block;
         position: relative;
       }
-      .pinned-app-icon.running {
-        background: rgba(255, 255, 255, 0.15);
-        outline: 1px solid rgba(255,255,255,0.3);
+      .pinned-app-icon.active {
+        background-color: rgba(255,255,255,0.2);
+        border-radius: 6px;
       }
-      .pinned-app-icon.appearing {
-        animation: iconAppear 0.25s ease forwards;
-      }
-      .pinned-app-icon.removing {
-        animation: iconDisappear 0.25s ease forwards;
-        pointer-events: none;
-      }
-      @keyframes iconAppear {
-        0% { opacity: 0; transform: scale(0.5); }
-        100% { opacity: 1; transform: scale(1); }
-      }
-      @keyframes iconDisappear {
-        0% { opacity: 1; transform: scale(1); }
-        100% { opacity: 0; transform: scale(0.5); }
+      .pinned-app-icon.active::after {
+        display: none;
       }
       .pinned-app-icon:hover {
         transform: scale(1.1);
         background: rgba(255,255,255,0.1);
+      }
+      .pinned-app-icon.entering {
+        opacity: 0;
+        transform: scale(0.5);
+      }
+      .pinned-app-icon.leaving {
+        opacity: 0;
+        transform: scale(0.5);
       }
       .windows-btn {
         width: 32px;
@@ -1128,6 +1062,7 @@ function createWindow(wallpaperPath) {
         padding: 8px 16px; cursor: pointer; font-size: 13px; color: white;
       }
       .app-context-menu-item:hover { background: #3a3a3a; }
+      .app-context-menu-item.hidden { display: none; }
       ${wallpaperUrl ? `
       .dynamic-island:not(.expanded) {
         background-image: url('${wallpaperUrl.replace(/'/g, "\\'")}');
@@ -1213,7 +1148,14 @@ function createWindow(wallpaperPath) {
         <div class="context-menu-item" id="ctxCopy">Копировать ссылку</div>
         <div class="context-menu-item" id="ctxDelete">Удалить</div>
       </div>
-      <div class="app-context-menu" id="appContextMenu"></div>
+      <div class="app-context-menu" id="appContextMenu">
+        <div class="app-context-menu-item" id="ctxPin">Закрепить на панели задач</div>
+        <div class="app-context-menu-item hidden" id="ctxEndTask">Завершить задачу</div>
+        <div class="app-context-menu-item hidden" id="ctxCloseWindow">Закрыть окно</div>
+        <div class="app-context-menu-item" id="ctxRunAdmin">Запуск от имени администратора</div>
+        <div class="app-context-menu-item" id="ctxOpenLocation">Перейти в расположение файла</div>
+        <div class="app-context-menu-item" id="ctxUninstall">Удалить</div>
+      </div>
       <div class="modal-overlay" id="confirmModal">
         <div class="modal-box">
           <div class="modal-message" id="modalMessage">Вы уверены, что хотите удалить эту ссылку?</div>
@@ -1265,6 +1207,12 @@ function createWindow(wallpaperPath) {
       const popupLinkInput = document.getElementById('popupLinkInput');
       const popupAddBtn = document.getElementById('popupAddBtn');
       const appContextMenu = document.getElementById('appContextMenu');
+      const ctxPin = document.getElementById('ctxPin');
+      const ctxRunAdmin = document.getElementById('ctxRunAdmin');
+      const ctxOpenLocation = document.getElementById('ctxOpenLocation');
+      const ctxUninstall = document.getElementById('ctxUninstall');
+      const ctxEndTask = document.getElementById('ctxEndTask');
+      const ctxCloseWindow = document.getElementById('ctxCloseWindow');
       const clickSound = document.getElementById('clickSound');
       const startupSound = document.getElementById('startupSound');
       const questionSound = document.getElementById('questionSound');
@@ -1290,6 +1238,7 @@ function createWindow(wallpaperPath) {
       let pinnedApps = [];
       let runningApps = [];
       let draggedPinnedIndex = null;
+      let runningElementMap = new Map();
 
       function closeAllPopups() {
         hideContextMenu();
@@ -1376,77 +1325,93 @@ function createWindow(wallpaperPath) {
         return runningApps.some(app => app.target === target);
       }
 
-      function updateRunningAppIcons(newApps) {
-        const existingIcons = taskbarPinned.querySelectorAll('.pinned-app-icon');
-        const pinnedTargets = pinnedApps.map(p => p.target);
-        const runningTargets = newApps.map(a => a.target);
-        const handled = new Set();
-
-        existingIcons.forEach(icon => {
-          const target = icon.dataset.target;
-          const isPinned = icon.dataset.isPinned === 'true';
-          if (isPinned) {
-            if (runningTargets.includes(target)) {
-              icon.classList.add('running');
-            } else {
-              icon.classList.remove('running');
-            }
-            handled.add(target);
-          } else {
-            if (!runningTargets.includes(target)) {
-              icon.classList.add('removing');
-              icon.addEventListener('animationend', () => {
-                if (icon.parentNode) icon.parentNode.removeChild(icon);
-              }, { once: true });
-            }
-          }
-        });
-
-        newApps.forEach(app => {
-          if (handled.has(app.target)) return;
-          const isPinned = pinnedTargets.includes(app.target);
-          if (isPinned) return;
-          const existing = taskbarPinned.querySelector(`.pinned-app-icon[data-target="${app.target}"]`);
-          if (existing) {
-            existing.classList.add('running');
-            return;
-          }
-          const img = createAppIcon(app, -1, false);
-          img.classList.add('appearing');
-          taskbarPinned.appendChild(img);
-        });
-      }
-
       function renderPinnedApps() {
-        taskbarPinned.innerHTML = '';
+        if (!taskbarPinned) return;
+        const currentPinnedTargets = new Set(pinnedApps.map(p => p.target));
+        const runningExtra = runningApps.filter(a => !currentPinnedTargets.has(a.target));
+        const runningExtraTargets = new Set(runningExtra.map(a => a.target));
+
+        const existingPinnedElements = taskbarPinned.querySelectorAll('.pinned-app-icon.pinned');
+        const pinnedElementsMap = new Map();
+        existingPinnedElements.forEach(el => { const t = el.dataset.target; if (t) pinnedElementsMap.set(t, el); });
+
         pinnedApps.forEach((app, index) => {
-          const img = createAppIcon(app, index, true);
-          if (isAppRunning(app.target)) img.classList.add('running');
-          taskbarPinned.appendChild(img);
-        });
-        runningApps.forEach(app => {
-          if (!pinnedApps.some(p => p.target === app.target)) {
-            const img = createAppIcon(app, -1, false);
-            img.classList.add('appearing');
-            taskbarPinned.appendChild(img);
+          let el = pinnedElementsMap.get(app.target);
+          if (!el) {
+            el = createAppElement(app, index, true);
+            el.classList.add('pinned');
+            taskbarPinned.appendChild(el);
+          } else {
+            el.dataset.index = index;
+            el.src = app.iconDataUrl || window.__LOGO_DATA_URI;
+            el.title = app.name;
+            el.classList.toggle('active', isAppRunning(app.target));
+            pinnedElementsMap.delete(app.target);
           }
         });
+
+        pinnedElementsMap.forEach((el, target) => {
+          el.remove();
+        });
+
+        const runningTargetsToRemove = new Set(runningElementMap.keys());
+        runningExtra.forEach(app => {
+          const target = app.target;
+          runningTargetsToRemove.delete(target);
+          let el = runningElementMap.get(target);
+          if (!el) {
+            el = createAppElement(app, -1, false);
+            el.classList.add('running');
+            el.classList.add('entering');
+            taskbarPinned.appendChild(el);
+            runningElementMap.set(target, el);
+            requestAnimationFrame(() => {
+              el.classList.remove('entering');
+            });
+          } else {
+            el.src = app.iconDataUrl || window.__LOGO_DATA_URI;
+            el.title = app.name;
+            el.classList.toggle('active', true);
+            el.classList.remove('leaving');
+          }
+        });
+
+        runningTargetsToRemove.forEach(target => {
+          const el = runningElementMap.get(target);
+          if (el) {
+            el.classList.add('leaving');
+            el.addEventListener('transitionend', function handler() {
+              el.removeEventListener('transitionend', handler);
+              el.remove();
+            });
+            runningElementMap.delete(target);
+          }
+        });
+
+        const allTaskbarChildren = Array.from(taskbarPinned.children);
+        const pinnedChildren = allTaskbarChildren.filter(c => c.classList.contains('pinned'));
+        const runningChildren = allTaskbarChildren.filter(c => c.classList.contains('running'));
+        const orderArray = [...pinnedChildren, ...runningChildren];
+        const currentOrder = Array.from(taskbarPinned.children);
+        if (JSON.stringify(orderArray.map(e => e.dataset.target)) !== JSON.stringify(currentOrder.map(e => e.dataset.target))) {
+          orderArray.forEach(child => taskbarPinned.appendChild(child));
+        }
       }
 
-      function createAppIcon(app, index, isPinned) {
+      function createAppElement(app, index, isPinned) {
         const img = document.createElement('img');
         img.className = 'pinned-app-icon';
+        if (isAppRunning(app.target)) img.classList.add('active');
         img.src = app.iconDataUrl || window.__LOGO_DATA_URI;
         img.title = app.name;
         img.draggable = true;
         img.dataset.index = isPinned ? index : -1;
         img.dataset.target = app.target;
-        img.dataset.isPinned = isPinned ? 'true' : 'false';
 
         img.addEventListener('click', (e) => {
           e.stopPropagation();
           if (isAppRunning(app.target)) {
-            ipcRenderer.send('toggle-app', app.target);
+            ipcRenderer.send('toggle-app-window', app.target);
           } else {
             ipcRenderer.send('open-app', app.target);
           }
@@ -1457,37 +1422,36 @@ function createWindow(wallpaperPath) {
           e.stopPropagation();
           playClick();
           currentContextApp = app;
-          showAppContextMenu(e.clientX, e.clientY, app, isAppRunning(app.target));
+          showAppContextMenu(e.clientX, e.clientY, app);
         });
 
-        img.addEventListener('dragstart', (e) => {
-          draggedPinnedIndex = isPinned ? parseInt(e.target.dataset.index, 10) : -1;
-          e.dataTransfer.effectAllowed = 'move';
-          e.dataTransfer.setData('text/plain', JSON.stringify(app));
-          e.target.style.opacity = '0.5';
-        });
-
-        img.addEventListener('dragend', (e) => {
-          e.target.style.opacity = '1';
-          draggedPinnedIndex = null;
-        });
-
-        img.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
-        });
-
-        img.addEventListener('drop', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const targetIndex = parseInt(e.currentTarget.dataset.index, 10);
-          if (draggedPinnedIndex !== null && draggedPinnedIndex !== -1 && targetIndex !== -1 && draggedPinnedIndex !== targetIndex) {
-            const movedItem = pinnedApps.splice(draggedPinnedIndex, 1)[0];
-            pinnedApps.splice(targetIndex, 0, movedItem);
-            savePinnedApps();
-            renderPinnedApps();
-          }
-        });
+        if (isPinned) {
+          img.addEventListener('dragstart', (e) => {
+            draggedPinnedIndex = parseInt(e.target.dataset.index, 10);
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', JSON.stringify(app));
+            e.target.style.opacity = '0.5';
+          });
+          img.addEventListener('dragend', (e) => {
+            e.target.style.opacity = '1';
+            draggedPinnedIndex = null;
+          });
+          img.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+          });
+          img.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const targetIndex = parseInt(e.currentTarget.dataset.index, 10);
+            if (draggedPinnedIndex !== null && draggedPinnedIndex !== -1 && targetIndex !== -1 && draggedPinnedIndex !== targetIndex) {
+              const movedItem = pinnedApps.splice(draggedPinnedIndex, 1)[0];
+              pinnedApps.splice(targetIndex, 0, movedItem);
+              savePinnedApps();
+              renderPinnedApps();
+            }
+          });
+        }
 
         return img;
       }
@@ -1511,81 +1475,18 @@ function createWindow(wallpaperPath) {
         }
       });
 
-      function showAppContextMenu(x, y, app, running) {
-        appContextMenu.innerHTML = '';
-        if (running) {
-          const endTaskItem = document.createElement('div');
-          endTaskItem.className = 'app-context-menu-item';
-          endTaskItem.textContent = 'Завершить задачу';
-          endTaskItem.addEventListener('click', () => {
-            playClick();
-            ipcRenderer.send('end-task', app.target);
-            hideAppContextMenu();
-          });
-          const closeWindowItem = document.createElement('div');
-          closeWindowItem.className = 'app-context-menu-item';
-          closeWindowItem.textContent = 'Закрыть окно';
-          closeWindowItem.addEventListener('click', () => {
-            playClick();
-            ipcRenderer.send('close-window', app.target);
-            hideAppContextMenu();
-          });
-          appContextMenu.appendChild(endTaskItem);
-          appContextMenu.appendChild(closeWindowItem);
-        } else {
-          const isPinned = pinnedApps.some(p => p.target === app.target);
-          const pinItem = document.createElement('div');
-          pinItem.className = 'app-context-menu-item';
-          pinItem.textContent = isPinned ? 'Открепить от панели задач' : 'Закрепить на панели задач';
-          pinItem.addEventListener('click', () => {
-            playClick();
-            if (currentContextApp) {
-              const idx = pinnedApps.findIndex(p => p.target === currentContextApp.target);
-              if (idx !== -1) {
-                pinnedApps.splice(idx, 1);
-              } else {
-                pinnedApps.push(currentContextApp);
-              }
-              savePinnedApps();
-              renderPinnedApps();
-            }
-            hideAppContextMenu();
-          });
-          const adminItem = document.createElement('div');
-          adminItem.className = 'app-context-menu-item';
-          adminItem.textContent = 'Запуск от имени администратора';
-          adminItem.addEventListener('click', () => {
-            playClick();
-            if (currentContextApp) ipcRenderer.send('run-as-admin', currentContextApp.target);
-            hideAppContextMenu();
-          });
-          const locationItem = document.createElement('div');
-          locationItem.className = 'app-context-menu-item';
-          locationItem.textContent = 'Перейти в расположение файла';
-          locationItem.addEventListener('click', () => {
-            playClick();
-            if (currentContextApp) ipcRenderer.send('open-file-location', currentContextApp.target);
-            hideAppContextMenu();
-          });
-          const uninstallItem = document.createElement('div');
-          uninstallItem.className = 'app-context-menu-item';
-          uninstallItem.textContent = 'Удалить';
-          uninstallItem.addEventListener('click', () => {
-            playClick();
-            if (currentContextApp) ipcRenderer.send('uninstall-app', currentContextApp.target);
-            hideAppContextMenu();
-          });
-          appContextMenu.appendChild(pinItem);
-          appContextMenu.appendChild(adminItem);
-          appContextMenu.appendChild(locationItem);
-          appContextMenu.appendChild(uninstallItem);
-        }
+      function showAppContextMenu(x, y, app) {
+        const isRunning = isAppRunning(app.target);
+        ctxEndTask.classList.toggle('hidden', !isRunning);
+        ctxCloseWindow.classList.toggle('hidden', !isRunning);
+        const isPinned = pinnedApps.some(p => p.target === app.target);
+        ctxPin.textContent = isPinned ? 'Открепить от панели задач' : 'Закрепить на панели задач';
 
         const rect = island.getBoundingClientRect();
         let left = x - rect.left;
         let top = y - rect.top;
         const menuWidth = appContextMenu.offsetWidth || 180;
-        const menuHeight = appContextMenu.offsetHeight || 120;
+        const menuHeight = appContextMenu.offsetHeight || 160;
         if (left + menuWidth > rect.width) left = rect.width - menuWidth - 5;
         if (top + menuHeight > rect.height) top = rect.height - menuHeight - 5;
         if (left < 5) left = 5;
@@ -1654,7 +1555,7 @@ function createWindow(wallpaperPath) {
             e.stopPropagation();
             playClick();
             currentContextApp = app;
-            showAppContextMenu(e.clientX, e.clientY, app, isAppRunning(app.target));
+            showAppContextMenu(e.clientX, e.clientY, app);
           });
 
           startMenuList.appendChild(card);
@@ -1667,18 +1568,68 @@ function createWindow(wallpaperPath) {
         renderStartMenuList(filtered);
       });
 
+      ctxPin.addEventListener('click', () => {
+        playClick();
+        if (currentContextApp) {
+          const idx = pinnedApps.findIndex(p => p.target === currentContextApp.target);
+          if (idx !== -1) {
+            pinnedApps.splice(idx, 1);
+          } else {
+            pinnedApps.push(currentContextApp);
+          }
+          savePinnedApps();
+          renderPinnedApps();
+        }
+        hideAppContextMenu();
+      });
+
+      ctxEndTask.addEventListener('click', () => {
+        playClick();
+        if (currentContextApp) {
+          ipcRenderer.send('end-task', currentContextApp.target);
+        }
+        hideAppContextMenu();
+      });
+
+      ctxCloseWindow.addEventListener('click', () => {
+        playClick();
+        if (currentContextApp) {
+          ipcRenderer.send('close-window', currentContextApp.target);
+        }
+        hideAppContextMenu();
+      });
+
+      ctxRunAdmin.addEventListener('click', () => {
+        playClick();
+        if (currentContextApp) {
+          ipcRenderer.send('run-as-admin', currentContextApp.target);
+        }
+        hideAppContextMenu();
+      });
+
+      ctxOpenLocation.addEventListener('click', () => {
+        playClick();
+        if (currentContextApp) {
+          ipcRenderer.send('open-file-location', currentContextApp.target);
+        }
+        hideAppContextMenu();
+      });
+
+      ctxUninstall.addEventListener('click', () => {
+        playClick();
+        if (currentContextApp) {
+          ipcRenderer.send('uninstall-app', currentContextApp.target);
+        }
+        hideAppContextMenu();
+      });
+
       ipcRenderer.on('close-all-popups', () => {
         closeAllPopups();
       });
 
       ipcRenderer.on('running-apps-update', (event, apps) => {
-        const prev = runningApps;
         runningApps = apps;
-        if (browserContainer.style.display !== 'none') {
-          updateRunningAppIcons(apps);
-        } else {
-          runningApps = apps;
-        }
+        renderPinnedApps();
       });
 
       function showErrorMessage(webview, failedUrl, errorCode) {
@@ -2667,16 +2618,42 @@ ipcMain.on('uninstall-app', (event, targetPath) => {
   uninstallApp(targetPath);
 });
 
-ipcMain.on('toggle-app', async (event, exePath) => {
-  await toggleAppWindow(exePath);
+ipcMain.on('toggle-app-window', async (event, targetPath) => {
+  try {
+    const active = await activeWin.getActiveWindow();
+    if (active && active.owner.path === targetPath) {
+      const handle = active.id;
+      const cmd = `powershell -command "Add-Type -Name User32 -Namespace Win32 -MemberDefinition '[DllImport(\\"user32.dll\\")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);'; [Win32.User32]::ShowWindowAsync([IntPtr]::new(${handle}), 6)"`;
+      child_process.exec(cmd);
+      return;
+    }
+    const windows = await activeWin.getOpenWindows();
+    const targetWindow = windows.find(w => w.owner.path === targetPath);
+    if (targetWindow) {
+      const handle = targetWindow.id;
+      const cmd = `powershell -command "Add-Type -Name User32 -Namespace Win32 -MemberDefinition '[DllImport(\\"user32.dll\\")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow); [DllImport(\\"user32.dll\\")] public static extern bool SetForegroundWindow(IntPtr hWnd);'; [Win32.User32]::ShowWindowAsync([IntPtr]::new(${handle}), 9); [Win32.User32]::SetForegroundWindow([IntPtr]::new(${handle}))"`;
+      child_process.exec(cmd);
+    } else {
+      shell.openPath(targetPath);
+    }
+  } catch (err) {}
 });
 
-ipcMain.on('end-task', async (event, exePath) => {
-  await endTask(exePath);
+ipcMain.on('end-task', async (event, targetPath) => {
+  const exeName = path.basename(targetPath);
+  child_process.exec(`taskkill /f /im "${exeName}"`, (err) => {
+    if (err) showNotification('Не удалось завершить процесс');
+  });
 });
 
-ipcMain.on('close-window', async (event, exePath) => {
-  await closeWindow(exePath);
+ipcMain.on('close-window', async (event, targetPath) => {
+  const windows = await activeWin.getOpenWindows();
+  const targetWindow = windows.find(w => w.owner.path === targetPath);
+  if (targetWindow) {
+    const handle = targetWindow.id;
+    const cmd = `powershell -command "Add-Type -Name User32 -Namespace Win32 -MemberDefinition '[DllImport(\\"user32.dll\\")] public static extern bool PostMessage(IntPtr hWnd, uint Msg, int wParam, int lParam);'; [Win32.User32]::PostMessage([IntPtr]::new(${handle}), 0x0010, 0, 0)"`;
+    child_process.exec(cmd);
+  }
 });
 
 ipcMain.on('expand-island', expandIsland);
