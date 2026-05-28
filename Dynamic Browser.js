@@ -1,10 +1,11 @@
-const { app, BrowserWindow, screen, ipcMain, Tray, Menu, nativeImage } = require('electron');
+const { app, BrowserWindow, screen, ipcMain, Tray, Menu, nativeImage, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
 const url = require('url');
 const activeWin = require('active-win');
 const { uIOhook } = require('uiohook-napi');
+const child_process = require('child_process');
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
@@ -28,13 +29,22 @@ let notificationsEnabled = true;
 
 const configPath = path.join(app.getPath('userData'), 'dock-position.json');
 const settingsPath = path.join(app.getPath('userData'), 'app-settings.json');
-let appSettings = { runAtStartup: false, hoverToOpen: false, savedLinks: [], startupAnimationEnabled: true, autoUpdateEnabled: false, notificationsEnabled: true };
+let appSettings = {
+  runAtStartup: false,
+  hoverToOpen: false,
+  savedLinks: [],
+  startupAnimationEnabled: true,
+  autoUpdateEnabled: false,
+  notificationsEnabled: true,
+  pinnedApps: []
+};
 const COLLAPSED_WIDTH = 180;
 const COLLAPSED_HEIGHT = 36;
 const EXPANDED_WIDTH = 800;
 const EXPANDED_HEIGHT = 520;
 const NOTIFICATION_WIDTH = 320;
 const NOTIFICATION_HEIGHT = 56;
+const TASKBAR_WIDTH = 40;
 
 function loadDockPosition() {
   try {
@@ -67,6 +77,7 @@ function loadSettings() {
       if (typeof appSettings.autoUpdateEnabled !== 'boolean') appSettings.autoUpdateEnabled = false;
       if (typeof appSettings.notificationsEnabled !== 'boolean') appSettings.notificationsEnabled = true;
       if (!Array.isArray(appSettings.savedLinks)) appSettings.savedLinks = [];
+      if (!Array.isArray(appSettings.pinnedApps)) appSettings.pinnedApps = [];
       appSettings.savedLinks = appSettings.savedLinks.map(item => {
         if (typeof item === 'string') {
           const hostname = (() => { try { return new URL(item).hostname; } catch(e) { return item; } })();
@@ -76,7 +87,15 @@ function loadSettings() {
       });
     }
   } catch (e) {
-    appSettings = { runAtStartup: false, hoverToOpen: false, savedLinks: [], startupAnimationEnabled: true, autoUpdateEnabled: false, notificationsEnabled: true };
+    appSettings = {
+      runAtStartup: false,
+      hoverToOpen: false,
+      savedLinks: [],
+      startupAnimationEnabled: true,
+      autoUpdateEnabled: false,
+      notificationsEnabled: true,
+      pinnedApps: []
+    };
   }
   notificationsEnabled = appSettings.notificationsEnabled;
 }
@@ -282,6 +301,67 @@ function performUpdate() {
   });
 }
 
+let cachedInstalledApps = null;
+
+async function getInstalledApps() {
+  if (cachedInstalledApps) return cachedInstalledApps;
+  const startMenuPaths = [
+    path.join(process.env.ALLUSERSPROFILE || 'C:\\ProgramData', 'Microsoft', 'Windows', 'Start Menu', 'Programs'),
+    path.join(app.getPath('appData'), 'Microsoft', 'Windows', 'Start Menu', 'Programs')
+  ];
+  let apps = [];
+  const walkDirSync = (dir) => {
+    if (!fs.existsSync(dir)) return;
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walkDirSync(fullPath);
+      } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.lnk')) {
+        try {
+          const shortcut = shell.readShortcutLink(fullPath);
+          if (shortcut.target && fs.existsSync(shortcut.target)) {
+            apps.push({
+              name: path.basename(entry.name, '.lnk'),
+              target: shortcut.target,
+              description: shortcut.description || ''
+            });
+          }
+        } catch (e) {}
+      }
+    }
+  };
+  for (const baseDir of startMenuPaths) {
+    walkDirSync(baseDir);
+  }
+  const seen = new Set();
+  const uniqueApps = [];
+  for (const appItem of apps) {
+    if (!seen.has(appItem.target)) {
+      seen.add(appItem.target);
+      try {
+        const iconNative = await app.getFileIcon(appItem.target, { size: 'normal' });
+        appItem.iconDataUrl = iconNative.toDataURL();
+      } catch (e) {
+        appItem.iconDataUrl = '';
+      }
+      uniqueApps.push(appItem);
+    }
+  }
+  cachedInstalledApps = uniqueApps;
+  return uniqueApps;
+}
+
+function runAsAdmin(targetPath) {
+  child_process.exec(`powershell -Command "Start-Process '${targetPath}' -Verb RunAs"`, (err) => {
+    if (err) showNotification('Не удалось запустить от имени администратора');
+  });
+}
+
+function uninstallApp(targetPath) {
+  shell.openPath('appwiz.cpl');
+}
+
 function createWindow(wallpaperPath) {
   updateCurrentDisplay();
   const windowWidth = COLLAPSED_WIDTH;
@@ -354,6 +434,12 @@ function createWindow(wallpaperPath) {
   try {
     const logoBuffer = fs.readFileSync(path.join(__dirname, 'Logo.ico'));
     logoDataUri = 'data:image/x-icon;base64,' + logoBuffer.toString('base64');
+  } catch (e) {}
+
+  let winIconUri = '';
+  try {
+    const winBuffer = fs.readFileSync(path.join(__dirname, 'Win.png'));
+    winIconUri = 'data:image/png;base64,' + winBuffer.toString('base64');
   } catch (e) {}
 
   const startupAnimFlag = appSettings.startupAnimationEnabled;
@@ -602,12 +688,14 @@ function createWindow(wallpaperPath) {
       .save-page-btn:hover { background: #2a5a9a; }
       .context-menu {
         position: absolute; background: #2a2a2a; border: 0.5px solid #555; border-radius: 8px;
-        padding: 4px 0; z-index: 300; display: none; box-shadow: 0 2px 10px rgba(0,0,0,0.7);
+        padding: 4px 0; z-index: 300; box-shadow: 0 2px 10px rgba(0,0,0,0.7);
         white-space: nowrap;
         opacity: 0; transform: scale(0.95); transition: opacity 0.15s, transform 0.15s;
+        pointer-events: none;
       }
       .context-menu.active {
-        display: block; opacity: 1; transform: scale(1);
+        opacity: 1; transform: scale(1);
+        pointer-events: auto;
       }
       .context-menu-item {
         padding: 8px 16px; cursor: pointer; font-size: 13px; color: white;
@@ -661,8 +749,8 @@ function createWindow(wallpaperPath) {
         padding: 5px;
       }
       .home-link-card {
-        width: 100px;
-        height: 100px;
+        width: 88px;
+        height: 88px;
         border-radius: 12px;
         background-color: #1a1a1a;
         background-size: cover;
@@ -711,11 +799,17 @@ function createWindow(wallpaperPath) {
       .add-link-popup {
         position: absolute; bottom: 50px; right: 0;
         background: #1e1e1e; border: 1px solid #444; border-radius: 12px; padding: 12px;
-        display: none; flex-direction: column; gap: 8px; z-index: 300;
+        flex-direction: column; gap: 8px; z-index: 300;
         box-shadow: 0 4px 12px rgba(0,0,0,0.6);
         width: 250px;
+        opacity: 0; transform: scale(0.9); transition: opacity 0.2s, transform 0.2s;
+        pointer-events: none;
+        display: flex;
       }
-      .add-link-popup.active { display: flex; }
+      .add-link-popup.active {
+        opacity: 1; transform: scale(1);
+        pointer-events: auto;
+      }
       .popup-input {
         background: #0a0a0a; border: 0.5px solid #333; border-radius: 8px;
         padding: 6px 10px; color: white; font-family: 'Inter', sans-serif; font-size: 13px;
@@ -759,20 +853,203 @@ function createWindow(wallpaperPath) {
         opacity: 1;
         transform: translateY(-50%) translateX(0);
       }
+      .main-content {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+      .taskbar {
+        width: ${TASKBAR_WIDTH}px;
+        min-width: ${TASKBAR_WIDTH}px;
+        background: #1a1a1a;
+        border-right: 0.5px solid #333333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+      }
+      .taskbar-pinned {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 0;
+        width: 100%;
+      }
+      .taskbar-pinned::-webkit-scrollbar { width: 2px; }
+      .taskbar-pinned::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
+      .pinned-app-icon {
+        width: 28px;
+        height: 28px;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: transform 0.1s, filter 0.2s;
+        object-fit: contain;
+        background: transparent;
+        display: block;
+        position: relative;
+      }
+      .pinned-app-icon.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 6px;
+        height: 2px;
+        border-radius: 1px;
+        background: #4a8ad0;
+      }
+      .pinned-app-icon:hover {
+        transform: scale(1.1);
+        background: rgba(255,255,255,0.1);
+      }
+      .windows-btn {
+        width: 32px;
+        height: 32px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s;
+        background: transparent;
+        flex-shrink: 0;
+      }
+      .windows-btn img {
+        width: 20px;
+        height: 20px;
+        pointer-events: none;
+      }
+      .windows-btn:hover {
+        background: rgba(255,255,255,0.1);
+      }
+      .start-menu-popup {
+        position: absolute;
+        left: ${TASKBAR_WIDTH}px;
+        bottom: 0;
+        width: 280px;
+        max-height: 350px;
+        background: #1e1e1e;
+        border: 1px solid #444;
+        border-radius: 8px;
+        z-index: 500;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.7);
+        overflow: hidden;
+        opacity: 0;
+        transform: scale(0.95);
+        transition: opacity 0.2s, transform 0.2s;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+      }
+      .start-menu-popup.active {
+        opacity: 1;
+        transform: scale(1);
+        pointer-events: auto;
+      }
+      .start-menu-search {
+        padding: 8px;
+        background: #111;
+        border-bottom: 0.5px solid #333;
+        flex-shrink: 0;
+      }
+      .start-menu-search input {
+        width: 100%;
+        background: #0a0a0a;
+        border: 0.5px solid #333;
+        border-radius: 4px;
+        padding: 6px 10px;
+        color: white;
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        outline: none;
+      }
+      .start-menu-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 8px;
+        justify-content: center;
+      }
+      .start-menu-list::-webkit-scrollbar { width: 4px; }
+      .start-menu-list::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
+      .start-menu-app-card {
+        width: 56px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 6px;
+        transition: background 0.1s;
+      }
+      .start-menu-app-card:hover {
+        background: rgba(255,255,255,0.1);
+      }
+      .start-menu-app-icon {
+        width: 36px;
+        height: 36px;
+        object-fit: contain;
+        border-radius: 4px;
+        margin-bottom: 4px;
+      }
+      .start-menu-app-name {
+        color: white;
+        font-size: 10px;
+        text-align: center;
+        word-break: break-word;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .app-context-menu {
+        position: absolute; background: #2a2a2a; border: 0.5px solid #555; border-radius: 8px;
+        padding: 4px 0; z-index: 600; box-shadow: 0 2px 10px rgba(0,0,0,0.7);
+        white-space: nowrap;
+        opacity: 0; transform: scale(0.95); transition: opacity 0.15s, transform 0.15s;
+        pointer-events: none;
+      }
+      .app-context-menu.active {
+        opacity: 1; transform: scale(1);
+        pointer-events: auto;
+      }
+      .app-context-menu-item {
+        padding: 8px 16px; cursor: pointer; font-size: 13px; color: white;
+      }
+      .app-context-menu-item:hover { background: #3a3a3a; }
       ${wallpaperUrl ? `
-      .dynamic-island {
+      .dynamic-island:not(.expanded) {
+        background-image: url('${wallpaperUrl.replace(/'/g, "\\'")}');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-color: transparent;
+      }
+      .dynamic-island:not(.expanded):hover {
+        background-color: rgba(0,0,0,0.5);
+        background-blend-mode: darken;
+      }
+      .dynamic-island.expanded:not(.home-active) {
+        background-color: #000000 !important;
+        background-image: none !important;
+      }
+      .dynamic-island.home-active {
         background-image: url('${wallpaperUrl.replace(/'/g, "\\'")}');
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
         background-color: transparent !important;
-      }
-      .dynamic-island.home-active {
-        background-color: transparent !important;
-      }
-      .dynamic-island:not(.home-active):hover {
-        background-color: rgba(0,0,0,0.5) !important;
-        background-blend-mode: darken;
       }
       ` : ''}
     </style>
@@ -801,26 +1078,46 @@ function createWindow(wallpaperPath) {
           </div>
           <button class="save-page-btn" id="savePageBtn">💾</button>
         </div>
-        <div class="home-screen" id="homeScreen">
-          <div class="home-search-area">
-            <input type="text" class="home-search-input" id="homeSearchInput" placeholder="Поиск в Google">
-          </div>
-          <div class="home-links-scroll">
-            <div class="home-links-container" id="homeLinksContainer"></div>
-          </div>
-          <div class="home-add-link-area">
-            <button class="home-add-btn" id="homeAddBtn">+</button>
-            <div class="add-link-popup" id="addLinkPopup">
-              <input type="text" class="popup-input" id="popupLinkInput" placeholder="Введите URL">
-              <button class="popup-add-btn" id="popupAddBtn">Добавить</button>
+        <div class="main-content">
+          <div class="taskbar" id="taskbar">
+            <div class="taskbar-pinned" id="taskbarPinned"></div>
+            <div class="windows-btn" id="windowsBtn">
+              <img src="${winIconUri}" alt="Win" />
             </div>
           </div>
+          <div class="home-screen" id="homeScreen">
+            <div class="home-search-area">
+              <input type="text" class="home-search-input" id="homeSearchInput" placeholder="Поиск в Google">
+            </div>
+            <div class="home-links-scroll">
+              <div class="home-links-container" id="homeLinksContainer"></div>
+            </div>
+            <div class="home-add-link-area">
+              <button class="home-add-btn" id="homeAddBtn">+</button>
+              <div class="add-link-popup" id="addLinkPopup">
+                <input type="text" class="popup-input" id="popupLinkInput" placeholder="Введите URL">
+                <button class="popup-add-btn" id="popupAddBtn">Добавить</button>
+              </div>
+            </div>
+          </div>
+          <div class="webview-container" id="webviewContainer"></div>
+          <div class="start-menu-popup" id="startMenuPopup">
+            <div class="start-menu-search">
+              <input type="text" id="startMenuSearchInput" placeholder="Поиск приложений...">
+            </div>
+            <div class="start-menu-list" id="startMenuList"></div>
+          </div>
         </div>
-        <div class="webview-container" id="webviewContainer"></div>
       </div>
       <div class="context-menu" id="contextMenu">
         <div class="context-menu-item" id="ctxCopy">Копировать ссылку</div>
         <div class="context-menu-item" id="ctxDelete">Удалить</div>
+      </div>
+      <div class="app-context-menu" id="appContextMenu">
+        <div class="app-context-menu-item" id="ctxPin">Закрепить на панели задач</div>
+        <div class="app-context-menu-item" id="ctxRunAdmin">Запуск от имени администратора</div>
+        <div class="app-context-menu-item" id="ctxOpenLocation">Перейти в расположение файла</div>
+        <div class="app-context-menu-item" id="ctxUninstall">Удалить</div>
       </div>
       <div class="modal-overlay" id="confirmModal">
         <div class="modal-box">
@@ -835,11 +1132,17 @@ function createWindow(wallpaperPath) {
     <script>
       window.__STARTUP_ANIMATION = ${startupAnimFlag};
       window.__LOGO_DATA_URI = "${logoDataUri.replace(/"/g, '\\"')}";
+      window.__WIN_ICON_URI = "${winIconUri.replace(/"/g, '\\"')}";
     </script>
     <script>
-      const { ipcRenderer } = require('electron');
+      const { ipcRenderer, shell } = require('electron');
       const island = document.getElementById('island');
       const browserContainer = document.getElementById('browserContainer');
+      const taskbarPinned = document.getElementById('taskbarPinned');
+      const windowsBtn = document.getElementById('windowsBtn');
+      const startMenuPopup = document.getElementById('startMenuPopup');
+      const startMenuSearchInput = document.getElementById('startMenuSearchInput');
+      const startMenuList = document.getElementById('startMenuList');
       const urlInput = document.getElementById('urlInput');
       const backBtn = document.getElementById('backBtn');
       const forwardBtn = document.getElementById('forwardBtn');
@@ -866,6 +1169,11 @@ function createWindow(wallpaperPath) {
       const addLinkPopup = document.getElementById('addLinkPopup');
       const popupLinkInput = document.getElementById('popupLinkInput');
       const popupAddBtn = document.getElementById('popupAddBtn');
+      const appContextMenu = document.getElementById('appContextMenu');
+      const ctxPin = document.getElementById('ctxPin');
+      const ctxRunAdmin = document.getElementById('ctxRunAdmin');
+      const ctxOpenLocation = document.getElementById('ctxOpenLocation');
+      const ctxUninstall = document.getElementById('ctxUninstall');
       const clickSound = document.getElementById('clickSound');
       const startupSound = document.getElementById('startupSound');
       const questionSound = document.getElementById('questionSound');
@@ -880,12 +1188,24 @@ function createWindow(wallpaperPath) {
       let hoverModeEnabled = false;
       let savedLinks = [];
       let currentContextLink = null;
+      let currentContextApp = null;
       let startupOverlay = null;
       let progressInterval = null;
       let progressTarget = 0;
       let progressValue = 0;
       let progressResetTimeout = null;
       let draggedIndex = null;
+      let allInstalledApps = [];
+      let pinnedApps = [];
+      let runningApps = [];
+      let draggedPinnedIndex = null;
+
+      function closeAllPopups() {
+        hideContextMenu();
+        hideAppContextMenu();
+        addLinkPopup.classList.remove('active');
+        startMenuPopup.classList.remove('active');
+      }
 
       function updateTime() {
         const now = new Date();
@@ -943,6 +1263,252 @@ function createWindow(wallpaperPath) {
       function saveLinksToStorage() {
         ipcRenderer.send('save-saved-links', savedLinks);
       }
+
+      async function loadPinnedApps() {
+        pinnedApps = ipcRenderer.sendSync('get-pinned-apps');
+        renderPinnedApps();
+      }
+
+      function savePinnedApps() {
+        ipcRenderer.send('save-pinned-apps', pinnedApps);
+      }
+
+      function isAppRunning(target) {
+        return runningApps.some(app => app.target === target);
+      }
+
+      function renderPinnedApps() {
+        if (!taskbarPinned) return;
+        taskbarPinned.innerHTML = '';
+        const renderedTargets = new Set();
+
+        pinnedApps.forEach((app, index) => {
+          const img = createAppIcon(app, index, true);
+          taskbarPinned.appendChild(img);
+          renderedTargets.add(app.target);
+        });
+
+        runningApps.forEach((app) => {
+          if (!renderedTargets.has(app.target)) {
+            const img = createAppIcon(app, -1, false, true);
+            taskbarPinned.appendChild(img);
+          }
+        });
+      }
+
+      function createAppIcon(app, index, isPinned, isRunningOnly = false) {
+        const img = document.createElement('img');
+        img.className = 'pinned-app-icon';
+        if (isAppRunning(app.target)) img.classList.add('active');
+        img.src = app.iconDataUrl || window.__LOGO_DATA_URI;
+        img.title = app.name;
+        img.draggable = true;
+        img.dataset.index = isPinned ? index : -1;
+        img.dataset.target = app.target;
+
+        img.addEventListener('click', (e) => {
+          e.stopPropagation();
+          ipcRenderer.send('open-app', app.target);
+          if (!runningApps.some(a => a.target === app.target)) {
+            runningApps.push(app);
+            renderPinnedApps();
+          }
+        });
+
+        img.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          playClick();
+          currentContextApp = app;
+          showAppContextMenu(e.clientX, e.clientY, app);
+        });
+
+        img.addEventListener('dragstart', (e) => {
+          draggedPinnedIndex = isPinned ? parseInt(e.target.dataset.index, 10) : -1;
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', JSON.stringify(app));
+          e.target.style.opacity = '0.5';
+        });
+
+        img.addEventListener('dragend', (e) => {
+          e.target.style.opacity = '1';
+          draggedPinnedIndex = null;
+        });
+
+        img.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+        });
+
+        img.addEventListener('drop', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const targetIndex = parseInt(e.currentTarget.dataset.index, 10);
+          if (draggedPinnedIndex !== null && draggedPinnedIndex !== -1 && targetIndex !== -1 && draggedPinnedIndex !== targetIndex) {
+            const movedItem = pinnedApps.splice(draggedPinnedIndex, 1)[0];
+            pinnedApps.splice(targetIndex, 0, movedItem);
+            savePinnedApps();
+            renderPinnedApps();
+          }
+        });
+
+        return img;
+      }
+
+      taskbarPinned.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+      });
+
+      taskbarPinned.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (e.target === taskbarPinned) {
+          try {
+            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+            if (data && data.target && !pinnedApps.some(p => p.target === data.target)) {
+              pinnedApps.push(data);
+              savePinnedApps();
+              renderPinnedApps();
+            }
+          } catch (ex) {}
+        }
+      });
+
+      function showAppContextMenu(x, y, app) {
+        const rect = island.getBoundingClientRect();
+        let left = x - rect.left;
+        let top = y - rect.top;
+        const isPinned = pinnedApps.some(p => p.target === app.target);
+        ctxPin.textContent = isPinned ? 'Открепить от панели задач' : 'Закрепить на панели задач';
+        const menuWidth = appContextMenu.offsetWidth || 180;
+        const menuHeight = appContextMenu.offsetHeight || 120;
+        if (left + menuWidth > rect.width) left = rect.width - menuWidth - 5;
+        if (top + menuHeight > rect.height) top = rect.height - menuHeight - 5;
+        if (left < 5) left = 5;
+        if (top < 5) top = 5;
+        appContextMenu.style.left = left + 'px';
+        appContextMenu.style.top = top + 'px';
+        appContextMenu.classList.add('active');
+      }
+
+      function hideAppContextMenu() {
+        appContextMenu.classList.remove('active');
+      }
+
+      document.addEventListener('click', (e) => {
+        if (!appContextMenu.contains(e.target)) hideAppContextMenu();
+        if (!contextMenu.contains(e.target)) hideContextMenu();
+        if (addLinkPopup.classList.contains('active') && !addLinkPopup.contains(e.target) && e.target !== homeAddBtn) {
+          addLinkPopup.classList.remove('active');
+        }
+        if (!startMenuPopup.contains(e.target) && e.target !== windowsBtn) {
+          startMenuPopup.classList.remove('active');
+        }
+      });
+
+      windowsBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        playClick();
+        if (allInstalledApps.length === 0) {
+          allInstalledApps = await ipcRenderer.invoke('get-installed-apps');
+        }
+        startMenuPopup.classList.toggle('active');
+        if (startMenuPopup.classList.contains('active')) {
+          startMenuSearchInput.value = '';
+          renderStartMenuList(allInstalledApps);
+          startMenuSearchInput.focus();
+        }
+      });
+
+      function renderStartMenuList(apps) {
+        startMenuList.innerHTML = '';
+        apps.forEach((app) => {
+          const card = document.createElement('div');
+          card.className = 'start-menu-app-card';
+          const img = document.createElement('img');
+          img.className = 'start-menu-app-icon';
+          img.src = app.iconDataUrl || '';
+          const nameSpan = document.createElement('span');
+          nameSpan.className = 'start-menu-app-name';
+          nameSpan.textContent = app.name;
+          card.appendChild(img);
+          card.appendChild(nameSpan);
+          card.draggable = true;
+
+          card.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', JSON.stringify(app));
+            e.dataTransfer.effectAllowed = 'copy';
+          });
+
+          card.addEventListener('click', () => {
+            ipcRenderer.send('open-app', app.target);
+            if (!runningApps.some(a => a.target === app.target)) {
+              runningApps.push(app);
+              renderPinnedApps();
+            }
+            startMenuPopup.classList.remove('active');
+          });
+
+          card.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            playClick();
+            currentContextApp = app;
+            showAppContextMenu(e.clientX, e.clientY, app);
+          });
+
+          startMenuList.appendChild(card);
+        });
+      }
+
+      startMenuSearchInput.addEventListener('input', () => {
+        const query = startMenuSearchInput.value.toLowerCase().trim();
+        const filtered = allInstalledApps.filter(app => app.name.toLowerCase().includes(query));
+        renderStartMenuList(filtered);
+      });
+
+      ctxPin.addEventListener('click', () => {
+        playClick();
+        if (currentContextApp) {
+          const idx = pinnedApps.findIndex(p => p.target === currentContextApp.target);
+          if (idx !== -1) {
+            pinnedApps.splice(idx, 1);
+          } else {
+            pinnedApps.push(currentContextApp);
+          }
+          savePinnedApps();
+          renderPinnedApps();
+        }
+        hideAppContextMenu();
+      });
+
+      ctxRunAdmin.addEventListener('click', () => {
+        playClick();
+        if (currentContextApp) {
+          ipcRenderer.send('run-as-admin', currentContextApp.target);
+        }
+        hideAppContextMenu();
+      });
+
+      ctxOpenLocation.addEventListener('click', () => {
+        playClick();
+        if (currentContextApp) {
+          ipcRenderer.send('open-file-location', currentContextApp.target);
+        }
+        hideAppContextMenu();
+      });
+
+      ctxUninstall.addEventListener('click', () => {
+        playClick();
+        if (currentContextApp) {
+          ipcRenderer.send('uninstall-app', currentContextApp.target);
+        }
+        hideAppContextMenu();
+      });
+
+      ipcRenderer.on('close-all-popups', () => {
+        closeAllPopups();
+      });
 
       function showErrorMessage(webview, failedUrl, errorCode) {
         const escapedUrl = failedUrl.replace(/'/g, "\\\\'");
@@ -1124,6 +1690,7 @@ function createWindow(wallpaperPath) {
           if (tab && activeTabId === id && tab.type === 'web') {
             if (!isErrorPage(webview.src)) tab.displayUrl = webview.src;
             updateUrlInput();
+            updateNavButtons();
           }
         });
         webview.addEventListener('did-navigate-in-page', () => {
@@ -1131,6 +1698,7 @@ function createWindow(wallpaperPath) {
           if (tab && activeTabId === id && tab.type === 'web') {
             if (!isErrorPage(webview.src)) tab.displayUrl = webview.src;
             updateUrlInput();
+            updateNavButtons();
           }
         });
         webview.addEventListener('page-title-updated', (e) => {
@@ -1161,6 +1729,7 @@ function createWindow(wallpaperPath) {
             if (!isErrorPage(webview.src)) tab.displayUrl = webview.src;
             updateUrlInput();
             finishSimulatedProgress();
+            updateNavButtons();
           }
           if (tab && !isErrorPage(webview.src) && (!tab.originalUrl || isErrorPage(tab.originalUrl))) {
             tab.originalUrl = webview.src;
@@ -1208,7 +1777,7 @@ function createWindow(wallpaperPath) {
           const webview = createWebview(url, id);
           webview.setAttribute('data-id', id);
           webviewContainer.appendChild(webview);
-          const newTab = { id, type: 'web', title: 'Загрузка...', favicon: '', originalUrl: url, displayUrl: url, webview, element: null };
+          const newTab = { id, type: 'web', title: 'Загрузка...', favicon: '', originalUrl: url, displayUrl: url, webview, element: null, originallyHome: false };
           tabs.push(newTab);
           const tabEl = createTabElement(newTab);
           tabsScroll.appendChild(tabEl);
@@ -1238,7 +1807,7 @@ function createWindow(wallpaperPath) {
           tabEl.addEventListener('animationend', () => tabEl.classList.remove('tab-adding'), { once: true });
           return true;
         } else {
-          const homeTab = { id, type: 'home', title: 'Главная', favicon: window.__LOGO_DATA_URI || '', originalUrl: '', displayUrl: '', webview: null, element: null };
+          const homeTab = { id, type: 'home', title: 'Главная', favicon: window.__LOGO_DATA_URI || '', originalUrl: '', displayUrl: '', webview: null, element: null, originallyHome: false };
           tabs.push(homeTab);
           const tabEl = createTabElement(homeTab);
           tabsScroll.appendChild(tabEl);
@@ -1275,6 +1844,7 @@ function createWindow(wallpaperPath) {
         tab.displayUrl = url;
         tab.favicon = getFaviconUrl(url, 16);
         tab.title = getHostnameFromUrl(url);
+        tab.originallyHome = true;
         if (tab.element && tab.element.parentNode) {
           tab.element.parentNode.removeChild(tab.element);
         }
@@ -1296,6 +1866,7 @@ function createWindow(wallpaperPath) {
         tab.originalUrl = '';
         tab.displayUrl = '';
         tab.webview = null;
+        tab.originallyHome = false;
         if (tab.element && tab.element.parentNode) {
           tab.element.parentNode.removeChild(tab.element);
         }
@@ -1303,6 +1874,7 @@ function createWindow(wallpaperPath) {
         tabsScroll.appendChild(newEl);
         tab.element = newEl;
         if (activeTabId === tabId) {
+          forceResetProgressBar();
           homeScreen.style.display = 'flex';
           homeSearchInput.value = '';
           urlInput.value = '';
@@ -1318,6 +1890,7 @@ function createWindow(wallpaperPath) {
       function switchToTab(id) {
         const tab = tabs.find(t => t.id === id);
         if (!tab) return;
+        forceResetProgressBar();
         webviewContainer.querySelectorAll('webview').forEach(wv => wv.style.display = 'none');
         homeScreen.style.display = 'none';
         if (activeTabId !== null) {
@@ -1344,7 +1917,6 @@ function createWindow(wallpaperPath) {
               startSimulatedProgress();
             } else {
               reloadBtn.textContent = '⟳';
-              finishSimulatedProgress();
             }
           }
         }
@@ -1515,13 +2087,6 @@ function createWindow(wallpaperPath) {
       });
       confirmModal.addEventListener('click', (e) => { if (e.target === confirmModal) hideConfirmModal(); });
 
-      document.addEventListener('click', (e) => {
-        if (!contextMenu.contains(e.target)) hideContextMenu();
-        if (addLinkPopup.classList.contains('active') && !addLinkPopup.contains(e.target) && e.target !== homeAddBtn) {
-          addLinkPopup.classList.remove('active');
-        }
-      });
-
       savePageBtn.addEventListener('click', () => {
         playClick();
         const activeTab = tabs.find(t => t.id === activeTabId);
@@ -1587,13 +2152,21 @@ function createWindow(wallpaperPath) {
       });
 
       island.addEventListener('click', (e) => {
-        if (e.target === urlInput || e.target === backBtn || e.target === forwardBtn || e.target === reloadBtn || e.target.closest('.tab') || e.target === addTabBtn || e.target.closest('.add-tab') || e.target.closest('.url-input-wrapper') || e.target === savePageBtn) return;
+        if (e.target === urlInput || e.target === backBtn || e.target === forwardBtn || e.target === reloadBtn || e.target.closest('.tab') || e.target === addTabBtn || e.target.closest('.add-tab') || e.target.closest('.url-input-wrapper') || e.target === savePageBtn || e.target.closest('.taskbar') || e.target.closest('#startMenuPopup') || e.target.closest('#appContextMenu')) return;
         if (contextMenu.classList.contains('active') && !contextMenu.contains(e.target)) {
           hideContextMenu();
           return;
         }
+        if (appContextMenu.classList.contains('active') && !appContextMenu.contains(e.target)) {
+          hideAppContextMenu();
+          return;
+        }
         if (addLinkPopup.classList.contains('active') && !addLinkPopup.contains(e.target) && e.target !== homeAddBtn) {
           addLinkPopup.classList.remove('active');
+          return;
+        }
+        if (startMenuPopup.classList.contains('active') && !startMenuPopup.contains(e.target) && e.target !== windowsBtn) {
+          startMenuPopup.classList.remove('active');
           return;
         }
         e.stopPropagation();
@@ -1610,15 +2183,21 @@ function createWindow(wallpaperPath) {
         if (tab && tab.type === 'web') {
           if (tab.webview && tab.webview.canGoBack()) {
             tab.webview.goBack();
+          } else if (tab.originallyHome) {
+            convertWebToHome(tab.id);
           } else {
             convertWebToHome(tab.id);
           }
+          updateNavButtons();
         }
       });
       forwardBtn.addEventListener('click', () => {
         playClick();
         const tab = tabs.find(t => t.id === activeTabId);
-        if (tab && tab.type === 'web' && tab.webview && tab.webview.canGoForward()) tab.webview.goForward();
+        if (tab && tab.type === 'web' && tab.webview && tab.webview.canGoForward()) {
+          tab.webview.goForward();
+          updateNavButtons();
+        }
       });
       reloadBtn.addEventListener('click', () => {
         playClick();
@@ -1626,6 +2205,7 @@ function createWindow(wallpaperPath) {
         if (tab && tab.type === 'web' && tab.webview) {
           if (tab.webview.isLoading()) tab.webview.stop();
           else tab.webview.reload();
+          updateNavButtons();
         }
       });
       urlInput.addEventListener('keypress', (e) => {
@@ -1639,6 +2219,7 @@ function createWindow(wallpaperPath) {
             } else if (tab && tab.type === 'web' && tab.webview) {
               tab.webview.src = url;
               tab.originalUrl = url;
+              updateNavButtons();
             }
           }
         }
@@ -1667,6 +2248,7 @@ function createWindow(wallpaperPath) {
         if (tabs.length === 0) addTab(null, true);
         else if (activeTabId === null && tabs.length) switchToTab(tabs[0].id);
         loadSavedLinks();
+        loadPinnedApps();
       });
 
       function removeStartupOverlay() {
@@ -1724,6 +2306,7 @@ function createWindow(wallpaperPath) {
 
       addTab(null, true);
       loadSavedLinks();
+      loadPinnedApps();
     </script>
   </body>
   </html>
@@ -1819,6 +2402,7 @@ async function expandIsland() {
 async function collapseIsland() {
   if (isAnimating || !isExpanded || fullscreenActive) return;
   stopGlobalMouseHook();
+  mainWindow.webContents.send('close-all-popups');
   isExpanded = false;
   const b = mainWindow.getBounds();
   mainWindow.webContents.executeJavaScript(`document.getElementById('island').classList.remove('expanded')`);
@@ -1872,6 +2456,35 @@ function createTray() {
   tray.setToolTip('Dynamic Island Browser');
   tray.on('click', () => { if (mainWindow.isVisible()) mainWindow.hide(); else mainWindow.show(); });
 }
+
+ipcMain.handle('get-installed-apps', async () => {
+  return await getInstalledApps();
+});
+
+ipcMain.on('get-pinned-apps', (event) => {
+  event.returnValue = appSettings.pinnedApps || [];
+});
+
+ipcMain.on('save-pinned-apps', (event, apps) => {
+  appSettings.pinnedApps = apps;
+  saveSettings();
+});
+
+ipcMain.on('open-app', (event, targetPath) => {
+  shell.openPath(targetPath);
+});
+
+ipcMain.on('run-as-admin', (event, targetPath) => {
+  runAsAdmin(targetPath);
+});
+
+ipcMain.on('open-file-location', (event, targetPath) => {
+  shell.showItemInFolder(targetPath);
+});
+
+ipcMain.on('uninstall-app', (event, targetPath) => {
+  uninstallApp(targetPath);
+});
 
 ipcMain.on('expand-island', expandIsland);
 ipcMain.on('collapse-island', collapseIsland);
