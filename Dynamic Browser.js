@@ -233,7 +233,7 @@ function showNotification(message) {
     thickFrame: false,
     backgroundColor: '#00000000',
     show: false,
-    webPreferences: { nodeIntegration: true, contextIsolation: false }
+    webPreferences: { nodeIntegration: true, contextIsolation: false, autoplayPolicy: 'no-user-gesture-required' }
   });
   notificationWindow.setAlwaysOnTop(true, 'screen-saver');
   notificationWindow.setVisibleOnAllWorkspaces(true);
@@ -279,13 +279,13 @@ function showNotification(message) {
     </style>
   </head>
   <body>
-    <audio id="notifSound" src="${notifSoundPath}" preload="auto"></audio>
+    <audio id="notifSound" src="${notifSoundPath}" preload="auto" autoplay></audio>
     <div class="notification">${message}</div>
     <script>
       const { ipcRenderer } = require('electron');
       const notifEl = document.querySelector('.notification');
       const notifSound = document.getElementById('notifSound');
-      try { notifSound.play().catch(() => {}); } catch(e) {}
+      notifSound.play().catch(() => {});
       notifEl.addEventListener('click', () => {
         ipcRenderer.send('close-notification-animated');
       });
@@ -296,6 +296,10 @@ function showNotification(message) {
   notificationWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(notifHtml)}`);
   notificationWindow.once('ready-to-show', () => {
     notificationWindow.show();
+    notificationWindow.webContents.executeJavaScript(`
+      const snd = document.getElementById('notifSound');
+      if (snd) snd.play().catch(() => {});
+    `);
   });
   notificationTimeout = setTimeout(() => destroyNotification(true), 3000);
 }
@@ -503,6 +507,7 @@ async function selectWallpaper() {
         const island = document.getElementById('island');
         if (island) {
           island.style.backgroundImage = 'url("${newWallpaperPath.replace(/\\/g, '/')}")';
+          setTimeout(() => window.updateClockColorFromWallpaper(), 50);
         }
       `);
     }
@@ -653,7 +658,7 @@ function createWindow(wallpaperPath) {
       .collapsed-time {
         white-space: nowrap;
         opacity: 0;
-        transition: opacity 0.5s ease;
+        transition: opacity 0.5s ease, color 0.2s ease;
         font-size: 15px;
         font-weight: 700;
         letter-spacing: 0.5px;
@@ -1351,6 +1356,57 @@ function createWindow(wallpaperPath) {
       let draggedPinnedIndex = null;
       let appsLoaded = false;
 
+      // Функция анализа яркости обоев и установки цвета часов
+      function updateClockColorFromWallpaper() {
+        const timeElement = document.getElementById('collapsedTime');
+        if (!timeElement) return;
+        const islandEl = document.getElementById('island');
+        let bgUrl = window.getComputedStyle(islandEl).backgroundImage;
+        if (!bgUrl || bgUrl === 'none') {
+          timeElement.style.color = 'white';
+          return;
+        }
+        let urlMatch = bgUrl.match(/url\(["']?([^"']+)["']?\)/);
+        if (!urlMatch) {
+          timeElement.style.color = 'white';
+          return;
+        }
+        const imgUrl = urlMatch[1];
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, img.width, img.height);
+          const imageData = ctx.getImageData(0, 0, img.width, img.height).data;
+          let r = 0, g = 0, b = 0;
+          let count = 0;
+          for (let i = 0; i < imageData.length; i += 4) {
+            r += imageData[i];
+            g += imageData[i+1];
+            b += imageData[i+2];
+            count++;
+          }
+          r = Math.floor(r / count);
+          g = Math.floor(g / count);
+          b = Math.floor(b / count);
+          const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
+          if (brightness > 128) {
+            timeElement.style.color = '#000000';
+          } else {
+            timeElement.style.color = '#ffffff';
+          }
+        };
+        img.onerror = () => {
+          timeElement.style.color = 'white';
+        };
+        img.src = imgUrl;
+      }
+
+      window.updateClockColorFromWallpaper = updateClockColorFromWallpaper;
+
       if (!window.__TASKBAR_VISIBLE && taskbar) {
         taskbar.classList.add('hidden');
       }
@@ -1758,6 +1814,7 @@ function createWindow(wallpaperPath) {
         const islandEl = document.getElementById('island');
         if (islandEl) {
           islandEl.style.backgroundImage = 'url("' + wallpaperPath.replace(/\\\\/g, '/') + '")';
+          setTimeout(() => updateClockColorFromWallpaper(), 50);
         }
       });
 
@@ -2673,6 +2730,7 @@ function createWindow(wallpaperPath) {
       loadSavedLinks();
       loadPinnedApps();
       ensureAppsLoaded();
+      setTimeout(updateClockColorFromWallpaper, 100);
     </script>
   </body>
   </html>
