@@ -1289,13 +1289,13 @@ function createWindow(wallpaperPath) {
           if (this.isNavigatingBackForward) return;
           if (replace && this.index >= 0) {
             this.stack[this.index] = url;
-            return;
+          } else {
+            if (this.index < this.stack.length - 1) {
+              this.stack = this.stack.slice(0, this.index + 1);
+            }
+            this.stack.push(url);
+            this.index = this.stack.length - 1;
           }
-          if (this.index < this.stack.length - 1) {
-            this.stack = this.stack.slice(0, this.index + 1);
-          }
-          this.stack.push(url);
-          this.index = this.stack.length - 1;
         }
 
         canGoBack() {
@@ -1310,14 +1310,16 @@ function createWindow(wallpaperPath) {
           if (!this.canGoBack()) return null;
           this.isNavigatingBackForward = true;
           this.index--;
-          return this.stack[this.index];
+          const url = this.stack[this.index];
+          return url;
         }
 
         goForward() {
           if (!this.canGoForward()) return null;
           this.isNavigatingBackForward = true;
           this.index++;
-          return this.stack[this.index];
+          const url = this.stack[this.index];
+          return url;
         }
 
         getCurrentUrl() {
@@ -1721,8 +1723,8 @@ function createWindow(wallpaperPath) {
           return;
         }
         if (activeTab.type === 'home') {
-          backBtn.disabled = false;
-          forwardBtn.disabled = false;
+          backBtn.disabled = true;
+          forwardBtn.disabled = true;
           return;
         }
         const canGoBack = activeTab.history.canGoBack();
@@ -1812,7 +1814,8 @@ function createWindow(wallpaperPath) {
         }, 550);
       }
 
-      function createWebview(startUrl, id) {
+      function createWebview(url, id) {
+        const startUrl = url || 'https://www.google.com';
         const webview = document.createElement('webview');
         webview.setAttribute('src', startUrl);
         webview.setAttribute('partition', 'persist:main');
@@ -1844,10 +1847,7 @@ function createWindow(wallpaperPath) {
           const newUrl = e.url;
           if (newUrl && !isErrorPage(newUrl)) {
             if (!tab.history.isNavigatingBackForward) {
-              const current = tab.history.getCurrentUrl();
-              if (current !== newUrl) {
-                tab.history.push(newUrl, false);
-              }
+              tab.history.push(newUrl, false);
             }
             tab.displayUrl = newUrl;
             tab.originalUrl = newUrl;
@@ -1864,10 +1864,7 @@ function createWindow(wallpaperPath) {
           const newUrl = e.url;
           if (newUrl && !isErrorPage(newUrl)) {
             if (!tab.history.isNavigatingBackForward) {
-              const current = tab.history.getCurrentUrl();
-              if (current !== newUrl) {
-                tab.history.push(newUrl, true);
-              }
+              tab.history.push(newUrl, true);
             }
             tab.displayUrl = newUrl;
           }
@@ -1962,6 +1959,7 @@ function createWindow(wallpaperPath) {
           webview.setAttribute('data-id', id);
           webviewContainer.appendChild(webview);
           const history = new TabHistory();
+          history.push(url, false);
           const newTab = {
             id, type: 'web', title: 'Загрузка...', favicon: '',
             originalUrl: url, displayUrl: url, webview, element: null,
@@ -2035,8 +2033,9 @@ function createWindow(wallpaperPath) {
         const tab = tabs.find(t => t.id === tabId);
         if (!tab) return;
         if (tab.type === 'web') {
-          if (tab.webview && tab.webview.src !== url) {
+          if (tab.webview) {
             tab.webview.src = url;
+            tab.history.push(url, false);
           }
           return;
         }
@@ -2046,6 +2045,7 @@ function createWindow(wallpaperPath) {
         tab.title = getHostnameFromUrl(url);
         tab.favicon = getFaviconUrl(url, 16);
         tab.history = new TabHistory();
+        tab.history.push(url, false);
         if (tab.element) {
           const titleEl = tab.element.querySelector('.tab-title');
           if (titleEl) titleEl.textContent = tab.title;
@@ -2075,6 +2075,10 @@ function createWindow(wallpaperPath) {
         const tab = tabs.find(t => t.id === tabId);
         if (!tab) return;
         if (tab.type === 'home') return;
+        if (tab.webview) {
+          tab.webview.stop();
+          tab.webview.src = 'about:blank';
+        }
         tab.type = 'home';
         tab.title = 'Главная';
         tab.favicon = window.__LOGO_DATA_URI || '';
@@ -2394,20 +2398,18 @@ function createWindow(wallpaperPath) {
         const tab = tabs.find(t => t.id === activeTabId);
         if (!tab) return;
         if (tab.type === 'web') {
-          const prevUrl = tab.history.goBack();
-          if (prevUrl) {
-            tab.webview.loadURL(prevUrl);
+          if (tab.history.canGoBack()) {
+            const prevUrl = tab.history.goBack();
+            if (prevUrl) {
+              tab.webview.loadURL(prevUrl);
+            }
           } else {
+            if (tab.webview) {
+              tab.webview.stop();
+            }
             switchToHome(tab.id);
           }
           updateNavButtonsState();
-        } else if (tab.type === 'home') {
-          if (tab.webview && tab.history.canGoBack()) {
-            const prevUrl = tab.history.goBack();
-            if (prevUrl) {
-              convertTabToWeb(tab.id, prevUrl);
-            }
-          }
         }
       });
 
@@ -2421,13 +2423,6 @@ function createWindow(wallpaperPath) {
             tab.webview.loadURL(nextUrl);
           }
           updateNavButtonsState();
-        } else if (tab.type === 'home') {
-          if (tab.webview && tab.history.canGoForward()) {
-            const nextUrl = tab.history.goForward();
-            if (nextUrl) {
-              convertTabToWeb(tab.id, nextUrl);
-            }
-          }
         }
       });
 
@@ -2449,8 +2444,11 @@ function createWindow(wallpaperPath) {
             const tab = tabs.find(t => t.id === activeTabId);
             if (tab && tab.type === 'home') {
               convertTabToWeb(activeTabId, url);
-            } else if (tab && tab.type === 'web' && tab.webview && tab.webview.src !== url) {
+            } else if (tab && tab.type === 'web' && tab.webview) {
+              tab.history.push(url, false);
               tab.webview.src = url;
+              tab.originalUrl = url;
+              updateNavButtonsState();
             }
           }
         }
