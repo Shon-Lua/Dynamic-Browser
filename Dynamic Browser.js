@@ -27,6 +27,8 @@ let currentDisplay = null;
 let isAnimating = false;
 let notificationsEnabled = true;
 let taskbarVisible = true;
+let currentWallpaperPath = '';
+let isUpdatingPosition = false;
 
 const configPath = path.join(app.getPath('userData'), 'dock-position.json');
 const settingsPath = path.join(app.getPath('userData'), 'app-settings.json');
@@ -507,6 +509,7 @@ async function selectWallpaper() {
   if (!result.canceled && result.filePaths.length > 0) {
     const newWallpaperPath = result.filePaths[0];
     saveWallpaperPath(newWallpaperPath);
+    currentWallpaperPath = newWallpaperPath;
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('wallpaper-changed', newWallpaperPath);
     }
@@ -515,6 +518,7 @@ async function selectWallpaper() {
 }
 
 function createWindow(wallpaperPath) {
+  currentWallpaperPath = wallpaperPath;
   updateCurrentDisplay();
   const windowWidth = COLLAPSED_WIDTH;
   const windowHeight = COLLAPSED_HEIGHT;
@@ -653,16 +657,44 @@ function createWindow(wallpaperPath) {
         font-size: 12px;
         font-weight: 600;
         padding: 0 12px;
+        position: relative;
+      }
+      .sound-wave {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+      .sound-wave.active {
+        opacity: 1;
+      }
+      .sound-wave .bar {
+        width: 3px;
+        background-color: rgba(255,255,255,0.8);
+        border-radius: 2px;
+        transition: height 0.05s ease;
       }
       .collapsed-time {
         white-space: nowrap;
         opacity: 0;
-        transition: opacity 0.5s ease;
-        font-size: 15px;
-        font-weight: 700;
+        transition: opacity 0.2s ease;
+        font-size: 18px;
+        font-weight: bold;
         letter-spacing: 0.5px;
         color: white;
         text-shadow: 0 0 2px rgba(0,0,0,0.5);
+        z-index: 1;
+      }
+      .sound-wave.active + .collapsed-time {
+        opacity: 0;
       }
       .collapsed-time.visible {
         opacity: 1;
@@ -670,6 +702,9 @@ function createWindow(wallpaperPath) {
       .collapsed-time.dark {
         color: black;
         text-shadow: 0 0 2px rgba(255,255,255,0.5);
+      }
+      .sound-wave .bar.dark {
+        background-color: rgba(0,0,0,0.8);
       }
       .browser-container {
         width: 100%; height: 100%; opacity: 0; transition: opacity 0.2s ease;
@@ -1219,6 +1254,16 @@ function createWindow(wallpaperPath) {
     <audio id="questionSound" src="${questionSoundPath}" preload="auto"></audio>
     <div class="dynamic-island" id="island" style="opacity:0;">
       <div class="collapsed-content">
+        <div class="sound-wave" id="soundWave">
+          <div class="bar" style="height: 8px;"></div>
+          <div class="bar" style="height: 8px;"></div>
+          <div class="bar" style="height: 8px;"></div>
+          <div class="bar" style="height: 8px;"></div>
+          <div class="bar" style="height: 8px;"></div>
+          <div class="bar" style="height: 8px;"></div>
+          <div class="bar" style="height: 8px;"></div>
+          <div class="bar" style="height: 8px;"></div>
+        </div>
         <span class="collapsed-time" id="collapsedTime">00:00</span>
       </div>
       <div class="browser-container" id="browserContainer">
@@ -1296,6 +1341,7 @@ function createWindow(wallpaperPath) {
     </script>
     <script>
       const { ipcRenderer, shell } = require('electron');
+      const pathToFileURL = require('url').pathToFileURL;
       const island = document.getElementById('island');
       const browserContainer = document.getElementById('browserContainer');
       const taskbar = document.getElementById('taskbar');
@@ -1322,6 +1368,7 @@ function createWindow(wallpaperPath) {
       const modalYes = document.getElementById('modalYes');
       const modalNo = document.getElementById('modalNo');
       const collapsedTime = document.getElementById('collapsedTime');
+      const soundWave = document.getElementById('soundWave');
       const navArea = document.getElementById('navArea');
       const homeScreen = document.getElementById('homeScreen');
       const homeSearchInput = document.getElementById('homeSearchInput');
@@ -1338,6 +1385,9 @@ function createWindow(wallpaperPath) {
       const clickSound = document.getElementById('clickSound');
       const startupSound = document.getElementById('startupSound');
       const questionSound = document.getElementById('questionSound');
+
+      let colorUpdateTimeout = null;
+      const audioDataMap = new Map();
 
       function playClick() {
         try { clickSound.currentTime = 0; clickSound.play().catch(() => {}); } catch(e) {}
@@ -1372,41 +1422,86 @@ function createWindow(wallpaperPath) {
           r = Math.floor(r / pixelCount);
           g = Math.floor(g / pixelCount);
           b = Math.floor(b / pixelCount);
-          callback(\`rgb(\${r},\${g},\${b})\`);
+          callback({ r, g, b });
         };
         img.onerror = () => {
-          callback('rgb(0,0,0)');
+          callback({ r: 0, g: 0, b: 0 });
         };
         img.src = imageUrl;
       }
 
-      function updateClockColor() {
+      function updateClockAndWaveColor() {
         const islandEl = document.getElementById('island');
         if (!islandEl) return;
         const bgImage = window.getComputedStyle(islandEl).backgroundImage;
         if (!bgImage || bgImage === 'none') {
           collapsedTime.classList.remove('dark');
+          const bars = soundWave.querySelectorAll('.bar');
+          bars.forEach(bar => bar.classList.remove('dark'));
           return;
         }
         const urlMatch = bgImage.match(/url\\(["']?([^"')]+)["']?\\)/);
         if (urlMatch && urlMatch[1]) {
-          getAverageColor(urlMatch[1], (avgColor) => {
-            const rgb = avgColor.match(/\\d+/g);
-            if (rgb) {
-              const luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
-              if (luminance > 0.5) {
-                collapsedTime.classList.add('dark');
-              } else {
-                collapsedTime.classList.remove('dark');
-              }
+          getAverageColor(urlMatch[1], (rgb) => {
+            const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+            if (luminance > 0.5) {
+              collapsedTime.classList.add('dark');
+              const bars = soundWave.querySelectorAll('.bar');
+              bars.forEach(bar => bar.classList.add('dark'));
+            } else {
+              collapsedTime.classList.remove('dark');
+              const bars = soundWave.querySelectorAll('.bar');
+              bars.forEach(bar => bar.classList.remove('dark'));
             }
           });
         } else {
           collapsedTime.classList.remove('dark');
+          const bars = soundWave.querySelectorAll('.bar');
+          bars.forEach(bar => bar.classList.remove('dark'));
         }
       }
 
-      window.updateClockColorFromBackground = updateClockColor;
+      window.updateClockColorFromBackground = function() {
+        if (colorUpdateTimeout) clearTimeout(colorUpdateTimeout);
+        colorUpdateTimeout = setTimeout(updateClockAndWaveColor, 100);
+      };
+
+      function setupAudioAnalyzers() {
+        setInterval(() => {
+          let anyAudible = false;
+          for (const tab of tabs) {
+            if (tab.type === 'web' && tab.webview && tab.webview.isCurrentlyAudible && tab.webview.isCurrentlyAudible()) {
+              anyAudible = true;
+              break;
+            }
+          }
+          if (anyAudible && !island.classList.contains('expanded')) {
+            soundWave.classList.add('active');
+            const activeTab = tabs.find(t => t.id === activeTabId);
+            let freqData = null;
+            if (activeTab && activeTab.type === 'web') {
+              freqData = audioDataMap.get(activeTab.id);
+            }
+            const bars = soundWave.querySelectorAll('.bar');
+            if (freqData && freqData.length === bars.length) {
+              bars.forEach((bar, i) => {
+                const value = freqData[i] || 0;
+                const height = Math.max(4, (value / 255) * 28) + 4;
+                bar.style.height = height + 'px';
+              });
+            } else {
+              bars.forEach(bar => {
+                const randomHeight = Math.floor(Math.random() * 24) + 8;
+                bar.style.height = randomHeight + 'px';
+              });
+            }
+          } else {
+            soundWave.classList.remove('active');
+            const bars = soundWave.querySelectorAll('.bar');
+            bars.forEach(bar => bar.style.height = '8px');
+          }
+        }, 100);
+      }
 
       let tabs = [];
       let activeTabId = null;
@@ -1831,9 +1926,34 @@ function createWindow(wallpaperPath) {
 
       ipcRenderer.on('wallpaper-changed', (event, wallpaperPath) => {
         const islandEl = document.getElementById('island');
-        if (islandEl) {
-          islandEl.style.backgroundImage = 'url("' + wallpaperPath.replace(/\\\\/g, '/') + '")';
-          setTimeout(updateClockColor, 200);
+        if (!islandEl) return;
+        const fileUrl = pathToFileURL(wallpaperPath).href;
+        const img = new Image();
+        img.onload = () => {
+          islandEl.style.backgroundImage = 'url("' + fileUrl + '")';
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              updateClockAndWaveColor();
+            });
+          });
+        };
+        img.onerror = () => {
+          islandEl.style.backgroundImage = 'url("' + fileUrl + '")';
+        };
+        img.src = fileUrl;
+        setTimeout(() => {
+          updateClockAndWaveColor();
+        }, 1000);
+      });
+
+      ipcRenderer.on('fullscreen-leave', () => {
+        const islandEl = document.getElementById('island');
+        if (islandEl && window.__currentWallpaper) {
+          const fileUrl = pathToFileURL(window.__currentWallpaper).href;
+          islandEl.style.backgroundImage = 'url("' + fileUrl + '")';
+          setTimeout(() => {
+            if (window.updateClockColorFromBackground) window.updateClockColorFromBackground();
+          }, 200);
         }
       });
 
@@ -2002,6 +2122,57 @@ function createWindow(wallpaperPath) {
         }, 550);
       }
 
+      function injectAudioHook(webview, tabId) {
+        webview.executeJavaScript(\`
+          (function() {
+            if (window.__audioCaptureInjected) return;
+            window.__audioCaptureInjected = true;
+            const { ipcRenderer } = require('electron');
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 64;
+            analyser.smoothingTimeConstant = 0.8;
+            const frequencyData = new Uint8Array(analyser.frequencyBinCount);
+            document.addEventListener('click', () => { if (audioCtx.state === 'suspended') audioCtx.resume(); }, { once: true });
+            const originalConnect = AudioNode.prototype.connect;
+            const connectedNodes = new WeakSet();
+            const patchedConnect = function(...args) {
+              if (!connectedNodes.has(this) && args[0] !== analyser && args[0] instanceof AudioNode && args[0].context === this.context) {
+                connectedNodes.add(this);
+                originalConnect.call(this, analyser);
+              }
+              return originalConnect.apply(this, args);
+            };
+            AudioNode.prototype.connect = patchedConnect;
+            const originalPlay = HTMLMediaElement.prototype.play;
+            HTMLMediaElement.prototype.play = function(...args) {
+              if (!this.__sourceNode) {
+                try {
+                  const source = audioCtx.createMediaElementSource(this);
+                  source.connect(analyser);
+                  this.__sourceNode = source;
+                } catch(e) {}
+              }
+              return originalPlay.apply(this, args);
+            };
+            setInterval(() => {
+              analyser.getByteFrequencyData(frequencyData);
+              const bands = 8;
+              const groupSize = Math.floor(frequencyData.length / bands);
+              const averaged = [];
+              for (let i = 0; i < bands; i++) {
+                let sum = 0;
+                for (let j = 0; j < groupSize; j++) {
+                  sum += frequencyData[i * groupSize + j];
+                }
+                averaged.push(sum / groupSize);
+              }
+              ipcRenderer.sendToHost('audio-data', { id: \${tabId}, data: averaged });
+            }, 50);
+          })();
+        \`).catch(() => {});
+      }
+
       function createWebview(url, id) {
         const startUrl = url || 'https://www.google.com';
         const webview = document.createElement('webview');
@@ -2051,6 +2222,7 @@ function createWindow(wallpaperPath) {
             updateUrlInput();
             updateNavButtonsState();
           }
+          injectAudioHook(webview, id);
         });
 
         webview.addEventListener('did-navigate-in-page', (e) => {
@@ -2113,6 +2285,22 @@ function createWindow(wallpaperPath) {
 
         webview.addEventListener('enter-html-full-screen', () => ipcRenderer.send('fullscreen-enter'));
         webview.addEventListener('leave-html-full-screen', () => ipcRenderer.send('fullscreen-leave'));
+
+        webview.addEventListener('dom-ready', () => {
+          injectAudioHook(webview, id);
+        });
+
+        webview.addEventListener('ipc-message', (event) => {
+          if (event.channel === 'audio-data') {
+            const { id: recId, data } = event.args[0];
+            audioDataMap.set(recId, data);
+          }
+        });
+
+        webview.addEventListener('destroyed', () => {
+          audioDataMap.delete(id);
+        });
+
         return webview;
       }
 
@@ -2749,7 +2937,8 @@ function createWindow(wallpaperPath) {
       loadSavedLinks();
       loadPinnedApps();
       ensureAppsLoaded();
-      setTimeout(updateClockColor, 500);
+      setTimeout(updateClockAndWaveColor, 500);
+      setupAudioAnalyzers();
     </script>
   </body>
   </html>
@@ -2805,9 +2994,12 @@ function isPointInsideWindow(point) {
 
 function startGlobalMouseHook() {
   uIOhook.on('mousedown', (e) => {
-    if (isAnimating) return;
+    if (isAnimating || isUpdatingPosition) return;
     if (isExpanded && !fullscreenActive) {
-      const clickPoint = { x: e.x, y: e.y };
+      const rawPoint = { x: e.x, y: e.y };
+      const displayForPoint = screen.getDisplayNearestPoint(rawPoint);
+      const scaleFactor = (displayForPoint && displayForPoint.scaleFactor) || 1;
+      const clickPoint = { x: rawPoint.x / scaleFactor, y: rawPoint.y / scaleFactor };
       if (isPointInsideWindow(clickPoint)) return;
       if (notificationWindow && !notificationWindow.isDestroyed()) {
         const notifBounds = notificationWindow.getBounds();
@@ -2940,13 +3132,27 @@ ipcMain.on('collapse-island', collapseIsland);
 ipcMain.on('fullscreen-enter', () => {
   fullscreenActive = true;
   stopGlobalMouseHook();
-  if (mainWindow && !mainWindow.isDestroyed()) { mainWindow.setAlwaysOnTop(false); mainWindow.setFullScreen(true); }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.setAlwaysOnTop(false);
+    mainWindow.setFullScreen(true);
+  }
 });
 ipcMain.on('fullscreen-leave', async () => {
   fullscreenActive = false;
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.setFullScreen(false);
     mainWindow.setAlwaysOnTop(true, 'screen-saver');
+    if (currentWallpaperPath) {
+      mainWindow.webContents.executeJavaScript(`
+        if (typeof window.__currentWallpaper !== 'undefined') {
+          const fileUrl = require('url').pathToFileURL(window.__currentWallpaper).href;
+          document.getElementById('island').style.backgroundImage = 'url("' + fileUrl + '")';
+          setTimeout(() => {
+            if (window.updateClockColorFromBackground) window.updateClockColorFromBackground();
+          }, 200);
+        }
+      `);
+    }
     if (isExpanded) {
       const b = mainWindow.getBounds();
       await animateResize(b.width, b.height, EXPANDED_WIDTH, EXPANDED_HEIGHT, 220);
@@ -2980,15 +3186,25 @@ app.whenReady().then(async () => {
       wallpaperPath = bgPath;
     }
   }
+  currentWallpaperPath = wallpaperPath;
   createWindow(wallpaperPath);
   createTray();
   getInstalledApps();
   screen.on('display-metrics-changed', () => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
-    updateCurrentDisplay();
-    const bounds = mainWindow.getBounds();
-    const x = getXForDock(bounds.width, dockPosition, currentDisplay);
-    mainWindow.setBounds({ x: x, y: currentDisplay.bounds.y });
+    try {
+      isUpdatingPosition = true;
+      updateCurrentDisplay();
+      const bounds = mainWindow.getBounds();
+      const x = getXForDock(bounds.width, dockPosition, currentDisplay);
+      mainWindow.setBounds({ x: x, y: currentDisplay.bounds.y });
+      setTimeout(() => {
+        isUpdatingPosition = false;
+      }, 500);
+    } catch (err) {
+      console.log('Display metrics changed error:', err);
+      isUpdatingPosition = false;
+    }
   });
 });
 
