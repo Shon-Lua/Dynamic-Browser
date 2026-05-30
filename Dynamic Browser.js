@@ -233,7 +233,7 @@ function showNotification(message) {
     thickFrame: false,
     backgroundColor: '#00000000',
     show: false,
-    webPreferences: { nodeIntegration: true, contextIsolation: false, autoplayPolicy: 'no-user-gesture-required' }
+    webPreferences: { nodeIntegration: true, contextIsolation: false }
   });
   notificationWindow.setAlwaysOnTop(true, 'screen-saver');
   notificationWindow.setVisibleOnAllWorkspaces(true);
@@ -279,13 +279,10 @@ function showNotification(message) {
     </style>
   </head>
   <body>
-    <audio id="notifSound" src="${notifSoundPath}" preload="auto" autoplay></audio>
     <div class="notification">${message}</div>
     <script>
       const { ipcRenderer } = require('electron');
       const notifEl = document.querySelector('.notification');
-      const notifSound = document.getElementById('notifSound');
-      notifSound.play().catch(() => {});
       notifEl.addEventListener('click', () => {
         ipcRenderer.send('close-notification-animated');
       });
@@ -296,10 +293,9 @@ function showNotification(message) {
   notificationWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(notifHtml)}`);
   notificationWindow.once('ready-to-show', () => {
     notificationWindow.show();
-    notificationWindow.webContents.executeJavaScript(`
-      const snd = document.getElementById('notifSound');
-      if (snd) snd.play().catch(() => {});
-    `);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('play-notification-sound');
+    }
   });
   notificationTimeout = setTimeout(() => destroyNotification(true), 3000);
 }
@@ -503,13 +499,6 @@ async function selectWallpaper() {
     saveWallpaperPath(newWallpaperPath);
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('wallpaper-changed', newWallpaperPath);
-      mainWindow.webContents.executeJavaScript(`
-        const island = document.getElementById('island');
-        if (island) {
-          island.style.backgroundImage = 'url("${newWallpaperPath.replace(/\\/g, '/')}")';
-          setTimeout(() => window.updateClockColorFromWallpaper(), 50);
-        }
-      `);
     }
     showNotification('Обои изменены');
   }
@@ -599,6 +588,7 @@ function createWindow(wallpaperPath) {
   const clickSoundPath = 'file:///' + path.join(__dirname, 'Click.wav').replace(/\\/g, '/');
   const startupSoundPath = 'file:///' + path.join(__dirname, 'StartUp.wav').replace(/\\/g, '/');
   const questionSoundPath = 'file:///' + path.join(__dirname, 'Question.wav').replace(/\\/g, '/');
+  const notificationSoundPath = 'file:///' + path.join(__dirname, 'Notification.wav').replace(/\\/g, '/');
   const wallpaperUrl = wallpaperPath ? url.pathToFileURL(wallpaperPath).href : '';
   const taskbarVisibleFlag = taskbarVisible;
 
@@ -658,13 +648,17 @@ function createWindow(wallpaperPath) {
       .collapsed-time {
         white-space: nowrap;
         opacity: 0;
-        transition: opacity 0.5s ease, color 0.2s ease;
+        transition: opacity 0.5s ease, color 0.3s ease;
         font-size: 15px;
         font-weight: 700;
         letter-spacing: 0.5px;
+        color: white;
       }
       .collapsed-time.visible {
         opacity: 1;
+      }
+      .collapsed-time.dark-text {
+        color: #000000;
       }
       .browser-container {
         width: 100%; height: 100%; opacity: 0; transition: opacity 0.2s ease;
@@ -1212,6 +1206,7 @@ function createWindow(wallpaperPath) {
     <audio id="clickSound" src="${clickSoundPath}" preload="auto"></audio>
     <audio id="startupSound" src="${startupSoundPath}" preload="auto"></audio>
     <audio id="questionSound" src="${questionSoundPath}" preload="auto"></audio>
+    <audio id="notificationSound" src="${notificationSoundPath}" preload="auto"></audio>
     <div class="dynamic-island" id="island" style="opacity:0;">
       <div class="collapsed-content">
         <span class="collapsed-time" id="collapsedTime">00:00</span>
@@ -1333,9 +1328,14 @@ function createWindow(wallpaperPath) {
       const clickSound = document.getElementById('clickSound');
       const startupSound = document.getElementById('startupSound');
       const questionSound = document.getElementById('questionSound');
+      const notificationSound = document.getElementById('notificationSound');
 
       function playClick() {
         try { clickSound.currentTime = 0; clickSound.play().catch(() => {}); } catch(e) {}
+      }
+
+      function playNotificationSound() {
+        try { notificationSound.currentTime = 0; notificationSound.play().catch(() => {}); } catch(e) {}
       }
 
       let tabs = [];
@@ -1356,19 +1356,21 @@ function createWindow(wallpaperPath) {
       let draggedPinnedIndex = null;
       let appsLoaded = false;
 
-      // Функция анализа яркости обоев и установки цвета часов
-      function updateClockColorFromWallpaper() {
-        const timeElement = document.getElementById('collapsedTime');
-        if (!timeElement) return;
+      if (!window.__TASKBAR_VISIBLE && taskbar) {
+        taskbar.classList.add('hidden');
+      }
+
+      function updateClockColor() {
         const islandEl = document.getElementById('island');
-        let bgUrl = window.getComputedStyle(islandEl).backgroundImage;
-        if (!bgUrl || bgUrl === 'none') {
-          timeElement.style.color = 'white';
+        if (!islandEl) return;
+        const bgImage = window.getComputedStyle(islandEl).backgroundImage;
+        if (!bgImage || bgImage === 'none') {
+          collapsedTime.classList.remove('dark-text');
           return;
         }
-        let urlMatch = bgUrl.match(/url\(["']?([^"']+)["']?\)/);
+        const urlMatch = bgImage.match(/url\(["']?(.+?)["']?\)/);
         if (!urlMatch) {
-          timeElement.style.color = 'white';
+          collapsedTime.classList.remove('dark-text');
           return;
         }
         const imgUrl = urlMatch[1];
@@ -1380,35 +1382,29 @@ function createWindow(wallpaperPath) {
           canvas.height = img.height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, img.width, img.height);
-          const imageData = ctx.getImageData(0, 0, img.width, img.height).data;
+          const imageData = ctx.getImageData(0, 0, img.width, img.height);
           let r = 0, g = 0, b = 0;
-          let count = 0;
-          for (let i = 0; i < imageData.length; i += 4) {
-            r += imageData[i];
-            g += imageData[i+1];
-            b += imageData[i+2];
-            count++;
+          const pixels = imageData.data;
+          for (let i = 0; i < pixels.length; i += 4) {
+            r += pixels[i];
+            g += pixels[i+1];
+            b += pixels[i+2];
           }
-          r = Math.floor(r / count);
-          g = Math.floor(g / count);
-          b = Math.floor(b / count);
+          const pixelCount = pixels.length / 4;
+          r = r / pixelCount;
+          g = g / pixelCount;
+          b = b / pixelCount;
           const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
           if (brightness > 128) {
-            timeElement.style.color = '#000000';
+            collapsedTime.classList.add('dark-text');
           } else {
-            timeElement.style.color = '#ffffff';
+            collapsedTime.classList.remove('dark-text');
           }
         };
         img.onerror = () => {
-          timeElement.style.color = 'white';
+          collapsedTime.classList.remove('dark-text');
         };
         img.src = imgUrl;
-      }
-
-      window.updateClockColorFromWallpaper = updateClockColorFromWallpaper;
-
-      if (!window.__TASKBAR_VISIBLE && taskbar) {
-        taskbar.classList.add('hidden');
       }
 
       class TabHistory {
@@ -1814,8 +1810,12 @@ function createWindow(wallpaperPath) {
         const islandEl = document.getElementById('island');
         if (islandEl) {
           islandEl.style.backgroundImage = 'url("' + wallpaperPath.replace(/\\\\/g, '/') + '")';
-          setTimeout(() => updateClockColorFromWallpaper(), 50);
+          setTimeout(() => updateClockColor(), 100);
         }
+      });
+
+      ipcRenderer.on('play-notification-sound', () => {
+        playNotificationSound();
       });
 
       function showErrorMessage(webview, failedUrl, errorCode) {
@@ -2730,7 +2730,7 @@ function createWindow(wallpaperPath) {
       loadSavedLinks();
       loadPinnedApps();
       ensureAppsLoaded();
-      setTimeout(updateClockColorFromWallpaper, 100);
+      updateClockColor();
     </script>
   </body>
   </html>
