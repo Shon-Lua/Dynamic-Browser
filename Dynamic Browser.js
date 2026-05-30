@@ -283,6 +283,10 @@ function showNotification(message) {
     <script>
       const { ipcRenderer } = require('electron');
       const notifEl = document.querySelector('.notification');
+      try {
+        const audio = new Audio('${notifSoundPath}');
+        audio.play().catch(() => {});
+      } catch(e) {}
       notifEl.addEventListener('click', () => {
         ipcRenderer.send('close-notification-animated');
       });
@@ -293,9 +297,6 @@ function showNotification(message) {
   notificationWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(notifHtml)}`);
   notificationWindow.once('ready-to-show', () => {
     notificationWindow.show();
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('play-notification-sound');
-    }
   });
   notificationTimeout = setTimeout(() => destroyNotification(true), 3000);
 }
@@ -499,6 +500,13 @@ async function selectWallpaper() {
     saveWallpaperPath(newWallpaperPath);
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('wallpaper-changed', newWallpaperPath);
+      mainWindow.webContents.executeJavaScript(`
+        const island = document.getElementById('island');
+        if (island) {
+          island.style.backgroundImage = 'url("${newWallpaperPath.replace(/\\/g, '/')}")';
+        }
+        updateClockColorFromBackground();
+      `);
     }
     showNotification('Обои изменены');
   }
@@ -588,7 +596,6 @@ function createWindow(wallpaperPath) {
   const clickSoundPath = 'file:///' + path.join(__dirname, 'Click.wav').replace(/\\/g, '/');
   const startupSoundPath = 'file:///' + path.join(__dirname, 'StartUp.wav').replace(/\\/g, '/');
   const questionSoundPath = 'file:///' + path.join(__dirname, 'Question.wav').replace(/\\/g, '/');
-  const notificationSoundPath = 'file:///' + path.join(__dirname, 'Notification.wav').replace(/\\/g, '/');
   const wallpaperUrl = wallpaperPath ? url.pathToFileURL(wallpaperPath).href : '';
   const taskbarVisibleFlag = taskbarVisible;
 
@@ -648,17 +655,19 @@ function createWindow(wallpaperPath) {
       .collapsed-time {
         white-space: nowrap;
         opacity: 0;
-        transition: opacity 0.5s ease, color 0.3s ease;
+        transition: opacity 0.5s ease;
         font-size: 15px;
         font-weight: 700;
         letter-spacing: 0.5px;
         color: white;
+        text-shadow: 0 0 2px rgba(0,0,0,0.5);
       }
       .collapsed-time.visible {
         opacity: 1;
       }
-      .collapsed-time.dark-text {
-        color: #000000;
+      .collapsed-time.dark {
+        color: black;
+        text-shadow: 0 0 2px rgba(255,255,255,0.5);
       }
       .browser-container {
         width: 100%; height: 100%; opacity: 0; transition: opacity 0.2s ease;
@@ -1206,7 +1215,6 @@ function createWindow(wallpaperPath) {
     <audio id="clickSound" src="${clickSoundPath}" preload="auto"></audio>
     <audio id="startupSound" src="${startupSoundPath}" preload="auto"></audio>
     <audio id="questionSound" src="${questionSoundPath}" preload="auto"></audio>
-    <audio id="notificationSound" src="${notificationSoundPath}" preload="auto"></audio>
     <div class="dynamic-island" id="island" style="opacity:0;">
       <div class="collapsed-content">
         <span class="collapsed-time" id="collapsedTime">00:00</span>
@@ -1328,15 +1336,75 @@ function createWindow(wallpaperPath) {
       const clickSound = document.getElementById('clickSound');
       const startupSound = document.getElementById('startupSound');
       const questionSound = document.getElementById('questionSound');
-      const notificationSound = document.getElementById('notificationSound');
 
       function playClick() {
         try { clickSound.currentTime = 0; clickSound.play().catch(() => {}); } catch(e) {}
       }
 
-      function playNotificationSound() {
-        try { notificationSound.currentTime = 0; notificationSound.play().catch(() => {}); } catch(e) {}
+      function getLuminance(color) {
+        const rgb = parseInt(color.slice(1), 16);
+        const r = (rgb >> 16) & 0xff;
+        const g = (rgb >> 8) & 0xff;
+        const b = (rgb >> 0) & 0xff;
+        return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
       }
+
+      function getAverageColor(imageUrl, callback) {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, img.width, img.height);
+          const imageData = ctx.getImageData(0, 0, img.width, img.height);
+          const data = imageData.data;
+          let r = 0, g = 0, b = 0;
+          for (let i = 0; i < data.length; i += 4) {
+            r += data[i];
+            g += data[i+1];
+            b += data[i+2];
+          }
+          const pixelCount = data.length / 4;
+          r = Math.floor(r / pixelCount);
+          g = Math.floor(g / pixelCount);
+          b = Math.floor(b / pixelCount);
+          callback(\`rgb(\${r},\${g},\${b})\`);
+        };
+        img.onerror = () => {
+          callback('rgb(0,0,0)');
+        };
+        img.src = imageUrl;
+      }
+
+      function updateClockColor() {
+        const islandEl = document.getElementById('island');
+        if (!islandEl) return;
+        const bgImage = window.getComputedStyle(islandEl).backgroundImage;
+        if (!bgImage || bgImage === 'none') {
+          collapsedTime.classList.remove('dark');
+          return;
+        }
+        const urlMatch = bgImage.match(/url\\(["']?([^"')]+)["']?\\)/);
+        if (urlMatch && urlMatch[1]) {
+          getAverageColor(urlMatch[1], (avgColor) => {
+            const rgb = avgColor.match(/\\d+/g);
+            if (rgb) {
+              const luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
+              if (luminance > 0.5) {
+                collapsedTime.classList.add('dark');
+              } else {
+                collapsedTime.classList.remove('dark');
+              }
+            }
+          });
+        } else {
+          collapsedTime.classList.remove('dark');
+        }
+      }
+
+      window.updateClockColorFromBackground = updateClockColor;
 
       let tabs = [];
       let activeTabId = null;
@@ -1358,53 +1426,6 @@ function createWindow(wallpaperPath) {
 
       if (!window.__TASKBAR_VISIBLE && taskbar) {
         taskbar.classList.add('hidden');
-      }
-
-      function updateClockColor() {
-        const islandEl = document.getElementById('island');
-        if (!islandEl) return;
-        const bgImage = window.getComputedStyle(islandEl).backgroundImage;
-        if (!bgImage || bgImage === 'none') {
-          collapsedTime.classList.remove('dark-text');
-          return;
-        }
-        const urlMatch = bgImage.match(/url\(["']?(.+?)["']?\)/);
-        if (!urlMatch) {
-          collapsedTime.classList.remove('dark-text');
-          return;
-        }
-        const imgUrl = urlMatch[1];
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, img.width, img.height);
-          const imageData = ctx.getImageData(0, 0, img.width, img.height);
-          let r = 0, g = 0, b = 0;
-          const pixels = imageData.data;
-          for (let i = 0; i < pixels.length; i += 4) {
-            r += pixels[i];
-            g += pixels[i+1];
-            b += pixels[i+2];
-          }
-          const pixelCount = pixels.length / 4;
-          r = r / pixelCount;
-          g = g / pixelCount;
-          b = b / pixelCount;
-          const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
-          if (brightness > 128) {
-            collapsedTime.classList.add('dark-text');
-          } else {
-            collapsedTime.classList.remove('dark-text');
-          }
-        };
-        img.onerror = () => {
-          collapsedTime.classList.remove('dark-text');
-        };
-        img.src = imgUrl;
       }
 
       class TabHistory {
@@ -1810,12 +1831,8 @@ function createWindow(wallpaperPath) {
         const islandEl = document.getElementById('island');
         if (islandEl) {
           islandEl.style.backgroundImage = 'url("' + wallpaperPath.replace(/\\\\/g, '/') + '")';
-          setTimeout(() => updateClockColor(), 100);
+          setTimeout(updateClockColor, 100);
         }
-      });
-
-      ipcRenderer.on('play-notification-sound', () => {
-        playNotificationSound();
       });
 
       function showErrorMessage(webview, failedUrl, errorCode) {
@@ -2730,7 +2747,7 @@ function createWindow(wallpaperPath) {
       loadSavedLinks();
       loadPinnedApps();
       ensureAppsLoaded();
-      updateClockColor();
+      setTimeout(updateClockColor, 500);
     </script>
   </body>
   </html>
