@@ -1,4 +1,4 @@
-const { app, BrowserWindow, screen, ipcMain, Tray, Menu, nativeImage, shell } = require('electron');
+const { app, BrowserWindow, screen, ipcMain, Tray, Menu, nativeImage, shell, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
@@ -26,9 +26,11 @@ let previousActiveWindow = null;
 let currentDisplay = null;
 let isAnimating = false;
 let notificationsEnabled = true;
+let taskbarVisible = true;
 
 const configPath = path.join(app.getPath('userData'), 'dock-position.json');
 const settingsPath = path.join(app.getPath('userData'), 'app-settings.json');
+const wallpaperSettingsPath = path.join(app.getPath('userData'), 'wallpaper-path.json');
 let appSettings = {
   runAtStartup: false,
   hoverToOpen: false,
@@ -63,6 +65,25 @@ function loadDockPosition() {
 function saveDockPosition() {
   try {
     fs.writeFileSync(configPath, JSON.stringify({ position: dockPosition }), 'utf-8');
+  } catch (e) {}
+}
+
+function loadWallpaperPath() {
+  try {
+    if (fs.existsSync(wallpaperSettingsPath)) {
+      const data = fs.readFileSync(wallpaperSettingsPath, 'utf-8');
+      const config = JSON.parse(data);
+      if (config.wallpaperPath && fs.existsSync(config.wallpaperPath)) {
+        return config.wallpaperPath;
+      }
+    }
+  } catch (e) {}
+  return '';
+}
+
+function saveWallpaperPath(wallpaperPath) {
+  try {
+    fs.writeFileSync(wallpaperSettingsPath, JSON.stringify({ wallpaperPath: wallpaperPath }), 'utf-8');
   } catch (e) {}
 }
 
@@ -127,6 +148,22 @@ function setNotificationsEnabled(value) {
   appSettings.notificationsEnabled = value;
   notificationsEnabled = value;
   saveSettings();
+}
+
+function setStartupAnimation(value) {
+  appSettings.startupAnimationEnabled = value;
+  saveSettings();
+}
+
+function setTaskbarVisible(visible) {
+  taskbarVisible = visible;
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('taskbar-visible-changed', visible);
+    if (isExpanded) {
+      const bounds = mainWindow.getBounds();
+      animateResize(bounds.width, bounds.height, EXPANDED_WIDTH, EXPANDED_HEIGHT, 220);
+    }
+  }
 }
 
 function getCurrentDisplayForWindow() {
@@ -450,6 +487,29 @@ function uninstallApp(targetPath) {
   shell.openPath('appwiz.cpl');
 }
 
+async function selectWallpaper() {
+  const result = await dialog.showOpenDialog({
+    properties: ['openFile'],
+    filters: [
+      { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'bmp', 'gif'] }
+    ]
+  });
+  if (!result.canceled && result.filePaths.length > 0) {
+    const newWallpaperPath = result.filePaths[0];
+    saveWallpaperPath(newWallpaperPath);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('wallpaper-changed', newWallpaperPath);
+      mainWindow.webContents.executeJavaScript(`
+        const island = document.getElementById('island');
+        if (island) {
+          island.style.backgroundImage = 'url("${newWallpaperPath.replace(/\\/g, '/')}")';
+        }
+      `);
+    }
+    showNotification('Обои изменены');
+  }
+}
+
 function createWindow(wallpaperPath) {
   updateCurrentDisplay();
   const windowWidth = COLLAPSED_WIDTH;
@@ -535,6 +595,7 @@ function createWindow(wallpaperPath) {
   const startupSoundPath = 'file:///' + path.join(__dirname, 'StartUp.wav').replace(/\\/g, '/');
   const questionSoundPath = 'file:///' + path.join(__dirname, 'Question.wav').replace(/\\/g, '/');
   const wallpaperUrl = wallpaperPath ? url.pathToFileURL(wallpaperPath).href : '';
+  const taskbarVisibleFlag = taskbarVisible;
 
   const html = `
   <!DOCTYPE html>
@@ -773,6 +834,9 @@ function createWindow(wallpaperPath) {
         color: white; cursor: pointer; transition: 0.15s; min-width: 32px; text-align: center;
         font-weight: 500; flex-shrink: 0;
       }
+      .save-page-btn.hidden {
+        display: none;
+      }
       .save-page-btn:hover { background: #2a5a9a; }
       .context-menu {
         position: absolute; background: #2a2a2a; border: 0.5px solid #555; border-radius: 8px;
@@ -958,6 +1022,12 @@ function createWindow(wallpaperPath) {
         height: 100%;
         position: relative;
         overflow: hidden;
+        transition: width 0.2s ease, min-width 0.2s ease;
+      }
+      .taskbar.hidden {
+        width: 0;
+        min-width: 0;
+        border-right: none;
       }
       .taskbar-pinned {
         flex: 1;
@@ -1212,11 +1282,13 @@ function createWindow(wallpaperPath) {
       window.__STARTUP_ANIMATION = ${startupAnimFlag};
       window.__LOGO_DATA_URI = "${logoDataUri.replace(/"/g, '\\"')}";
       window.__WIN_ICON_URI = "${winIconUri.replace(/"/g, '\\"')}";
+      window.__TASKBAR_VISIBLE = ${taskbarVisibleFlag};
     </script>
     <script>
       const { ipcRenderer, shell } = require('electron');
       const island = document.getElementById('island');
       const browserContainer = document.getElementById('browserContainer');
+      const taskbar = document.getElementById('taskbar');
       const taskbarPinned = document.getElementById('taskbarPinned');
       const windowsBtn = document.getElementById('windowsBtn');
       const startMenuPopup = document.getElementById('startMenuPopup');
@@ -1277,6 +1349,11 @@ function createWindow(wallpaperPath) {
       let allInstalledApps = [];
       let pinnedApps = [];
       let draggedPinnedIndex = null;
+      let appsLoaded = false;
+
+      if (!window.__TASKBAR_VISIBLE && taskbar) {
+        taskbar.classList.add('hidden');
+      }
 
       class TabHistory {
         constructor() {
@@ -1542,12 +1619,17 @@ function createWindow(wallpaperPath) {
         }
       });
 
+      async function ensureAppsLoaded() {
+        if (!appsLoaded) {
+          allInstalledApps = await ipcRenderer.invoke('get-installed-apps');
+          appsLoaded = true;
+        }
+      }
+
       windowsBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
         playClick();
-        if (allInstalledApps.length === 0) {
-          allInstalledApps = await ipcRenderer.invoke('get-installed-apps');
-        }
+        await ensureAppsLoaded();
         startMenuPopup.classList.toggle('active');
         if (startMenuPopup.classList.contains('active')) {
           startMenuSearchInput.value = '';
@@ -1662,6 +1744,23 @@ function createWindow(wallpaperPath) {
         closeAllPopups();
       });
 
+      ipcRenderer.on('taskbar-visible-changed', (event, visible) => {
+        if (taskbar) {
+          if (visible) {
+            taskbar.classList.remove('hidden');
+          } else {
+            taskbar.classList.add('hidden');
+          }
+        }
+      });
+
+      ipcRenderer.on('wallpaper-changed', (event, wallpaperPath) => {
+        const islandEl = document.getElementById('island');
+        if (islandEl) {
+          islandEl.style.backgroundImage = 'url("' + wallpaperPath.replace(/\\\\/g, '/') + '")';
+        }
+      });
+
       function showErrorMessage(webview, failedUrl, errorCode) {
         const escapedUrl = failedUrl.replace(/'/g, "\\\\'");
         let title = 'Не удалось загрузить страницу';
@@ -1731,6 +1830,19 @@ function createWindow(wallpaperPath) {
         const canGoForward = activeTab.history.canGoForward();
         backBtn.disabled = !canGoBack;
         forwardBtn.disabled = !canGoForward;
+      }
+
+      function updateSaveButtonVisibility() {
+        const activeTab = tabs.find(t => t.id === activeTabId);
+        if (!activeTab) {
+          savePageBtn.classList.add('hidden');
+          return;
+        }
+        if (activeTab.type === 'home') {
+          savePageBtn.classList.add('hidden');
+        } else {
+          savePageBtn.classList.remove('hidden');
+        }
       }
 
       function canAddTab() {
@@ -1847,7 +1959,14 @@ function createWindow(wallpaperPath) {
           const newUrl = e.url;
           if (newUrl && !isErrorPage(newUrl)) {
             if (!tab.history.isNavigatingBackForward) {
-              tab.history.push(newUrl, false);
+              if (tab.history.stack.length === 0) {
+                tab.history.push(newUrl, false);
+              } else {
+                const lastUrl = tab.history.getCurrentUrl();
+                if (lastUrl !== newUrl) {
+                  tab.history.push(newUrl, false);
+                }
+              }
             }
             tab.displayUrl = newUrl;
             tab.originalUrl = newUrl;
@@ -1981,6 +2100,7 @@ function createWindow(wallpaperPath) {
             island.classList.remove('home-active');
             updateUrlInput();
             updateNavButtonsState();
+            updateSaveButtonVisibility();
             if (webview.isLoading()) {
               reloadBtn.textContent = '⛔';
               startSimulatedProgress();
@@ -2021,6 +2141,7 @@ function createWindow(wallpaperPath) {
             urlInput.value = '';
             updateSecurityIcon('');
             updateNavButtonsState();
+            updateSaveButtonVisibility();
             reloadBtn.textContent = '⟳';
           }
           tabEl.classList.add('tab-adding');
@@ -2062,6 +2183,7 @@ function createWindow(wallpaperPath) {
           island.classList.remove('home-active');
           updateUrlInput();
           updateNavButtonsState();
+          updateSaveButtonVisibility();
           if (tab.webview && tab.webview.isLoading()) {
             reloadBtn.textContent = '⛔';
             startSimulatedProgress();
@@ -2098,6 +2220,7 @@ function createWindow(wallpaperPath) {
           urlInput.value = '';
           updateSecurityIcon('');
           updateNavButtonsState();
+          updateSaveButtonVisibility();
           reloadBtn.textContent = '⟳';
         }
       }
@@ -2119,6 +2242,7 @@ function createWindow(wallpaperPath) {
           urlInput.value = '';
           updateSecurityIcon('');
           updateNavButtonsState();
+          updateSaveButtonVisibility();
           reloadBtn.textContent = '⟳';
         } else {
           if (tab.webview) tab.webview.style.display = 'flex';
@@ -2136,6 +2260,7 @@ function createWindow(wallpaperPath) {
             reloadBtn.textContent = '⟳';
           }
           updateNavButtonsState();
+          updateSaveButtonVisibility();
         }
       }
 
@@ -2547,6 +2672,7 @@ function createWindow(wallpaperPath) {
       addTab(null, true);
       loadSavedLinks();
       loadPinnedApps();
+      ensureAppsLoaded();
     </script>
   </body>
   </html>
@@ -2677,17 +2803,23 @@ function createTray() {
   tray = new Tray(icon);
   const menuTemplate = [
     { label: 'Запускать при запуске системы', type: 'checkbox', checked: appSettings.runAtStartup, click: (menuItem) => { setAutoLaunch(menuItem.checked); menuItem.checked = appSettings.runAtStartup; } },
-    { label: 'Открывать по наведению', type: 'checkbox', checked: appSettings.hoverToOpen, click: (menuItem) => { setHoverToOpen(menuItem.checked); menuItem.checked = appSettings.hoverToOpen; } },
-    { label: 'Анимация при запуске', type: 'checkbox', checked: appSettings.startupAnimationEnabled, click: (menuItem) => { appSettings.startupAnimationEnabled = menuItem.checked; saveSettings(); } },
+    { type: 'separator' },
+    {
+      label: 'Внешний вид',
+      submenu: [
+        { label: 'Анимация при запуске', type: 'checkbox', checked: appSettings.startupAnimationEnabled, click: (menuItem) => { setStartupAnimation(menuItem.checked); menuItem.checked = appSettings.startupAnimationEnabled; } },
+        { label: 'Открывать по наведению', type: 'checkbox', checked: appSettings.hoverToOpen, click: (menuItem) => { setHoverToOpen(menuItem.checked); menuItem.checked = appSettings.hoverToOpen; } },
+        { label: 'Уведомления', type: 'checkbox', checked: notificationsEnabled, click: (menuItem) => { setNotificationsEnabled(menuItem.checked); menuItem.checked = notificationsEnabled; } },
+        { label: 'Переместить в:', submenu: [ { label: 'Право', click: () => moveIsland('right') }, { label: 'Лево', click: () => moveIsland('left') }, { label: 'Центр', click: () => moveIsland('center') } ] },
+        { label: 'Обои', click: selectWallpaper },
+        { label: 'Скрыть боковую панель', type: 'checkbox', checked: !taskbarVisible, click: (menuItem) => { setTaskbarVisible(!menuItem.checked); menuItem.checked = !taskbarVisible; } }
+      ]
+    },
     { type: 'separator' },
     { label: 'Обновить', click: performUpdate },
     { label: 'Обновлять при запуске', type: 'checkbox', checked: appSettings.autoUpdateEnabled, click: (menuItem) => { appSettings.autoUpdateEnabled = menuItem.checked; saveSettings(); } },
     { type: 'separator' },
-    { label: 'Уведомления', type: 'checkbox', checked: notificationsEnabled, click: (menuItem) => { setNotificationsEnabled(menuItem.checked); menuItem.checked = notificationsEnabled; } },
-    { type: 'separator' },
     { label: 'Перезапустить', click: () => { app.relaunch(); app.exit(); } },
-    { type: 'separator' },
-    { label: 'Переместить в:', submenu: [ { label: 'Право', click: () => moveIsland('right') }, { label: 'Лево', click: () => moveIsland('left') }, { label: 'Центр', click: () => moveIsland('center') } ] },
     { type: 'separator' },
     { label: 'Выход', click: () => { isQuitting = true; stopGlobalMouseHook(); app.quit(); } }
   ];
@@ -2764,13 +2896,16 @@ app.whenReady().then(async () => {
   if (appSettings.autoUpdateEnabled) {
     await performUpdate();
   }
-  let wallpaperPath = '';
-  const bgPath = path.join(__dirname, 'Background.jpg');
-  if (fs.existsSync(bgPath)) {
-    wallpaperPath = bgPath;
+  let wallpaperPath = loadWallpaperPath();
+  if (!wallpaperPath || !fs.existsSync(wallpaperPath)) {
+    const bgPath = path.join(__dirname, 'Background.jpg');
+    if (fs.existsSync(bgPath)) {
+      wallpaperPath = bgPath;
+    }
   }
   createWindow(wallpaperPath);
   createTray();
+  getInstalledApps();
   screen.on('display-metrics-changed', () => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
     updateCurrentDisplay();
