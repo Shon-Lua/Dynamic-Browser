@@ -213,14 +213,14 @@ function destroyNotification(animate = false) {
 function playNotificationSound() {
   const soundPath = path.join(__dirname, 'Notification.wav');
   if (fs.existsSync(soundPath)) {
-    const audio = new (require('electron').nativeImage)();
     try {
-      const { shell } = require('electron');
       const { exec } = require('child_process');
       exec(`powershell -c (New-Object Media.SoundPlayer "${soundPath}").PlaySync();`, (err) => {
         if (err) console.log('Sound play error:', err);
       });
-    } catch (e) {}
+    } catch (e) {
+      console.log('Sound play exception:', e);
+    }
   }
 }
 
