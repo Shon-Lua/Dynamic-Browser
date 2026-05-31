@@ -2443,6 +2443,8 @@ function createWindow(wallpaperPath) {
           tab.webview.style.display = 'flex';
         }
         if (activeTabId === tabId) {
+          tabs.forEach(t => { if (t.webview) t.webview.style.display = 'none'; });
+          tab.webview.style.display = 'flex';
           homeScreen.style.display = 'none';
           island.classList.remove('home-active');
           updateUrlInput();
@@ -2477,7 +2479,7 @@ function createWindow(wallpaperPath) {
           tab.element.title = tab.title;
         }
         if (activeTabId === tabId) {
-          if (tab.webview) tab.webview.style.display = 'none';
+          tabs.forEach(t => { if (t.webview) t.webview.style.display = 'none'; });
           homeScreen.style.display = 'flex';
           island.classList.add('home-active');
           forceResetProgressBar();
@@ -2493,6 +2495,9 @@ function createWindow(wallpaperPath) {
         const tab = tabs.find(t => t.id === id);
         if (!tab) return;
         forceResetProgressBar();
+        tabs.forEach(t => {
+          if (t.webview) t.webview.style.display = 'none';
+        });
         if (activeTabId !== null) {
           const prevTab = tabs.find(t => t.id === activeTabId);
           if (prevTab && prevTab.element) prevTab.element.classList.remove('active');
@@ -2500,7 +2505,6 @@ function createWindow(wallpaperPath) {
         activeTabId = id;
         if (tab.element) tab.element.classList.add('active');
         if (tab.type === 'home') {
-          if (tab.webview) tab.webview.style.display = 'none';
           homeScreen.style.display = 'flex';
           island.classList.add('home-active');
           urlInput.value = '';
