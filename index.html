@@ -95,19 +95,10 @@
         }
 
         @keyframes orbFloat {
-            0%,
-            100% {
-                transform: translate(0, 0) scale(1);
-            }
-            25% {
-                transform: translate(80px, -60px) scale(1.15);
-            }
-            50% {
-                transform: translate(-40px, 70px) scale(0.9);
-            }
-            75% {
-                transform: translate(-90px, -30px) scale(1.1);
-            }
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(80px, -60px) scale(1.15); }
+            50% { transform: translate(-40px, 70px) scale(0.9); }
+            75% { transform: translate(-90px, -30px) scale(1.1); }
         }
 
         .noise-overlay {
@@ -139,32 +130,13 @@
             z-index: 2;
             max-width: 900px;
             margin: 0 auto;
-            padding: 20px 24px 60px;
+            padding: 60px 24px 60px;
         }
 
         .hero {
             text-align: center;
-            padding: 50px 20px 40px;
+            padding: 0 20px 40px;
             position: relative;
-        }
-        .hero__icon-wrap {
-            display: inline-block;
-            width: 80px;
-            height: 80px;
-            border-radius: 24px;
-            background: linear-gradient(145deg, #1e1e35, #151525);
-            box-shadow: var(--shadow-lg), var(--shadow-glow);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 24px;
-        }
-        .hero__icon-wrap svg {
-            width: 48px;
-            height: 48px;
-            fill: none;
-            stroke: var(--accent-2);
-            stroke-width: 1.5;
         }
         .hero__title {
             font-size: clamp(2.2rem, 5vw, 3.4rem);
@@ -176,37 +148,6 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-        }
-        .hero__subtitle {
-            font-size: 1.15rem;
-            color: var(--text-2);
-            max-width: 500px;
-            margin: 0 auto 10px;
-            font-weight: 400;
-        }
-        .hero__meta {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 8px;
-            font-size: 0.85rem;
-            color: var(--text-3);
-        }
-        .hero__meta span {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .hero__meta .dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-        .dot--green {
-            background: var(--success);
-            box-shadow: 0 0 8px var(--success);
         }
 
         .section-title {
@@ -555,20 +496,10 @@
 
         @media (max-width: 640px) {
             .container {
-                padding: 12px 12px 40px;
+                padding: 30px 12px 40px;
             }
             .hero {
-                padding: 30px 10px 25px;
-            }
-            .hero__icon-wrap {
-                width: 64px;
-                height: 64px;
-                border-radius: 18px;
-                margin-bottom: 18px;
-            }
-            .hero__icon-wrap svg {
-                width: 36px;
-                height: 36px;
+                padding: 0 10px 30px;
             }
             .version-cards {
                 grid-template-columns: 1fr;
@@ -597,21 +528,7 @@
 
     <div class="container">
         <section class="hero">
-            <div class="hero__icon-wrap">
-                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="2" y1="12" x2="22" y2="12" />
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                </svg>
-            </div>
             <h1 class="hero__title">Dynamic Browser</h1>
-            <p class="hero__subtitle">
-                Быстрый, безопасный и современный браузер с открытым исходным кодом.
-                Выберите версию и формат для установки.
-            </p>
-            <div class="hero__meta">
-                <span><span class="dot dot--green"></span> Последнее обновление: 4 июня 2026</span>
-            </div>
         </section>
 
         <section id="versions">
@@ -753,15 +670,10 @@
             const sizeKey = state.selectedFormat === 'exe' ? 'exeSize' : 'zipSize';
             const size = vd ? vd[sizeKey] : '—';
             const ext = state.selectedFormat === 'exe' ? 'exe' : 'zip';
-            const fileName =
-                state.selectedFormat === 'exe' ?
-                `dynamic-browser-setup-${state.selectedVersion}.exe` :
-                `dynamic-browser-portable-${state.selectedVersion}.zip`;
+            const fileName = state.selectedFormat === 'exe' ? `dynamic-browser-setup-${state.selectedVersion}.exe` : `dynamic-browser-portable-${state.selectedVersion}.zip`;
             const link = `https://dynamicbrowser.app/dl/v${state.selectedVersion}/${fileName}`;
 
-            document.getElementById('downloadInfo').textContent =
-                `v${state.selectedVersion} • ${state.selectedFormat.toUpperCase()} • ${size}`;
-
+            document.getElementById('downloadInfo').textContent = `v${state.selectedVersion} • ${state.selectedFormat.toUpperCase()} • ${size}`;
             if (vd) {
                 document.getElementById('exeSize').textContent = vd.exeSize;
                 document.getElementById('zipSize').textContent = vd.zipSize;
@@ -771,8 +683,7 @@
         document.getElementById('versionCards').addEventListener('click', function(e) {
             const card = e.target.closest('.version-card');
             if (!card) return;
-            this.querySelectorAll('.version-card').forEach(c => c.classList.remove(
-                'version-card--selected'));
+            this.querySelectorAll('.version-card').forEach(c => c.classList.remove('version-card--selected'));
             card.classList.add('version-card--selected');
             state.selectedVersion = card.dataset.version;
             updateUI();
@@ -781,8 +692,7 @@
         document.getElementById('formatSelector').addEventListener('click', function(e) {
             const card = e.target.closest('.format-card');
             if (!card) return;
-            this.querySelectorAll('.format-card').forEach(c => c.classList.remove(
-                'format-card--selected'));
+            this.querySelectorAll('.format-card').forEach(c => c.classList.remove('format-card--selected'));
             card.classList.add('format-card--selected');
             state.selectedFormat = card.dataset.format;
             updateUI();
@@ -793,9 +703,7 @@
             document.getElementById('toastMessage').textContent = message;
             toast.classList.add('toast--visible');
             clearTimeout(toast._timeout);
-            toast._timeout = setTimeout(() => {
-                toast.classList.remove('toast--visible');
-            }, 2800);
+            toast._timeout = setTimeout(() => { toast.classList.remove('toast--visible'); }, 2800);
         }
 
         function handleDownload() {
@@ -803,10 +711,7 @@
             const sizeKey = state.selectedFormat === 'exe' ? 'exeSize' : 'zipSize';
             const size = vd ? vd[sizeKey] : '—';
             const ext = state.selectedFormat === 'exe' ? 'exe' : 'zip';
-            const fileName =
-                state.selectedFormat === 'exe' ?
-                `dynamic-browser-setup-${state.selectedVersion}.exe` :
-                `dynamic-browser-portable-${state.selectedVersion}.zip`;
+            const fileName = state.selectedFormat === 'exe' ? `dynamic-browser-setup-${state.selectedVersion}.exe` : `dynamic-browser-portable-${state.selectedVersion}.zip`;
             const link = `https://dynamicbrowser.app/dl/v${state.selectedVersion}/${fileName}`;
 
             showToast(`Загрузка Dynamic Browser v${state.selectedVersion} (${ext.toUpperCase()}, ${size}) началась!`);
@@ -816,7 +721,6 @@
             setTimeout(() => { btn.style.transform = ''; }, 180);
 
             console.log(`Downloading: ${link}`);
-
             const a = document.createElement('a');
             a.href = link;
             a.download = fileName;
