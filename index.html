@@ -298,8 +298,7 @@
             height: 14px;
             fill: #ffffffcc;
         }
-        .version-card--selected .os-badge,
-        .format-card--selected .os-badge {
+        .version-card--selected .os-badge {
             background: rgba(255, 255, 255, 0.12);
             border-color: rgba(255, 255, 255, 0.2);
         }
@@ -495,6 +494,56 @@
             text-decoration: none;
         }
 
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.modal--visible {
+            display: flex;
+        }
+        .modal-content {
+            background: var(--surface);
+            border: 1px solid var(--border-2);
+            border-radius: var(--radius-lg);
+            max-width: 700px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 30px;
+            position: relative;
+            color: var(--text);
+            box-shadow: var(--shadow-lg);
+        }
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--text-2);
+            font-size: 2rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .modal-body h3 {
+            font-size: 1rem;
+            margin-top: 1.2em;
+            margin-bottom: 0.5em;
+            color: var(--accent-2);
+        }
+        .modal-body p {
+            margin-bottom: 0.8em;
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
         @media (max-width: 640px) {
             .container {
                 padding: 30px 12px 40px;
@@ -584,9 +633,6 @@
             <h2 class="section-title">Формат файла</h2>
             <div class="format-selector" id="formatSelector">
                 <div class="format-card format-card--selected" data-format="exe">
-                    <span class="os-badge" title="Windows">
-                        <svg viewBox="0 0 24 24"><path d="M3 5.47v4.16h4.74V5.47H3zm0 5.37v4.16h4.74v-4.16H3zm5.89 0v4.16h4.74v-4.16H8.89zm0-5.37v4.16h4.74V5.47H8.89zm5.88 0v4.16H20V5.47h-5.23zm0 5.37v4.16H20v-4.16h-5.23z"/></svg>
-                    </span>
                     <div class="format-card__icon">
                         <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 16V8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
@@ -600,9 +646,6 @@
                     <div class="format-card__check"></div>
                 </div>
                 <div class="format-card" data-format="zip">
-                    <span class="os-badge" title="Windows">
-                        <svg viewBox="0 0 24 24"><path d="M3 5.47v4.16h4.74V5.47H3zm0 5.37v4.16h4.74v-4.16H3zm5.89 0v4.16h4.74v-4.16H8.89zm0-5.37v4.16h4.74V5.47H8.89zm5.88 0v4.16H20V5.47h-5.23zm0 5.37v4.16H20v-4.16h-5.23z"/></svg>
-                    </span>
                     <div class="format-card__icon">
                         <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 8v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8" />
@@ -636,9 +679,35 @@
 
         <footer class="footer">
             © 2026 Dynamic Browser. Все права защищены.
-            <a href="#">Политика конфиденциальности</a> •
-            <a href="#">GitHub</a>
+            <a href="#" id="privacyLink">Политика конфиденциальности</a> •
+            <a href="https://github.com/Shon-Lua/Dynamic-Browser" target="_blank" rel="noopener noreferrer" id="githubLink">GitHub</a>
         </footer>
+    </div>
+
+    <div class="modal-overlay" id="privacyModal">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose">&times;</button>
+            <div class="modal-body">
+                <h3>1. Общие положения</h3>
+                <p>Настоящая Политика конфиденциальности регулирует порядок обработки данных при использовании приложения Dynamic Browser (далее — «Браузер»).<br>Используя Браузер, пользователь подтверждает, что ознакомлен с данной Политикой.</p>
+                <h3>2. Сбор и обработка данных</h3>
+                <p>2.1. Отсутствие сбора персональных данных<br>Dynamic Browser не собирает, не обрабатывает и не передаёт какие‑либо персональные данные пользователей.</p>
+                <p>2.2. Отсутствие технического сбора<br>Браузер не собирает:<br>• сведения о версии операционной системы;<br>• сведения о версии приложения;<br>• технические логи, ошибки, отчёты о сбоях;<br>• данные об устройстве или его конфигурации.</p>
+                <p>2.3. Отсутствие трекинга<br>Браузер не использует трекеры, аналитические инструменты, системы мониторинга поведения, рекламные идентификаторы или любые механизмы слежения.</p>
+                <h3>3. Данные, передаваемые при посещении сайтов</h3>
+                <p>При загрузке веб‑страниц могут автоматически передаваться данные, необходимые для работы сайтов (например, IP‑адрес, cookies, User‑Agent).<br>Эти данные:<br>• не собираются и не сохраняются Браузером;<br>• передаются напрямую посещаемым сайтам в рамках стандартной работы интернета.</p>
+                <h3>4. Локальное хранение</h3>
+                <p>Браузер может использовать локальное хранилище, кэш и cookies исключительно для обеспечения работы интерфейса и сохранения пользовательских настроек.<br>Все данные хранятся только на устройстве пользователя и не передаются разработчику.</p>
+                <h3>5. Передача данных третьим лицам</h3>
+                <p>Dynamic Browser не передаёт, не продаёт и не предоставляет какие‑либо данные третьим лицам.<br>Исключения отсутствуют.</p>
+                <h3>6. Сторонние ресурсы</h3>
+                <p>При посещении сайтов пользователь взаимодействует со сторонними сервисами, которые имеют собственные политики конфиденциальности.<br>Dynamic Browser не контролирует и не несёт ответственность за обработку данных такими сервисами.</p>
+                <h3>7. Права пользователя</h3>
+                <p>Пользователь вправе:<br>• прекратить использование Браузера в любой момент;<br>• удалить приложение и все локальные данные.</p>
+                <h3>8. Изменения Политики</h3>
+                <p>Политика конфиденциальности может быть обновлена.<br>Актуальная версия всегда доступна в меню Браузера.</p>
+            </div>
+        </div>
     </div>
 
     <div class="toast" id="toast">
@@ -671,8 +740,6 @@
             const sizeKey = state.selectedFormat === 'exe' ? 'exeSize' : 'zipSize';
             const size = vd ? vd[sizeKey] : '—';
             const ext = state.selectedFormat === 'exe' ? 'exe' : 'zip';
-            const fileName = state.selectedFormat === 'exe' ? `dynamic-browser-setup-${state.selectedVersion}.exe` : `dynamic-browser-portable-${state.selectedVersion}.zip`;
-            const link = `https://dynamicbrowser.app/dl/v${state.selectedVersion}/${fileName}`;
 
             document.getElementById('downloadInfo').textContent = `v${state.selectedVersion} • ${state.selectedFormat.toUpperCase()} • ${size}`;
             if (vd) {
@@ -721,12 +788,12 @@
             btn.style.transform = 'scale(0.94)';
             setTimeout(() => { btn.style.transform = ''; }, 180);
 
-            console.log(`Downloading: ${link}`);
             const a = document.createElement('a');
             a.href = link;
             a.download = fileName;
             a.style.display = 'none';
             document.body.appendChild(a);
+            a.click();
             document.body.removeChild(a);
         }
 
@@ -734,6 +801,29 @@
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                 e.preventDefault();
                 handleDownload();
+            }
+        });
+
+        const privacyLink = document.getElementById('privacyLink');
+        const privacyModal = document.getElementById('privacyModal');
+        const modalClose = document.getElementById('modalClose');
+
+        privacyLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            privacyModal.classList.add('modal--visible');
+        });
+
+        function closeModal() {
+            privacyModal.classList.remove('modal--visible');
+        }
+
+        modalClose.addEventListener('click', closeModal);
+        privacyModal.addEventListener('click', function(e) {
+            if (e.target === privacyModal) closeModal();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && privacyModal.classList.contains('modal--visible')) {
+                closeModal();
             }
         });
 
