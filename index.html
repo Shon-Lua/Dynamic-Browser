@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dynamic Browser</title>
     <link rel="icon" href="Logo.png" type="image/png">
     <style>
@@ -44,17 +44,25 @@
         html {
             scroll-behavior: smooth;
             font-size: 16px;
+            height: 100%;
         }
 
         body {
             font-family: var(--font);
             background: var(--bg);
             color: var(--text);
-            min-height: 100vh;
-            overflow-x: hidden;
+            height: 100vh;
+            overflow: hidden;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             line-height: 1.6;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                overflow-y: auto;
+                height: auto;
+            }
         }
 
         .bg-orb {
@@ -131,20 +139,32 @@
             z-index: 2;
             max-width: 900px;
             margin: 0 auto;
-            padding: 60px 24px 60px;
+            padding: 20px 24px 10px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                height: auto;
+                padding: 20px 16px 20px;
+            }
         }
 
         .hero {
             text-align: center;
-            padding: 0 20px 40px;
+            padding: 10px 0 20px;
             position: relative;
+            flex-shrink: 0;
         }
         .hero__title {
-            font-size: clamp(2.2rem, 5vw, 3.4rem);
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
             font-weight: 800;
             letter-spacing: -0.03em;
             line-height: 1.1;
-            margin-bottom: 12px;
+            margin-bottom: 6px;
             background: linear-gradient(135deg, #fff 0%, #c4c4e0 50%, var(--accent-2) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -152,12 +172,12 @@
         }
 
         .section-title {
-            font-size: 1.1rem;
+            font-size: 0.9rem;
             font-weight: 700;
             letter-spacing: 0.06em;
             text-transform: uppercase;
             color: var(--text-3);
-            margin-bottom: 16px;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -172,20 +192,34 @@
 
         .version-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 14px;
-            margin-bottom: 32px;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-shrink: 1;
+            min-height: 0;
+            overflow-y: auto;
         }
+
+        @media (max-width: 640px) {
+            .version-cards {
+                grid-template-columns: 1fr;
+                overflow-y: visible;
+            }
+        }
+
         .version-card {
             background: var(--surface);
             border: 2px solid var(--border);
             border-radius: var(--radius);
-            padding: 20px 22px;
+            padding: 14px 16px;
             cursor: pointer;
             transition: var(--transition);
             position: relative;
             overflow: hidden;
             user-select: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         .version-card:hover {
             border-color: var(--border-2);
@@ -201,13 +235,13 @@
         }
         .version-card__badge {
             display: inline-block;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            padding: 4px 10px;
+            padding: 3px 8px;
             border-radius: 20px;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
         }
         .badge--latest {
             background: #2ed57322;
@@ -225,25 +259,25 @@
             border: 1px solid #ff6b6b33;
         }
         .version-card__version {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: 700;
             letter-spacing: -0.02em;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
         .version-card__date {
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             color: var(--text-3);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         .version-card__changelog {
-            font-size: 0.82rem;
+            font-size: 0.72rem;
             color: var(--text-2);
-            line-height: 1.5;
+            line-height: 1.4;
         }
         .version-card__changelog li {
-            margin-bottom: 3px;
+            margin-bottom: 2px;
             list-style: none;
-            padding-left: 16px;
+            padding-left: 14px;
             position: relative;
         }
         .version-card__changelog li::before {
@@ -254,10 +288,10 @@
         }
         .version-card__radio {
             position: absolute;
-            top: 16px;
-            right: 16px;
-            width: 22px;
-            height: 22px;
+            top: 12px;
+            right: 12px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             border: 2px solid var(--border-2);
             display: flex;
@@ -272,16 +306,16 @@
         .version-card--selected .version-card__radio::after {
             content: '✓';
             color: #fff;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 700;
         }
 
         .os-badge {
             position: absolute;
-            bottom: 10px;
-            right: 10px;
-            width: 28px;
-            height: 28px;
+            bottom: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.07);
             backdrop-filter: blur(6px);
@@ -294,8 +328,8 @@
             transition: var(--transition);
         }
         .os-badge svg {
-            width: 14px;
-            height: 14px;
+            width: 12px;
+            height: 12px;
             fill: #ffffffcc;
         }
         .version-card--selected .os-badge {
@@ -305,17 +339,18 @@
 
         .format-selector {
             display: flex;
-            gap: 14px;
-            margin-bottom: 32px;
+            gap: 10px;
+            margin-bottom: 16px;
             flex-wrap: wrap;
+            flex-shrink: 0;
         }
         .format-card {
             flex: 1;
-            min-width: 180px;
+            min-width: 160px;
             background: var(--surface);
             border: 2px solid var(--border);
             border-radius: var(--radius);
-            padding: 22px 20px;
+            padding: 16px 14px;
             cursor: pointer;
             transition: var(--transition);
             text-align: center;
@@ -335,9 +370,9 @@
             transform: translateY(-3px) !important;
         }
         .format-card__icon {
-            width: 56px;
-            height: 56px;
-            margin: 0 auto 10px;
+            width: 44px;
+            height: 44px;
+            margin: 0 auto 8px;
             display: block;
         }
         .format-card__icon svg {
@@ -353,31 +388,31 @@
         }
         .format-card__name {
             font-weight: 700;
-            font-size: 1.2rem;
+            font-size: 1rem;
             letter-spacing: -0.01em;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
         .format-card__desc {
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             color: var(--text-3);
             line-height: 1.4;
         }
         .format-card__size {
             display: inline-block;
-            margin-top: 8px;
-            font-size: 0.78rem;
+            margin-top: 6px;
+            font-size: 0.68rem;
             font-weight: 600;
-            padding: 4px 12px;
+            padding: 3px 10px;
             border-radius: 14px;
             background: var(--surface-3);
             color: var(--text-2);
         }
         .format-card__check {
             position: absolute;
-            top: 14px;
-            right: 14px;
-            width: 22px;
-            height: 22px;
+            top: 10px;
+            right: 10px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             border: 2px solid var(--border-2);
             transition: var(--transition);
@@ -392,20 +427,21 @@
         .format-card--selected .format-card__check::after {
             content: '✓';
             color: #000;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 700;
         }
 
         .download-section {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 16px;
+            flex-shrink: 0;
         }
         .btn-download {
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            padding: 16px 36px;
-            font-size: 1.1rem;
+            gap: 8px;
+            padding: 12px 28px;
+            font-size: 1rem;
             font-weight: 700;
             letter-spacing: 0.02em;
             border: none;
@@ -429,8 +465,8 @@
             transition: 0.1s;
         }
         .btn-download__icon {
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
         }
         .btn-download__icon svg {
             width: 100%;
@@ -441,7 +477,7 @@
         }
         .btn-download__info {
             display: block;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 400;
             opacity: 0.8;
             letter-spacing: 0.03em;
@@ -449,29 +485,29 @@
 
         .toast {
             position: fixed;
-            bottom: 30px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%) translateY(120px);
             background: var(--surface-2);
             border: 1px solid var(--border-2);
             border-radius: 50px;
-            padding: 14px 28px;
+            padding: 12px 24px;
             color: #fff;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             z-index: 100;
             box-shadow: 0 16px 50px rgba(0, 0, 0, 0.6);
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
         .toast--visible {
             transform: translateX(-50%) translateY(0);
         }
         .toast__icon {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
         }
         .toast__icon svg {
             width: 100%;
@@ -483,11 +519,12 @@
 
         .footer {
             text-align: center;
-            padding: 20px;
+            padding: 8px 10px;
             color: var(--text-3);
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             border-top: 1px solid var(--border);
-            margin-top: 20px;
+            margin-top: 6px;
+            flex-shrink: 0;
         }
         .footer a {
             color: var(--accent-2);
@@ -495,18 +532,24 @@
         }
 
         .modal-overlay {
-            display: none;
+            display: flex;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.75);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             z-index: 1000;
             align-items: center;
             justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
         }
         .modal-overlay.modal--visible {
-            display: flex;
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
         }
         .modal-content {
             background: var(--surface);
@@ -516,54 +559,69 @@
             width: 90%;
             max-height: 80vh;
             overflow-y: auto;
-            padding: 30px;
+            padding: 26px 24px;
             position: relative;
             color: var(--text);
             box-shadow: var(--shadow-lg);
         }
+        .modal-content::-webkit-scrollbar {
+            width: 5px;
+        }
+        .modal-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+        .modal-content::-webkit-scrollbar-thumb {
+            background: var(--accent-2);
+            border-radius: 3px;
+        }
         .modal-close {
             position: absolute;
-            top: 10px;
-            right: 15px;
+            top: 6px;
+            right: 12px;
             background: none;
             border: none;
             color: var(--text-2);
             font-size: 2rem;
             cursor: pointer;
             line-height: 1;
+            z-index: 5;
         }
         .modal-body h3 {
-            font-size: 1rem;
+            font-size: 0.95rem;
             margin-top: 1.2em;
-            margin-bottom: 0.5em;
+            margin-bottom: 0.4em;
             color: var(--accent-2);
         }
         .modal-body p {
-            margin-bottom: 0.8em;
-            font-size: 0.9rem;
+            margin-bottom: 0.6em;
+            font-size: 0.85rem;
             line-height: 1.7;
         }
 
         @media (max-width: 640px) {
             .container {
-                padding: 30px 12px 40px;
+                padding: 16px 12px 20px;
+                height: auto;
             }
             .hero {
-                padding: 0 10px 30px;
+                padding: 0 0 18px;
             }
             .version-cards {
                 grid-template-columns: 1fr;
-                gap: 10px;
+                overflow-y: visible;
             }
             .format-selector {
                 flex-direction: column;
-                gap: 10px;
             }
             .btn-download {
                 width: 100%;
                 justify-content: center;
-                padding: 15px 24px;
-                font-size: 1rem;
+                padding: 13px 20px;
+                font-size: 0.95rem;
+            }
+            .modal-content {
+                padding: 20px 16px;
             }
         }
     </style>
@@ -739,8 +797,6 @@
             const vd = state.versionData[state.selectedVersion];
             const sizeKey = state.selectedFormat === 'exe' ? 'exeSize' : 'zipSize';
             const size = vd ? vd[sizeKey] : '—';
-            const ext = state.selectedFormat === 'exe' ? 'exe' : 'zip';
-
             document.getElementById('downloadInfo').textContent = `v${state.selectedVersion} • ${state.selectedFormat.toUpperCase()} • ${size}`;
             if (vd) {
                 document.getElementById('exeSize').textContent = vd.exeSize;
@@ -808,14 +864,17 @@
         const privacyModal = document.getElementById('privacyModal');
         const modalClose = document.getElementById('modalClose');
 
-        privacyLink.addEventListener('click', function(e) {
-            e.preventDefault();
+        function openModal() {
             privacyModal.classList.add('modal--visible');
-        });
-
+        }
         function closeModal() {
             privacyModal.classList.remove('modal--visible');
         }
+
+        privacyLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            openModal();
+        });
 
         modalClose.addEventListener('click', closeModal);
         privacyModal.addEventListener('click', function(e) {
