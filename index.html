@@ -596,12 +596,6 @@
         .modal-body p {
             margin-bottom: 0.7em;
         }
-        .modal-body h3 {
-            font-size: 0.95rem;
-            margin-top: 1.1em;
-            margin-bottom: 0.4em;
-            color: var(--accent-2);
-        }
 
         @media (max-width: 640px), (max-height: 700px) {
             body {
@@ -968,9 +962,6 @@
                 .then(text => {
                     const paragraphs = text.split('\n\n').filter(p => p.trim() !== '');
                     const html = paragraphs.map(p => {
-                        if (p.match(/^\d+\./)) {
-                            return `<h3>${p.replace(/\n/g, '<br>')}</h3>`;
-                        }
                         return `<p>${p.replace(/\n/g, '<br>')}</p>`;
                     }).join('');
                     modalBody.innerHTML = html;
