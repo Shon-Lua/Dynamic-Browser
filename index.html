@@ -6,14 +6,6 @@
     <title>Dynamic Browser</title>
     <link rel="icon" href="Logo.png" type="image/png">
     <style>
-        :root {<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dynamic Browser</title>
-    <link rel="icon" href="Logo.png" type="image/png">
-    <style>
         :root {
             --bg: #0a0a0f;
             --surface: #12121a;
@@ -152,7 +144,6 @@
             text-align: center;
             padding: 0 20px 10px;
             flex-shrink: 0;
-            position: relative;
         }
         .hero__title {
             font-size: clamp(2rem, 5vw, 3.4rem);
@@ -164,54 +155,6 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-        }
-
-        .hamburger {
-            display: none;
-            position: absolute;
-            top: 0;
-            right: 0;
-            background: none;
-            border: none;
-            color: var(--text);
-            font-size: 1.6rem;
-            cursor: pointer;
-            z-index: 10;
-            line-height: 1;
-            padding: 4px 8px;
-            border-radius: 8px;
-            transition: background 0.2s;
-        }
-        .hamburger:hover {
-            background: rgba(255,255,255,0.1);
-        }
-
-        .mobile-menu {
-            display: none;
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: var(--surface-2);
-            border: 1px solid var(--border-2);
-            border-radius: var(--radius-sm);
-            padding: 8px 0;
-            min-width: 180px;
-            box-shadow: 0 16px 40px rgba(0,0,0,0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            z-index: 20;
-            flex-direction: column;
-        }
-        .mobile-menu a {
-            display: block;
-            padding: 10px 16px;
-            color: var(--text);
-            text-decoration: none;
-            font-size: 0.85rem;
-            transition: background 0.2s;
-        }
-        .mobile-menu a:hover {
-            background: rgba(255,255,255,0.05);
         }
 
         .section-title {
@@ -461,51 +404,25 @@
             font-weight: 700;
         }
 
-        .mobile-controls {
-            display: none;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 10px;
-            flex-shrink: 0;
-        }
         .mobile-select {
-            background: var(--surface-2);
-            color: var(--text);
-            border: 1px solid var(--border-2);
-            border-radius: var(--radius-sm);
-            padding: 10px 12px;
-            font-size: 0.85rem;
+            display: none;
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 0.95rem;
             font-weight: 600;
-            outline: none;
+            color: var(--text);
+            background: var(--surface-2);
+            border: 2px solid var(--border-2);
+            border-radius: var(--radius);
             cursor: pointer;
+            outline: none;
             appearance: none;
             -webkit-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23b0b0c0' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23b0b0c0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
             background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 12px;
-        }
-        .format-toggle-group {
-            display: flex;
-            gap: 8px;
-        }
-        .format-toggle {
-            flex: 1;
-            background: var(--surface);
-            border: 2px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 10px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: var(--transition);
-            color: var(--text);
-        }
-        .format-toggle.active {
-            border-color: var(--cyan);
-            background: var(--surface-2);
-            box-shadow: 0 0 0 4px var(--cyan-glow);
+            background-position: right 14px center;
+            background-size: 16px;
+            margin-bottom: 12px;
         }
 
         .download-section {
@@ -671,1019 +588,37 @@
             line-height: 1;
             z-index: 2;
         }
-        .modal-body h3 {
-            font-size: 0.95rem;
-            margin-top: 1.1em;
-            margin-bottom: 0.4em;
-            color: var(--accent-2);
-        }
-        .modal-body p {
-            margin-bottom: 0.7em;
-            font-size: 0.85rem;
-            line-height: 1.6;
-        }
-
-        @media (max-width: 640px) {
-            .hamburger {
-                display: block;
-            }
-            .container {
-                padding: 12px 12px 12px;
-            }
-            .hero {
-                padding: 0 40px 4px 10px;
-            }
-            .hero__title {
-                font-size: 1.8rem;
-                margin-bottom: 4px;
-            }
-            .section-title {
-                font-size: 0.8rem;
-                margin-bottom: 6px;
-                gap: 6px;
-            }
-            .section-title::after {
-                display: none;
-            }
-            .version-cards,
-            .format-selector,
-            .footer {
-                display: none;
-            }
-            .mobile-controls {
-                display: flex;
-            }
-            .btn-download {
-                width: 100%;
-                justify-content: center;
-                padding: 12px 20px;
-                font-size: 0.9rem;
-            }
-            .mobile-menu {
-                display: none;
-            }
-            .mobile-menu.open {
-                display: flex;
-            }
-        }
-
-        @media (max-height: 580px) and (max-width: 640px) {
-            .container {
-                padding: 6px 10px 6px;
-            }
-            .hero {
-                padding: 0 40px 2px 6px;
-            }
-            .hero__title {
-                font-size: 1.4rem;
-                margin-bottom: 0;
-            }
-            .section-title {
-                font-size: 0.65rem;
-                margin-bottom: 4px;
-            }
-            .mobile-controls {
-                gap: 6px;
-                margin-bottom: 6px;
-            }
-            .mobile-select {
-                padding: 8px 10px;
-                font-size: 0.75rem;
-            }
-            .format-toggle {
-                padding: 8px;
-                font-size: 0.7rem;
-            }
-            .btn-download {
-                padding: 10px 16px;
-                font-size: 0.8rem;
-                gap: 6px;
-            }
-            .btn-download__icon {
-                width: 18px;
-                height: 18px;
-            }
-            .btn-download__info {
-                font-size: 0.6rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="bg-orb bg-orb--1"></div>
-    <div class="bg-orb bg-orb--2"></div>
-    <div class="bg-orb bg-orb--3"></div>
-    <div class="noise-overlay"></div>
-    <div class="grid-lines"></div>
-
-    <div class="container">
-        <section class="hero">
-            <h1 class="hero__title">Dynamic Browser</h1>
-            <button class="hamburger" id="hamburgerBtn" aria-label="Меню">☰</button>
-            <div class="mobile-menu" id="mobileMenu">
-                <a href="#" id="mobilePrivacyLink">Политика конфиденциальности</a>
-                <a href="https://github.com/Shon-Lua/Dynamic-Browser" target="_blank" rel="noopener noreferrer">GitHub</a>
-            </div>
-        </section>
-
-        <section id="versions">
-            <h2 class="section-title">Выберите версию</h2>
-            <div class="version-cards" id="versionCards">
-                <div class="version-card version-card--selected" data-version="3.2.1" data-date="2026-06-04" data-zip-size="142 MB" data-exe-size="128 MB">
-                    <span class="os-badge" title="Windows">
-                        <svg viewBox="0 0 24 24"><path d="M3 5.47v4.16h4.74V5.47H3zm0 5.37v4.16h4.74v-4.16H3zm5.89 0v4.16h4.74v-4.16H8.89zm0-5.37v4.16h4.74V5.47H8.89zm5.88 0v4.16H20V5.47h-5.23zm0 5.37v4.16H20v-4.16h-5.23z"/></svg>
-                    </span>
-                    <span class="version-card__badge badge--latest">Последняя</span>
-                    <div class="version-card__version">v3.2.1</div>
-                    <div class="version-card__date">4 июня 2026</div>
-                    <ul class="version-card__changelog">
-                        <li>Ускоренный рендеринг страниц</li>
-                        <li>Новый менеджер вкладок</li>
-                        <li>Исправлены уязвимости</li>
-                    </ul>
-                    <div class="version-card__radio"></div>
-                </div>
-                <div class="version-card" data-version="3.2.0" data-date="2026-05-12" data-zip-size="140 MB" data-exe-size="126 MB">
-                    <span class="os-badge" title="Windows">
-                        <svg viewBox="0 0 24 24"><path d="M3 5.47v4.16h4.74V5.47H3zm0 5.37v4.16h4.74v-4.16H3zm5.89 0v4.16h4.74v-4.16H8.89zm0-5.37v4.16h4.74V5.47H8.89zm5.88 0v4.16H20V5.47h-5.23zm0 5.37v4.16H20v-4.16h-5.23z"/></svg>
-                    </span>
-                    <span class="version-card__badge badge--stable">Стабильная</span>
-                    <div class="version-card__version">v3.2.0</div>
-                    <div class="version-card__date">12 мая 2026</div>
-                    <ul class="version-card__changelog">
-                        <li>Тёмная тема по умолчанию</li>
-                        <li>Поддержка WebAssembly 2.0</li>
-                        <li>Улучшена синхронизация</li>
-                    </ul>
-                    <div class="version-card__radio"></div>
-                </div>
-                <div class="version-card" data-version="3.1.5" data-date="2026-03-28" data-zip-size="138 MB" data-exe-size="124 MB">
-                    <span class="os-badge" title="Windows">
-                        <svg viewBox="0 0 24 24"><path d="M3 5.47v4.16h4.74V5.47H3zm0 5.37v4.16h4.74v-4.16H3zm5.89 0v4.16h4.74v-4.16H8.89zm0-5.37v4.16h4.74V5.47H8.89zm5.88 0v4.16H20V5.47h-5.23zm0 5.37v4.16H20v-4.16h-5.23z"/></svg>
-                    </span>
-                    <span class="version-card__badge badge--beta">LTS</span>
-                    <div class="version-card__version">v3.1.5</div>
-                    <div class="version-card__date">28 марта 2026</div>
-                    <ul class="version-card__changelog">
-                        <li>Долгосрочная поддержка</li>
-                        <li>Стабильность корп. среда</li>
-                        <li>Патчи безопасности</li>
-                    </ul>
-                    <div class="version-card__radio"></div>
-                </div>
-            </div>
-            <div class="mobile-controls">
-                <select class="mobile-select" id="mobileVersionSelect"></select>
-                <div class="format-toggle-group" id="mobileFormatGroup">
-                    <button class="format-toggle active" data-format="exe">EXE</button>
-                    <button class="format-toggle" data-format="zip">ZIP</button>
-                </div>
-            </div>
-        </section>
-
-        <section id="formats">
-            <h2 class="section-title">Формат файла</h2>
-            <div class="format-selector" id="formatSelector">
-                <div class="format-card format-card--selected" data-format="exe">
-                    <div class="format-card__icon">
-                        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 16V8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                            <line x1="12" y1="22.08" x2="12" y2="12" />
-                        </svg>
-                    </div>
-                    <div class="format-card__name">EXE — Установщик</div>
-                    <div class="format-card__desc">Автоматическая установка с мастером настройки</div>
-                    <span class="format-card__size" id="exeSize">128 MB</span>
-                    <div class="format-card__check"></div>
-                </div>
-                <div class="format-card" data-format="zip">
-                    <div class="format-card__icon">
-                        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 8v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8" />
-                            <polyline points="16 12 12 16 8 12" />
-                            <line x1="12" y1="16" x2="12" y2="4" />
-                        </svg>
-                    </div>
-                    <div class="format-card__name">ZIP — Портативная</div>
-                    <div class="format-card__desc">Ручная распаковка, не требует прав администратора</div>
-                    <span class="format-card__size" id="zipSize">142 MB</span>
-                    <div class="format-card__check"></div>
-                </div>
-            </div>
-        </section>
-
-        <section class="download-section" id="download">
-            <button class="btn-download" id="btnDownload" onclick="handleDownload()">
-                <span class="btn-download__icon">
-                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                </span>
-                <span>
-                    Скачать Dynamic Browser
-                    <span class="btn-download__info" id="downloadInfo">v3.2.1 • EXE • 128 MB</span>
-                </span>
-            </button>
-        </section>
-
-        <footer class="footer">
-            © 2026 Dynamic Browser. Все права защищены.
-            <a href="#" id="privacyLink">Политика конфиденциальности</a> •
-            <a href="https://github.com/Shon-Lua/Dynamic-Browser" target="_blank" rel="noopener noreferrer" id="githubLink">GitHub</a>
-        </footer>
-    </div>
-
-    <div class="modal-overlay" id="privacyModal">
-        <div class="modal-content">
-            <button class="modal-close" id="modalClose">&times;</button>
-            <div class="modal-scroll">
-                <div class="modal-body" id="policyContent"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="toast" id="toast">
-        <span class="toast__icon">
-            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-            </svg>
-        </span>
-        <span id="toastMessage">Загрузка началась!</span>
-    </div>
-
-    <script>
-        const state = {
-            selectedVersion: '3.2.1',
-            selectedFormat: 'exe',
-            versionData: {}
-        };
-
-        document.querySelectorAll('.version-card').forEach(card => {
-            const v = card.dataset.version;
-            state.versionData[v] = {
-                date: card.dataset.date,
-                zipSize: card.dataset.zipSize,
-                exeSize: card.dataset.exeSize,
-            };
-        });
-
-        function updateUI() {
-            const vd = state.versionData[state.selectedVersion];
-            const sizeKey = state.selectedFormat === 'exe' ? 'exeSize' : 'zipSize';
-            const size = vd ? vd[sizeKey] : '—';
-            document.getElementById('downloadInfo').textContent = `v${state.selectedVersion} • ${state.selectedFormat.toUpperCase()} • ${size}`;
-            if (vd) {
-                document.getElementById('exeSize').textContent = vd.exeSize;
-                document.getElementById('zipSize').textContent = vd.zipSize;
-            }
-            const mobileSelect = document.getElementById('mobileVersionSelect');
-            if (mobileSelect) mobileSelect.value = state.selectedVersion;
-            document.querySelectorAll('.format-toggle').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.format === state.selectedFormat);
-            });
-        }
-
-        function populateMobileSelect() {
-            const select = document.getElementById('mobileVersionSelect');
-            const cards = document.querySelectorAll('.version-card');
-            select.innerHTML = '';
-            cards.forEach(card => {
-                const option = document.createElement('option');
-                option.value = card.dataset.version;
-                option.textContent = `v${card.dataset.version} (${card.dataset.date})`;
-                select.appendChild(option);
-            });
-            select.value = state.selectedVersion;
-        }
-
-        document.getElementById('versionCards').addEventListener('click', function(e) {
-            const card = e.target.closest('.version-card');
-            if (!card) return;
-            this.querySelectorAll('.version-card').forEach(c => c.classList.remove('version-card--selected'));
-            card.classList.add('version-card--selected');
-            state.selectedVersion = card.dataset.version;
-            updateUI();
-        });
-
-        document.getElementById('formatSelector').addEventListener('click', function(e) {
-            const card = e.target.closest('.format-card');
-            if (!card) return;
-            this.querySelectorAll('.format-card').forEach(c => c.classList.remove('format-card--selected'));
-            card.classList.add('format-card--selected');
-            state.selectedFormat = card.dataset.format;
-            updateUI();
-        });
-
-        document.getElementById('mobileVersionSelect').addEventListener('change', function() {
-            state.selectedVersion = this.value;
-            document.querySelectorAll('.version-card').forEach(card => {
-                card.classList.toggle('version-card--selected', card.dataset.version === this.value);
-            });
-            updateUI();
-        });
-
-        document.getElementById('mobileFormatGroup').addEventListener('click', function(e) {
-            const btn = e.target.closest('.format-toggle');
-            if (!btn) return;
-            state.selectedFormat = btn.dataset.format;
-            document.querySelectorAll('.format-card').forEach(card => {
-                card.classList.toggle('format-card--selected', card.dataset.format === state.selectedFormat);
-            });
-            updateUI();
-        });
-
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toastMessage').textContent = message;
-            toast.classList.add('toast--visible');
-            clearTimeout(toast._timeout);
-            toast._timeout = setTimeout(() => { toast.classList.remove('toast--visible'); }, 2800);
-        }
-
-        function handleDownload() {
-            const vd = state.versionData[state.selectedVersion];
-            const sizeKey = state.selectedFormat === 'exe' ? 'exeSize' : 'zipSize';
-            const size = vd ? vd[sizeKey] : '—';
-            const ext = state.selectedFormat === 'exe' ? 'exe' : 'zip';
-            const fileName = state.selectedFormat === 'exe' ? `dynamic-browser-setup-${state.selectedVersion}.exe` : `dynamic-browser-portable-${state.selectedVersion}.zip`;
-            const link = `https://dynamicbrowser.app/dl/v${state.selectedVersion}/${fileName}`;
-
-            showToast(`Загрузка Dynamic Browser v${state.selectedVersion} (${ext.toUpperCase()}, ${size}) началась!`);
-
-            const btn = document.getElementById('btnDownload');
-            btn.style.transform = 'scale(0.94)';
-            setTimeout(() => { btn.style.transform = ''; }, 180);
-
-            const a = document.createElement('a');
-            a.href = link;
-            a.download = fileName;
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                handleDownload();
-            }
-        });
-
-        const privacyModal = document.getElementById('privacyModal');
-        const modalClose = document.getElementById('modalClose');
-
-        function openPrivacyModal(e) {
-            e.preventDefault();
-            privacyModal.classList.add('modal--visible');
-        }
-
-        function closeModal() {
-            privacyModal.classList.remove('modal--visible');
-        }
-
-        document.getElementById('privacyLink').addEventListener('click', openPrivacyModal);
-        document.getElementById('mobilePrivacyLink').addEventListener('click', openPrivacyModal);
-        modalClose.addEventListener('click', closeModal);
-        privacyModal.addEventListener('click', function(e) {
-            if (e.target === privacyModal) closeModal();
-        });
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && privacyModal.classList.contains('modal--visible')) {
-                closeModal();
-            }
-        });
-
-        const hamburgerBtn = document.getElementById('hamburgerBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        hamburgerBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            mobileMenu.classList.toggle('open');
-        });
-        document.addEventListener('click', function(e) {
-            if (!hamburgerBtn.contains(e.target) && !mobileMenu.contains(e.target)) {
-                mobileMenu.classList.remove('open');
-            }
-        });
-
-        async function loadPolicy() {
-            try {
-                const response = await fetch('POLITICS.txt');
-                if (!response.ok) throw new Error('Network response was not ok');
-                const text = await response.text();
-                const html = parsePolicy(text);
-                document.getElementById('policyContent').innerHTML = html;
-            } catch (error) {
-                document.getElementById('policyContent').textContent = 'Не удалось загрузить политику конфиденциальности.';
-            }
-        }
-
-        function parsePolicy(text) {
-            const lines = text.split('\n');
-            let html = '';
-            let paragraphLines = [];
-            lines.forEach(line => {
-                const trimmed = line.trim();
-                if (/^\d+(\.\d+)*\.?\s/.test(trimmed) && trimmed.length < 120) {
-                    if (paragraphLines.length) {
-                        html += `<p>${paragraphLines.join('<br>')}</p>`;
-                        paragraphLines = [];
-                    }
-                    html += `<h3>${trimmed}</h3>`;
-                } else {
-                    paragraphLines.push(line);
-                }
-            });
-            if (paragraphLines.length) {
-                html += `<p>${paragraphLines.join('<br>')}</p>`;
-            }
-            return html;
-        }
-
-        populateMobileSelect();
-        updateUI();
-        loadPolicy();
-    </script>
-</body>
-</html>
-            --bg: #0a0a0f;
-            --surface: #12121a;
-            --surface-2: #1a1a26;
-            --surface-3: #222236;
-            --accent: #6c5ce7;
-            --accent-2: #a29bfe;
-            --accent-glow: #6c5ce766;
-            --cyan: #00d2d3;
-            --cyan-glow: #00d2d344;
-            --text: #e8e8f0;
-            --text-2: #b0b0c0;
-            --text-3: #787890;
-            --border: #ffffff0d;
-            --border-2: #ffffff14;
-            --danger: #ff6b6b;
-            --success: #2ed573;
-            --warning: #ffa502;
-            --radius-sm: 10px;
-            --radius: 16px;
-            --radius-lg: 24px;
-            --radius-xl: 32px;
-            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            --shadow-lg: 0 25px 60px rgba(0, 0, 0, 0.5);
-            --shadow-glow: 0 0 80px var(--accent-glow);
-            --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-            font-size: 16px;
-            height: 100%;
-        }
-
-        body {
-            font-family: var(--font);
-            background: var(--bg);
+        .modal-body {
             color: var(--text);
-            height: 100vh;
-            height: 100dvh;
-            overflow: hidden;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            font-size: 0.85rem;
             line-height: 1.6;
-            position: relative;
         }
-
-        .bg-orb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(120px);
-            opacity: 0.35;
-            pointer-events: none;
-            z-index: 0;
-            animation: orbFloat 20s ease-in-out infinite;
-        }
-        .bg-orb--1 {
-            width: 600px;
-            height: 600px;
-            background: var(--accent);
-            top: -200px;
-            left: -150px;
-            animation-delay: 0s;
-        }
-        .bg-orb--2 {
-            width: 500px;
-            height: 500px;
-            background: var(--cyan);
-            bottom: -180px;
-            right: -120px;
-            animation-delay: -7s;
-            animation-duration: 24s;
-        }
-        .bg-orb--3 {
-            width: 350px;
-            height: 350px;
-            background: #e17055;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation-delay: -14s;
-            animation-duration: 28s;
-            opacity: 0.2;
-        }
-
-        @keyframes orbFloat {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            25% { transform: translate(80px, -60px) scale(1.15); }
-            50% { transform: translate(-40px, 70px) scale(0.9); }
-            75% { transform: translate(-90px, -30px) scale(1.1); }
-        }
-
-        .noise-overlay {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 1;
-            opacity: 0.025;
-            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-            background-size: 200px 200px;
-        }
-
-        .grid-lines {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 0;
-            opacity: 0.03;
-            background-image:
-                linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
-            background-size: 60px 60px;
-            mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
-            -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
-        }
-
-        .container {
-            position: relative;
-            z-index: 2;
-            max-width: 900px;
-            margin: 0 auto;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            padding: 20px 24px 20px;
-        }
-
-        .hero {
-            text-align: center;
-            padding: 0 20px 10px;
-            flex-shrink: 0;
-        }
-        .hero__title {
-            font-size: clamp(2rem, 5vw, 3.4rem);
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            line-height: 1.1;
-            margin-bottom: 8px;
-            background: linear-gradient(135deg, #fff 0%, #c4c4e0 50%, var(--accent-2) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .section-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            color: var(--text-3);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-        }
-        .section-title::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border-2);
-            border-radius: 1px;
-        }
-
-        .version-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 10px;
-            margin-bottom: 14px;
-            flex-shrink: 0;
-        }
-        .version-card {
-            background: var(--surface);
-            border: 2px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px 18px;
-            cursor: pointer;
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-            user-select: none;
-        }
-        .version-card:hover {
-            border-color: var(--border-2);
-            background: var(--surface-2);
-            transform: translateY(-2px);
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
-        }
-        .version-card--selected {
-            border-color: var(--accent) !important;
-            background: var(--surface-2) !important;
-            box-shadow: 0 0 0 6px var(--accent-glow), 0 12px 40px rgba(0, 0, 0, 0.4) !important;
-            transform: translateY(-3px) !important;
-        }
-        .version-card__badge {
-            display: inline-block;
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 3px 8px;
-            border-radius: 20px;
-            margin-bottom: 8px;
-        }
-        .badge--latest {
-            background: #2ed57322;
-            color: var(--success);
-            border: 1px solid #2ed57333;
-        }
-        .badge--stable {
-            background: #ffa50222;
-            color: var(--warning);
-            border: 1px solid #ffa50233;
-        }
-        .badge--beta {
-            background: #ff6b6b22;
-            color: var(--danger);
-            border: 1px solid #ff6b6b33;
-        }
-        .version-card__version {
-            font-size: 1.3rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin-bottom: 2px;
-        }
-        .version-card__date {
-            font-size: 0.7rem;
-            color: var(--text-3);
-            margin-bottom: 6px;
-        }
-        .version-card__changelog {
-            font-size: 0.75rem;
-            color: var(--text-2);
-            line-height: 1.5;
-        }
-        .version-card__changelog li {
-            margin-bottom: 2px;
-            list-style: none;
-            padding-left: 14px;
-            position: relative;
-        }
-        .version-card__changelog li::before {
-            content: '•';
-            position: absolute;
-            left: 0;
-            color: var(--accent-2);
-        }
-        .version-card__radio {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 2px solid var(--border-2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: var(--transition);
-        }
-        .version-card--selected .version-card__radio {
-            border-color: var(--accent);
-            background: var(--accent);
-        }
-        .version-card--selected .version-card__radio::after {
-            content: '✓';
-            color: #fff;
-            font-size: 0.65rem;
-            font-weight: 700;
-        }
-
-        .os-badge {
-            position: absolute;
-            bottom: 8px;
-            right: 8px;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.07);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2;
-            transition: var(--transition);
-        }
-        .os-badge svg {
-            width: 12px;
-            height: 12px;
-            fill: #ffffffcc;
-        }
-        .version-card--selected .os-badge {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .format-selector {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 14px;
-            flex-shrink: 0;
-        }
-        .format-card {
-            flex: 1;
-            min-width: 160px;
-            background: var(--surface);
-            border: 2px solid var(--border);
-            border-radius: var(--radius);
-            padding: 18px 16px;
-            cursor: pointer;
-            transition: var(--transition);
-            text-align: center;
-            user-select: none;
-            position: relative;
-        }
-        .format-card:hover {
-            border-color: var(--border-2);
-            background: var(--surface-2);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-        .format-card--selected {
-            border-color: var(--cyan) !important;
-            background: var(--surface-2) !important;
-            box-shadow: 0 0 0 6px var(--cyan-glow), 0 10px 30px rgba(0, 0, 0, 0.4) !important;
-            transform: translateY(-3px) !important;
-        }
-        .format-card__icon {
-            width: 44px;
-            height: 44px;
-            margin: 0 auto 8px;
-            display: block;
-        }
-        .format-card__icon svg {
-            width: 100%;
-            height: 100%;
-            stroke: var(--text-2);
-            stroke-width: 1.8;
-            fill: none;
-            transition: stroke 0.3s;
-        }
-        .format-card--selected .format-card__icon svg {
-            stroke: var(--cyan);
-        }
-        .format-card__name {
-            font-weight: 700;
-            font-size: 1rem;
-            letter-spacing: -0.01em;
-            margin-bottom: 2px;
-        }
-        .format-card__desc {
-            font-size: 0.7rem;
-            color: var(--text-3);
-            line-height: 1.4;
-        }
-        .format-card__size {
-            display: inline-block;
-            margin-top: 6px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            padding: 3px 10px;
-            border-radius: 14px;
-            background: var(--surface-3);
-            color: var(--text-2);
-        }
-        .format-card__check {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 2px solid var(--border-2);
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .format-card--selected .format-card__check {
-            border-color: var(--cyan);
-            background: var(--cyan);
-        }
-        .format-card--selected .format-card__check::after {
-            content: '✓';
-            color: #000;
-            font-size: 0.65rem;
-            font-weight: 700;
-        }
-
-        .download-section {
-            text-align: center;
-            margin-top: auto;
-            flex-shrink: 0;
-        }
-        .btn-download {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 14px 30px;
-            font-size: 1rem;
-            font-weight: 700;
-            letter-spacing: 0.02em;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            color: #fff;
-            background: linear-gradient(135deg, var(--accent), #8b7cf0);
-            box-shadow: 0 8px 35px var(--accent-glow), 0 2px 8px rgba(0, 0, 0, 0.3);
-            transition: var(--transition-slow);
-            position: relative;
-            overflow: hidden;
-            text-decoration: none;
-        }
-        .btn-download:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 14px 45px var(--accent-glow), 0 4px 14px rgba(0, 0, 0, 0.4);
-            background: linear-gradient(135deg, #7c6cf0, #9b8ff8);
-        }
-        .btn-download:active {
-            transform: scale(0.96);
-            transition: 0.1s;
-        }
-        .btn-download__icon {
-            width: 22px;
-            height: 22px;
-        }
-        .btn-download__icon svg {
-            width: 100%;
-            height: 100%;
-            stroke: #fff;
-            stroke-width: 2;
-            fill: none;
-        }
-        .btn-download__info {
-            display: block;
-            font-size: 0.65rem;
-            font-weight: 400;
-            opacity: 0.8;
-            letter-spacing: 0.03em;
-        }
-
-        .footer {
-            text-align: center;
-            padding: 12px 0 4px;
-            color: var(--text-3);
-            font-size: 0.7rem;
-            border-top: 1px solid var(--border);
-            margin-top: 8px;
-            flex-shrink: 0;
-        }
-        .footer a {
-            color: var(--accent-2);
-            text-decoration: none;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(120px);
-            background: var(--surface-2);
-            border: 1px solid var(--border-2);
-            border-radius: 50px;
-            padding: 12px 24px;
-            color: #fff;
-            font-weight: 600;
-            font-size: 0.9rem;
-            z-index: 100;
-            box-shadow: 0 16px 50px rgba(0, 0, 0, 0.6);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .toast--visible {
-            transform: translateX(-50%) translateY(0);
-        }
-        .toast__icon {
-            width: 18px;
-            height: 18px;
-        }
-        .toast__icon svg {
-            width: 100%;
-            height: 100%;
-            stroke: var(--success);
-            stroke-width: 2.5;
-            fill: none;
-        }
-
-        .modal-overlay {
-            display: flex;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s;
-        }
-        .modal-overlay.modal--visible {
-            opacity: 1;
-            visibility: visible;
-        }
-        .modal-content {
-            background: var(--surface);
-            border: 1px solid var(--border-2);
-            border-radius: var(--radius-lg);
-            max-width: 700px;
-            width: 90%;
-            position: relative;
-            overflow: hidden;
-            box-shadow: var(--shadow-lg);
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-        }
-        .modal-overlay.modal--visible .modal-content {
-            transform: scale(1);
-        }
-        .modal-scroll {
-            overflow-y: auto;
-            max-height: 80vh;
-            padding: 24px;
-            scrollbar-width: thin;
-            scrollbar-color: var(--accent) var(--surface-2);
-        }
-        .modal-scroll::-webkit-scrollbar {
-            width: 6px;
-        }
-        .modal-scroll::-webkit-scrollbar-track {
-            background: var(--surface-2);
-            border-radius: 3px;
-        }
-        .modal-scroll::-webkit-scrollbar-thumb {
-            background: var(--accent);
-            border-radius: 3px;
-        }
-        .modal-close {
-            position: absolute;
-            top: 12px;
-            right: 16px;
-            background: none;
-            border: none;
-            color: var(--text-2);
-            font-size: 1.8rem;
-            cursor: pointer;
-            line-height: 1;
-            z-index: 2;
+        .modal-body p {
+            margin-bottom: 0.7em;
         }
         .modal-body h3 {
             font-size: 0.95rem;
             margin-top: 1.1em;
             margin-bottom: 0.4em;
             color: var(--accent-2);
-        }
-        .modal-body p {
-            margin-bottom: 0.7em;
-            font-size: 0.85rem;
-            line-height: 1.6;
         }
 
         @media (max-width: 640px), (max-height: 700px) {
+            body {
+                overflow-y: auto;
+                height: auto;
+                min-height: 100vh;
+                min-height: 100dvh;
+            }
             .container {
+                height: auto;
+                min-height: 100vh;
+                min-height: 100dvh;
                 padding: 12px 12px 12px;
+                justify-content: flex-start;
+            }
+            .download-section {
+                margin-top: 16px;
             }
             .hero {
                 padding: 0 10px 4px;
@@ -1697,46 +632,13 @@
                 margin-bottom: 6px;
             }
             .version-cards {
-                grid-template-columns: 1fr;
-                gap: 8px;
-                margin-bottom: 10px;
-            }
-            .version-card {
-                padding: 12px 14px;
-            }
-            .version-card__badge {
-                font-size: 0.6rem;
-                padding: 2px 7px;
-                margin-bottom: 6px;
-            }
-            .version-card__version {
-                font-size: 1.1rem;
-            }
-            .version-card__date {
-                font-size: 0.65rem;
-                margin-bottom: 4px;
-            }
-            .version-card__changelog {
-                font-size: 0.7rem;
+                display: none;
             }
             .format-selector {
-                flex-direction: column;
-                gap: 8px;
-                margin-bottom: 10px;
+                display: none;
             }
-            .format-card {
-                padding: 14px 12px;
-            }
-            .format-card__icon {
-                width: 36px;
-                height: 36px;
-                margin-bottom: 6px;
-            }
-            .format-card__name {
-                font-size: 0.9rem;
-            }
-            .format-card__desc {
-                font-size: 0.65rem;
+            .mobile-select {
+                display: block;
             }
             .btn-download {
                 width: 100%;
@@ -1747,7 +649,7 @@
             .footer {
                 font-size: 0.65rem;
                 padding: 8px 0 2px;
-                margin-top: 4px;
+                margin-top: 8px;
             }
         }
 
@@ -1767,61 +669,10 @@
                 margin-bottom: 4px;
                 gap: 6px;
             }
-            .version-cards {
-                gap: 6px;
+            .mobile-select {
+                padding: 10px 12px;
+                font-size: 0.8rem;
                 margin-bottom: 8px;
-            }
-            .version-card {
-                padding: 6px 10px;
-            }
-            .version-card__badge {
-                font-size: 0.55rem;
-                padding: 1px 5px;
-                margin-bottom: 4px;
-            }
-            .version-card__version {
-                font-size: 0.85rem;
-            }
-            .version-card__date {
-                font-size: 0.55rem;
-                margin-bottom: 2px;
-            }
-            .version-card__changelog {
-                font-size: 0.55rem;
-                line-height: 1.3;
-            }
-            .version-card__changelog li {
-                padding-left: 10px;
-                margin-bottom: 1px;
-            }
-            .version-card__radio {
-                width: 16px;
-                height: 16px;
-                top: 8px;
-                right: 8px;
-            }
-            .format-selector {
-                gap: 6px;
-                margin-bottom: 8px;
-            }
-            .format-card {
-                padding: 8px 10px;
-            }
-            .format-card__icon {
-                width: 28px;
-                height: 28px;
-                margin-bottom: 4px;
-            }
-            .format-card__name {
-                font-size: 0.75rem;
-            }
-            .format-card__desc {
-                font-size: 0.6rem;
-            }
-            .format-card__size {
-                font-size: 0.6rem;
-                padding: 2px 8px;
-                margin-top: 4px;
             }
             .btn-download {
                 padding: 8px 16px;
@@ -1838,7 +689,7 @@
             .footer {
                 font-size: 0.55rem;
                 padding: 4px 0 2px;
-                margin-top: 2px;
+                margin-top: 4px;
             }
             .toast {
                 padding: 8px 16px;
@@ -1906,6 +757,11 @@
                     <div class="version-card__radio"></div>
                 </div>
             </div>
+            <select class="mobile-select" id="versionMobileSelect">
+                <option value="3.2.1" selected>v3.2.1 — Последняя (4 июня 2026)</option>
+                <option value="3.2.0">v3.2.0 — Стабильная (12 мая 2026)</option>
+                <option value="3.1.5">v3.1.5 — LTS (28 марта 2026)</option>
+            </select>
         </section>
 
         <section id="formats">
@@ -1938,6 +794,10 @@
                     <div class="format-card__check"></div>
                 </div>
             </div>
+            <select class="mobile-select" id="formatMobileSelect">
+                <option value="exe" selected>EXE — Установщик (128 MB)</option>
+                <option value="zip">ZIP — Портативная (142 MB)</option>
+            </select>
         </section>
 
         <section class="download-section" id="download">
@@ -1967,25 +827,8 @@
         <div class="modal-content">
             <button class="modal-close" id="modalClose">&times;</button>
             <div class="modal-scroll">
-                <div class="modal-body">
-                    <h3>1. Общие положения</h3>
-                    <p>Настоящая Политика конфиденциальности регулирует порядок обработки данных при использовании приложения Dynamic Browser (далее — «Браузер»).<br>Используя Браузер, пользователь подтверждает, что ознакомлен с данной Политикой.</p>
-                    <h3>2. Сбор и обработка данных</h3>
-                    <p>2.1. Отсутствие сбора персональных данных<br>Dynamic Browser не собирает, не обрабатывает и не передаёт какие‑либо персональные данные пользователей.</p>
-                    <p>2.2. Отсутствие технического сбора<br>Браузер не собирает:<br>• сведения о версии операционной системы;<br>• сведения о версии приложения;<br>• технические логи, ошибки, отчёты о сбоях;<br>• данные об устройстве или его конфигурации.</p>
-                    <p>2.3. Отсутствие трекинга<br>Браузер не использует трекеры, аналитические инструменты, системы мониторинга поведения, рекламные идентификаторы или любые механизмы слежения.</p>
-                    <h3>3. Данные, передаваемые при посещении сайтов</h3>
-                    <p>При загрузке веб‑страниц могут автоматически передаваться данные, необходимые для работы сайтов (например, IP‑адрес, cookies, User‑Agent).<br>Эти данные:<br>• не собираются и не сохраняются Браузером;<br>• передаются напрямую посещаемым сайтам в рамках стандартной работы интернета.</p>
-                    <h3>4. Локальное хранение</h3>
-                    <p>Браузер может использовать локальное хранилище, кэш и cookies исключительно для обеспечения работы интерфейса и сохранения пользовательских настроек.<br>Все данные хранятся только на устройстве пользователя и не передаются разработчику.</p>
-                    <h3>5. Передача данных третьим лицам</h3>
-                    <p>Dynamic Browser не передаёт, не продаёт и не предоставляет какие‑либо данные третьим лицам.<br>Исключения отсутствуют.</p>
-                    <h3>6. Сторонние ресурсы</h3>
-                    <p>При посещении сайтов пользователь взаимодействует со сторонними сервисами, которые имеют собственные политики конфиденциальности.<br>Dynamic Browser не контролирует и не несёт ответственность за обработку данных такими сервисами.</p>
-                    <h3>7. Права пользователя</h3>
-                    <p>Пользователь вправе:<br>• прекратить использование Браузера в любой момент;<br>• удалить приложение и все локальные данные.</p>
-                    <h3>8. Изменения Политики</h3>
-                    <p>Политика конфиденциальности может быть обновлена.<br>Актуальная версия всегда доступна в меню Браузера.</p>
+                <div class="modal-body" id="modalBody">
+                    Загрузка политики конфиденциальности...
                 </div>
             </div>
         </div>
@@ -2025,6 +868,14 @@
                 document.getElementById('exeSize').textContent = vd.exeSize;
                 document.getElementById('zipSize').textContent = vd.zipSize;
             }
+            const versionMobile = document.getElementById('versionMobileSelect');
+            if (versionMobile.value !== state.selectedVersion) {
+                versionMobile.value = state.selectedVersion;
+            }
+            const formatMobile = document.getElementById('formatMobileSelect');
+            if (formatMobile.value !== state.selectedFormat) {
+                formatMobile.value = state.selectedFormat;
+            }
         }
 
         document.getElementById('versionCards').addEventListener('click', function(e) {
@@ -2036,12 +887,32 @@
             updateUI();
         });
 
+        document.getElementById('versionMobileSelect').addEventListener('change', function() {
+            state.selectedVersion = this.value;
+            document.querySelectorAll('.version-card').forEach(c => c.classList.remove('version-card--selected'));
+            const selectedCard = document.querySelector(`.version-card[data-version="${this.value}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('version-card--selected');
+            }
+            updateUI();
+        });
+
         document.getElementById('formatSelector').addEventListener('click', function(e) {
             const card = e.target.closest('.format-card');
             if (!card) return;
             this.querySelectorAll('.format-card').forEach(c => c.classList.remove('format-card--selected'));
             card.classList.add('format-card--selected');
             state.selectedFormat = card.dataset.format;
+            updateUI();
+        });
+
+        document.getElementById('formatMobileSelect').addEventListener('change', function() {
+            state.selectedFormat = this.value;
+            document.querySelectorAll('.format-card').forEach(c => c.classList.remove('format-card--selected'));
+            const selectedCard = document.querySelector(`.format-card[data-format="${this.value}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('format-card--selected');
+            }
             updateUI();
         });
 
@@ -2086,6 +957,30 @@
         const privacyLink = document.getElementById('privacyLink');
         const privacyModal = document.getElementById('privacyModal');
         const modalClose = document.getElementById('modalClose');
+        const modalBody = document.getElementById('modalBody');
+
+        function loadPrivacyPolicy() {
+            fetch('POLITICS.txt')
+                .then(response => {
+                    if (!response.ok) throw new Error('Файл не найден');
+                    return response.text();
+                })
+                .then(text => {
+                    const paragraphs = text.split('\n\n').filter(p => p.trim() !== '');
+                    const html = paragraphs.map(p => {
+                        if (p.match(/^\d+\./)) {
+                            return `<h3>${p.replace(/\n/g, '<br>')}</h3>`;
+                        }
+                        return `<p>${p.replace(/\n/g, '<br>')}</p>`;
+                    }).join('');
+                    modalBody.innerHTML = html;
+                })
+                .catch(() => {
+                    modalBody.innerHTML = '<p>Не удалось загрузить политику конфиденциальности. Пожалуйста, попробуйте позже.</p>';
+                });
+        }
+
+        loadPrivacyPolicy();
 
         privacyLink.addEventListener('click', function(e) {
             e.preventDefault();
