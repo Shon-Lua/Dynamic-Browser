@@ -1,5 +1,7 @@
 {
     "app": "Dynamic_Browser.apk",
-    "Image_1": "1.png",
-    "desc": "desc.txt"
+    "desc": "desc.txt",
+    "Images": {
+    "Image_1": "Screenshots/1.png"
+   }
   }
