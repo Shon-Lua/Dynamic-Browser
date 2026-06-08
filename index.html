@@ -689,6 +689,13 @@
         }
     });
 
+    function getAppVersion() {
+        if (currentInstruction && currentInstruction.version) {
+            return currentInstruction.version;
+        }
+        return '3.2.1';
+    }
+
     async function updateUI() {
         if (!state.selectedOS) {
             platformScreen.classList.remove('hidden');
@@ -714,16 +721,18 @@
             `<div class="permission-item"><i class="fas fa-check-circle"></i>${p}</div>`
         ).join('');
 
+        const version = getAppVersion();
+
         if (state.selectedOS === 'Windows') {
             formatSelector.style.display = 'flex';
             document.querySelectorAll('.format-chip').forEach(c => c.classList.remove('active'));
             const activeChip = document.querySelector(`.format-chip[data-format="${state.selectedFormat}"]`);
             if (activeChip) activeChip.classList.add('active');
-            installMeta.textContent = `v3.2.1 · ${osData.sizes[state.selectedFormat]}`;
+            installMeta.textContent = `v${version} · ${osData.sizes[state.selectedFormat]}`;
         } else {
             formatSelector.style.display = 'none';
             state.selectedFormat = 'apk';
-            installMeta.textContent = `v3.2.1 · ${osData.sizes.apk}`;
+            installMeta.textContent = `v${version} · ${osData.sizes.apk}`;
         }
 
         let imagesObj = currentInstruction?.Images || null;
@@ -759,6 +768,7 @@
         if (!state.selectedOS) return;
         const osData = appData[state.selectedOS];
         const size = osData.sizes[state.selectedFormat];
+        const version = getAppVersion();
         let fileName;
         if (currentInstruction?.app) {
             if (state.selectedOS === 'Windows') {
@@ -768,10 +778,9 @@
             }
         }
         if (!fileName) {
-            const v = '3.2.1';
             fileName = state.selectedOS === 'Windows'
-                ? (state.selectedFormat === 'exe' ? `dynamic-browser-setup-${v}.exe` : `dynamic-browser-portable-${v}.zip`)
-                : `dynamic-browser-${v}.apk`;
+                ? (state.selectedFormat === 'exe' ? `dynamic-browser-setup-${version}.exe` : `dynamic-browser-portable-${version}.zip`)
+                : `dynamic-browser-${version}.apk`;
         }
         const link = `https://dynamicbrowser.app/dl/${fileName}`;
         showToast(`Загрузка ${fileName} (${size}) началась!`);
