@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dynamic Browser</title>
     <link rel="icon" href="Logo.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
             --bg: #0a0a0f;
@@ -28,7 +30,7 @@
             --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             --shadow-lg: 0 25px 60px rgba(0, 0, 0, 0.5);
             --shadow-glow: 0 0 80px var(--accent-glow);
-            --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --font: 'Inter', system-ui, -apple-system, sans-serif;
         }
 
         * {
@@ -48,10 +50,10 @@
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
-            min-height: 100dvh;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
+            padding: 40px 24px;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             line-height: 1.6;
@@ -133,35 +135,37 @@
             z-index: 2;
             width: 100%;
             max-width: 900px;
-            padding: 24px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            flex: 1;
+            justify-content: center;
         }
 
         .platform-container {
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             width: 100%;
             transition: all 0.4s ease;
+            flex: 1;
         }
-        .platform-container.initial {
-            flex-grow: 1;
-            justify-content: center;
+        .platform-container.hidden {
+            display: none;
         }
         .platform-title {
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: 700;
-            letter-spacing: 0.06em;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
             color: var(--text-3);
-            margin-bottom: 24px;
+            margin-bottom: 32px;
             text-align: center;
         }
         .os-cards {
             display: flex;
-            gap: 16px;
+            gap: 24px;
             flex-wrap: wrap;
             justify-content: center;
         }
@@ -169,14 +173,14 @@
             background: var(--surface);
             border: 2px solid var(--border);
             border-radius: var(--radius);
-            padding: 28px 24px;
+            padding: 32px 28px;
             cursor: pointer;
             transition: var(--transition);
             text-align: center;
             user-select: none;
-            min-width: 160px;
-            flex: 1 1 160px;
-            max-width: 200px;
+            min-width: 180px;
+            flex: 1 1 180px;
+            max-width: 220px;
         }
         .os-card:hover {
             border-color: var(--border-2);
@@ -191,21 +195,17 @@
             transform: translateY(-4px) !important;
         }
         .os-card__icon {
-            width: 56px;
-            height: 56px;
-            margin: 0 auto 14px;
+            font-size: 3rem;
+            color: #ffffffcc;
+            margin-bottom: 16px;
+            display: block;
         }
-        .os-card__icon svg {
-            width: 100%;
-            height: 100%;
-            fill: #ffffffcc;
-        }
-        .os-card--selected .os-card__icon svg {
-            fill: var(--accent-2);
+        .os-card--selected .os-card__icon {
+            color: var(--accent-2);
         }
         .os-card__name {
             font-weight: 700;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             letter-spacing: -0.01em;
         }
 
@@ -213,72 +213,113 @@
             display: none;
             flex-direction: column;
             width: 100%;
-            margin-top: 28px;
+            position: relative;
         }
         .store-content.visible {
             display: flex;
         }
 
-        .app-details {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 20px;
-        }
-        .app-logo {
-            width: 68px;
-            height: 68px;
-            border-radius: 16px;
-            object-fit: cover;
-            background: var(--surface-3);
-        }
-        .app-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .app-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin-bottom: 6px;
-        }
-        .app-desc {
-            font-size: 0.85rem;
+        .back-btn {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: none;
+            border: none;
             color: var(--text-2);
-            line-height: 1.5;
+            font-size: 1.6rem;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 50%;
+            transition: var(--transition);
+            z-index: 5;
+        }
+        .back-btn:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.05);
         }
 
-        .section-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            color: var(--text-3);
-            margin-bottom: 12px;
-            display: flex;
+        .store-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .store-app-icon {
+            width: 96px;
+            height: 96px;
+            border-radius: 24px;
+            object-fit: cover;
+            background: var(--surface-3);
+            margin-bottom: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        }
+        .store-app-title {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+        .store-app-short-desc {
+            font-size: 1rem;
+            color: var(--text-2);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .download-section {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .btn-download {
+            display: inline-flex;
             align-items: center;
             gap: 10px;
+            padding: 16px 36px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            color: #fff;
+            background: linear-gradient(135deg, var(--accent), #8b7cf0);
+            box-shadow: 0 8px 35px var(--accent-glow), 0 2px 8px rgba(0, 0, 0, 0.3);
+            transition: var(--transition-slow);
+            text-decoration: none;
         }
-        .section-title::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border-2);
-            border-radius: 1px;
+        .btn-download i {
+            font-size: 1.3rem;
+        }
+        .btn-download:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 14px 45px var(--accent-glow), 0 4px 14px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(135deg, #7c6cf0, #9b8ff8);
+        }
+        .btn-download:active {
+            transform: scale(0.96);
+            transition: 0.1s;
+        }
+        .btn-download__info {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 400;
+            opacity: 0.8;
+            letter-spacing: 0.03em;
         }
 
         .format-selector {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
+            justify-content: center;
         }
         .format-card {
             flex: 1;
-            min-width: 160px;
+            min-width: 140px;
+            max-width: 220px;
             background: var(--surface);
             border: 2px solid var(--border);
             border-radius: var(--radius);
-            padding: 18px 16px;
+            padding: 16px 12px;
             cursor: pointer;
             transition: var(--transition);
             text-align: center;
@@ -298,25 +339,18 @@
             transform: translateY(-3px) !important;
         }
         .format-card__icon {
-            width: 44px;
-            height: 44px;
-            margin: 0 auto 8px;
+            font-size: 2rem;
+            color: var(--text-2);
+            margin-bottom: 6px;
             display: block;
+            transition: color 0.3s;
         }
-        .format-card__icon svg {
-            width: 100%;
-            height: 100%;
-            stroke: var(--text-2);
-            stroke-width: 1.8;
-            fill: none;
-            transition: stroke 0.3s;
-        }
-        .format-card--selected .format-card__icon svg {
-            stroke: var(--cyan);
+        .format-card--selected .format-card__icon {
+            color: var(--cyan);
         }
         .format-card__name {
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.95rem;
             letter-spacing: -0.01em;
             margin-bottom: 2px;
         }
@@ -359,53 +393,69 @@
             font-weight: 700;
         }
 
-        .download-section {
-            text-align: center;
-            margin-top: 8px;
+        .screenshots {
+            display: flex;
+            overflow-x: auto;
+            gap: 14px;
+            padding-bottom: 10px;
+            margin-bottom: 28px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent) var(--surface-2);
         }
-        .btn-download {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 14px 30px;
+        .screenshots::-webkit-scrollbar {
+            height: 6px;
+        }
+        .screenshots::-webkit-scrollbar-track {
+            background: var(--surface-2);
+            border-radius: 3px;
+        }
+        .screenshots::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 3px;
+        }
+        .screenshot-img {
+            border-radius: var(--radius);
+            max-height: 300px;
+            flex-shrink: 0;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            border: 1px solid var(--border-2);
+        }
+
+        .store-details {
+            margin-top: 10px;
+            margin-bottom: 24px;
+        }
+        .store-details h3 {
             font-size: 1rem;
             font-weight: 700;
-            letter-spacing: 0.02em;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            color: #fff;
-            background: linear-gradient(135deg, var(--accent), #8b7cf0);
-            box-shadow: 0 8px 35px var(--accent-glow), 0 2px 8px rgba(0, 0, 0, 0.3);
-            transition: var(--transition-slow);
-            text-decoration: none;
+            margin: 20px 0 8px;
+            color: var(--text-2);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
-        .btn-download:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 14px 45px var(--accent-glow), 0 4px 14px rgba(0, 0, 0, 0.4);
-            background: linear-gradient(135deg, #7c6cf0, #9b8ff8);
+        .store-details p {
+            font-size: 0.9rem;
+            color: var(--text-2);
+            line-height: 1.7;
+            margin-bottom: 12px;
         }
-        .btn-download:active {
-            transform: scale(0.96);
-            transition: 0.1s;
+        .store-details ul {
+            list-style: none;
+            padding: 0;
+            font-size: 0.9rem;
+            color: var(--text-2);
         }
-        .btn-download__icon {
-            width: 22px;
-            height: 22px;
+        .store-details ul li {
+            padding: 6px 0 6px 28px;
+            position: relative;
+            border-bottom: 1px solid var(--border);
         }
-        .btn-download__icon svg {
-            width: 100%;
-            height: 100%;
-            stroke: #fff;
-            stroke-width: 2;
-            fill: none;
-        }
-        .btn-download__info {
-            display: block;
-            font-size: 0.65rem;
-            font-weight: 400;
-            opacity: 0.8;
-            letter-spacing: 0.03em;
+        .store-details ul li::before {
+            content: '•';
+            position: absolute;
+            left: 8px;
+            color: var(--accent-2);
+            font-weight: bold;
         }
 
         .footer {
@@ -414,7 +464,7 @@
             color: var(--text-3);
             font-size: 0.7rem;
             border-top: 1px solid var(--border);
-            margin-top: 24px;
+            margin-top: 12px;
         }
         .footer a {
             color: var(--accent-2);
@@ -443,16 +493,9 @@
         .toast--visible {
             transform: translateX(-50%) translateY(0);
         }
-        .toast__icon {
-            width: 18px;
-            height: 18px;
-        }
-        .toast__icon svg {
-            width: 100%;
-            height: 100%;
-            stroke: var(--success);
-            stroke-width: 2.5;
-            fill: none;
+        .toast__icon i {
+            color: var(--success);
+            font-size: 1.2rem;
         }
 
         .modal-overlay {
@@ -528,35 +571,33 @@
         }
 
         @media (max-width: 640px) {
-            .main-container {
-                padding: 16px;
+            body {
+                padding: 24px 16px;
             }
             .os-card {
-                padding: 20px 16px;
+                padding: 24px 16px;
                 min-width: 140px;
             }
             .os-card__icon {
-                width: 44px;
-                height: 44px;
-                margin-bottom: 10px;
+                font-size: 2.4rem;
             }
             .os-card__name {
-                font-size: 1rem;
+                font-size: 1.1rem;
             }
-            .app-details {
-                flex-direction: column;
-                text-align: center;
+            .store-app-icon {
+                width: 72px;
+                height: 72px;
+                border-radius: 18px;
             }
-            .app-logo {
-                width: 56px;
-                height: 56px;
+            .store-app-title {
+                font-size: 1.6rem;
             }
             .format-selector {
                 flex-direction: column;
+                align-items: center;
             }
-            .btn-download {
-                width: 100%;
-                justify-content: center;
+            .format-card {
+                max-width: 260px;
             }
         }
     </style>
@@ -569,83 +610,70 @@
     <div class="grid-lines"></div>
 
     <div class="main-container">
-        <div class="platform-container initial" id="platformContainer">
+        <div class="platform-container" id="platformContainer">
             <h2 class="platform-title">Выберите платформу</h2>
             <div class="os-cards" id="osCards">
                 <div class="os-card" data-os="windows">
-                    <div class="os-card__icon">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M3 12h8V4H3v8zm0 2v6h8v-6H3zm10-2h8V4h-8v8zm0 2v6h8v-6h-8z"/>
-                        </svg>
-                    </div>
+                    <span class="os-card__icon"><i class="fab fa-windows"></i></span>
                     <div class="os-card__name">Windows</div>
                 </div>
                 <div class="os-card" data-os="android">
-                    <div class="os-card__icon">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M6 18c0 .55.45 1 1 1h1v3.5a1.5 1.5 0 003 0V19h2v3.5a1.5 1.5 0 003 0V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v7c0 .83.67 1.5 1.5 1.5S5 17.33 5 16.5v-7C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5zm-4.97-5.84l1.62-2.8c.18-.3.07-.69-.23-.86-.3-.18-.69-.07-.86.23l-1.64 2.84C14.15 2.26 13.1 2 12 2c-1.1 0-2.15.26-3.08.73L7.28.73c-.17-.3-.56-.41-.86-.23-.3.18-.41.56-.23.86l1.62 2.8C5.18 5.61 3.5 7.88 3.03 10.5h17.94c-.47-2.62-2.15-4.89-4.44-6.34zM12 5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
-                        </svg>
-                    </div>
+                    <span class="os-card__icon"><i class="fab fa-android"></i></span>
                     <div class="os-card__name">Android</div>
                 </div>
             </div>
         </div>
 
         <div class="store-content" id="storeContent">
-            <div class="app-details">
-                <img src="Logo.png" alt="Dynamic Browser" class="app-logo" id="appLogo">
-                <div class="app-info">
-                    <h2 class="app-title" id="appTitle">Dynamic Browser</h2>
-                    <p class="app-desc" id="appDesc"></p>
-                </div>
-            </div>
+            <button class="back-btn" id="backBtn"><i class="fas fa-arrow-left"></i></button>
 
-            <div id="formatsSection" style="display: none;">
-                <h2 class="section-title">Формат загрузки</h2>
-                <div class="format-selector" id="formatSelectorWindows">
-                    <div class="format-card format-card--selected" data-format="exe">
-                        <div class="format-card__icon">
-                            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 16V8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                                <line x1="12" y1="22.08" x2="12" y2="12" />
-                            </svg>
-                        </div>
-                        <div class="format-card__name">EXE — Установщик</div>
-                        <div class="format-card__desc">Автоматическая установка с мастером настройки</div>
-                        <span class="format-card__size">128 MB</span>
-                        <div class="format-card__check"></div>
-                    </div>
-                    <div class="format-card" data-format="zip">
-                        <div class="format-card__icon">
-                            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 8v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8" />
-                                <polyline points="16 12 12 16 8 12" />
-                                <line x1="12" y1="16" x2="12" y2="4" />
-                            </svg>
-                        </div>
-                        <div class="format-card__name">ZIP — Портативная</div>
-                        <div class="format-card__desc">Ручная распаковка, не требует прав администратора</div>
-                        <span class="format-card__size">142 MB</span>
-                        <div class="format-card__check"></div>
-                    </div>
-                </div>
+            <div class="store-header">
+                <img src="Logo.png" alt="Dynamic Browser" class="store-app-icon" id="appLogo">
+                <h2 class="store-app-title" id="appTitle">Dynamic Browser</h2>
+                <p class="store-app-short-desc" id="appShortDesc"></p>
             </div>
 
             <div class="download-section">
+                <div id="formatsSection" style="display: none;">
+                    <div class="format-selector" id="formatSelectorWindows">
+                        <div class="format-card format-card--selected" data-format="exe">
+                            <span class="format-card__icon"><i class="fas fa-file-code"></i></span>
+                            <div class="format-card__name">EXE — Установщик</div>
+                            <div class="format-card__desc">Автоматическая установка с мастером</div>
+                            <span class="format-card__size">128 MB</span>
+                            <div class="format-card__check"></div>
+                        </div>
+                        <div class="format-card" data-format="zip">
+                            <span class="format-card__icon"><i class="fas fa-file-archive"></i></span>
+                            <div class="format-card__name">ZIP — Портативная</div>
+                            <div class="format-card__desc">Ручная распаковка, без прав администратора</div>
+                            <span class="format-card__size">142 MB</span>
+                            <div class="format-card__check"></div>
+                        </div>
+                    </div>
+                </div>
                 <button class="btn-download" id="btnDownload" onclick="handleDownload()">
-                    <span class="btn-download__icon">
-                        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" y1="15" x2="12" y2="3" />
-                        </svg>
-                    </span>
+                    <i class="fas fa-download"></i>
                     <span>
                         Скачать Dynamic Browser
                         <span class="btn-download__info" id="downloadInfo"></span>
                     </span>
                 </button>
+            </div>
+
+            <div class="screenshots">
+                <img src="https://via.placeholder.com/300x200/6c5ce7/ffffff?text=Screenshot+1" class="screenshot-img" alt="Скриншот 1">
+                <img src="https://via.placeholder.com/300x200/6c5ce7/ffffff?text=Screenshot+2" class="screenshot-img" alt="Скриншот 2">
+                <img src="https://via.placeholder.com/300x200/6c5ce7/ffffff?text=Screenshot+3" class="screenshot-img" alt="Скриншот 3">
+            </div>
+
+            <div class="store-details">
+                <h3>Описание</h3>
+                <p id="fullDesc"></p>
+                <h3>Версия</h3>
+                <p>3.2.1</p>
+                <h3>Права доступа</h3>
+                <ul id="permissionsList"></ul>
             </div>
 
             <footer class="footer">
@@ -668,11 +696,7 @@
     </div>
 
     <div class="toast" id="toast">
-        <span class="toast__icon">
-            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-            </svg>
-        </span>
+        <span class="toast__icon"><i class="fas fa-check"></i></span>
         <span id="toastMessage">Загрузка началась!</span>
     </div>
 
@@ -685,17 +709,21 @@
         const appData = {
             windows: {
                 title: 'Dynamic Browser для Windows',
-                desc: 'Быстрый, безопасный и современный браузер для Windows с поддержкой последних веб-технологий.',
+                shortDesc: 'Быстрый, безопасный и современный браузер.',
+                fullDesc: 'Dynamic Browser — это новый уровень веб-сёрфинга. Мгновенная загрузка страниц, встроенная защита от трекеров, удобное управление вкладками и поддержка всех современных веб-стандартов. Идеально подходит для работы, учёбы и развлечений.',
                 formats: ['exe', 'zip'],
                 sizes: { exe: '128 MB', zip: '142 MB' },
-                defaultFormat: 'exe'
+                defaultFormat: 'exe',
+                permissions: ['Интернет-соединение', 'Доступ к файловой системе (при сохранении файлов)', 'Геолокация (по желанию)']
             },
             android: {
                 title: 'Dynamic Browser для Android',
-                desc: 'Лёгкий и энергоэффективный браузер для вашего Android-устройства с синхронизацией.',
+                shortDesc: 'Лёгкий и энергоэффективный браузер.',
+                fullDesc: 'Dynamic Browser для Android обеспечивает плавную работу даже на слабых устройствах. Экономия трафика, ночной режим, блокировка рекламы и синхронизация с облаком. Ваши закладки и пароли всегда под рукой.',
                 formats: ['apk'],
                 sizes: { apk: '95 MB' },
-                defaultFormat: 'apk'
+                defaultFormat: 'apk',
+                permissions: ['Интернет-соединение', 'Доступ к хранилищу (для загрузок)', 'Геолокация (по желанию)', 'Управление уведомлениями']
             }
         };
 
@@ -704,24 +732,29 @@
         const formatsSection = document.getElementById('formatsSection');
         const formatWindows = document.getElementById('formatSelectorWindows');
         const appTitle = document.getElementById('appTitle');
-        const appDesc = document.getElementById('appDesc');
+        const appShortDesc = document.getElementById('appShortDesc');
+        const fullDesc = document.getElementById('fullDesc');
+        const permissionsList = document.getElementById('permissionsList');
         const downloadInfo = document.getElementById('downloadInfo');
         const osCards = document.querySelectorAll('.os-card');
+        const backBtn = document.getElementById('backBtn');
 
         function updateUI() {
             if (!state.selectedOS) {
-                platformContainer.classList.add('initial');
+                platformContainer.classList.remove('hidden');
                 storeContent.classList.remove('visible');
-                formatsSection.style.display = 'none';
                 return;
             }
 
-            platformContainer.classList.remove('initial');
+            platformContainer.classList.add('hidden');
             storeContent.classList.add('visible');
 
             const osData = appData[state.selectedOS];
             appTitle.textContent = osData.title;
-            appDesc.textContent = osData.desc;
+            appShortDesc.textContent = osData.shortDesc;
+            fullDesc.textContent = osData.fullDesc;
+
+            permissionsList.innerHTML = osData.permissions.map(p => `<li>${p}</li>`).join('');
 
             if (state.selectedOS === 'windows') {
                 formatsSection.style.display = 'block';
@@ -747,6 +780,12 @@
                 state.selectedFormat = appData[os].defaultFormat;
                 updateUI();
             });
+        });
+
+        backBtn.addEventListener('click', () => {
+            state.selectedOS = null;
+            osCards.forEach(c => c.classList.remove('os-card--selected'));
+            updateUI();
         });
 
         formatWindows.addEventListener('click', function(e) {
