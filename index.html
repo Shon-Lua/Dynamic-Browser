@@ -736,49 +736,54 @@
 
         let currentInstruction = null;
 
-        async function loadInstruction(os) {
+        async function safeFetchText(url) {
             try {
-                const response = await fetch(`${os}/instruction.json`);
-                if (response.ok) {
-                    const data = await response.json();
-                    return data;
-                }
-            } catch (e) {}
-            return null;
+                const response = await fetch(url);
+                if (!response.ok) return null;
+                return await response.text();
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function safeFetchJson(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) return null;
+                return await response.json();
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function loadInstruction(os) {
+            const data = await safeFetchJson(`${os}/instruction.json`);
+            return data;
         }
 
         async function loadDescriptionFromPath(basePath, descPath) {
-            try {
-                const response = await fetch(`${basePath}/${descPath}`);
-                if (response.ok) {
-                    return await response.text();
-                }
-            } catch (e) {}
-            return appData[basePath].fullDesc || 'Описание отсутствует.';
+            if (!descPath) return null;
+            const text = await safeFetchText(`${basePath}/${descPath}`);
+            return text;
         }
 
         async function loadScreenshotsFromPaths(basePath, imagesObj) {
             const imageUrls = [];
-            if (imagesObj && typeof imagesObj === 'object') {
-                const keys = Object.keys(imagesObj).sort((a, b) => {
-                    const numA = parseInt(a.match(/\d+/)?.[0] || 0);
-                    const numB = parseInt(b.match(/\d+/)?.[0] || 0);
-                    return numA - numB;
+            if (!imagesObj || typeof imagesObj !== 'object') return imageUrls;
+            const keys = Object.keys(imagesObj).sort((a, b) => {
+                const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+                const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+                return numA - numB;
+            });
+            for (const key of keys) {
+                const src = `${basePath}/${imagesObj[key]}`;
+                const loaded = await new Promise(resolve => {
+                    const img = new Image();
+                    img.onload = () => resolve(true);
+                    img.onerror = () => resolve(false);
+                    img.src = src;
                 });
-                for (const key of keys) {
-                    const src = `${basePath}/${imagesObj[key]}`;
-                    try {
-                        const img = new Image();
-                        await new Promise((resolve, reject) => {
-                            img.onload = () => {
-                                imageUrls.push(src);
-                                resolve();
-                            };
-                            img.onerror = reject;
-                            img.src = src;
-                        });
-                    } catch (e) {}
-                }
+                if (loaded) imageUrls.push(src);
             }
             return imageUrls;
         }
@@ -813,12 +818,13 @@
             appShortDesc.textContent = osData.shortDesc;
 
             currentInstruction = await loadInstruction(state.selectedOS);
-            let descPath = '';
+
+            let descText = osData.fullDesc || '';
             if (currentInstruction && currentInstruction.desc) {
-                descPath = currentInstruction.desc;
+                const fetchedDesc = await loadDescriptionFromPath(state.selectedOS, currentInstruction.desc);
+                if (fetchedDesc) descText = fetchedDesc;
             }
-            const desc = await loadDescriptionFromPath(state.selectedOS, descPath);
-            fullDesc.textContent = desc;
+            fullDesc.textContent = descText;
 
             permissionsList.innerHTML = osData.permissions.map(p => `<li>${p}</li>`).join('');
 
@@ -851,7 +857,7 @@
                 this.classList.add('os-card--selected');
                 state.selectedOS = os;
                 state.selectedFormat = appData[os].defaultFormat;
-                updateUI();
+                updateUI().catch(err => console.error('Update UI failed:', err));
             });
         });
 
@@ -859,7 +865,7 @@
             state.selectedOS = null;
             osCards.forEach(c => c.classList.remove('os-card--selected'));
             currentInstruction = null;
-            updateUI();
+            updateUI().catch(err => console.error('Update UI failed:', err));
         });
 
         formatWindows.addEventListener('click', function(e) {
@@ -868,7 +874,7 @@
             this.querySelectorAll('.format-card').forEach(c => c.classList.remove('format-card--selected'));
             card.classList.add('format-card--selected');
             state.selectedFormat = card.dataset.format;
-            updateUI();
+            updateUI().catch(err => console.error('Update UI failed:', err));
         });
 
         function showToast(message) {
@@ -888,7 +894,6 @@
                     return currentInstruction.app;
                 }
             }
-            const osData = appData[state.selectedOS];
             const version = '3.2.1';
             if (state.selectedOS === 'windows') {
                 return state.selectedFormat === 'exe' ? `dynamic-browser-setup-${version}.exe` : `dynamic-browser-portable-${version}.zip`;
@@ -968,7 +973,7 @@
             }
         });
 
-        updateUI();
+        updateUI().catch(err => console.error('Initial UI update failed:', err));
     </script>
 </body>
 </html>
