@@ -177,138 +177,96 @@
             border-radius: 1px;
         }
 
-        .version-cards {
+        .os-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            grid-template-columns: 1fr 1fr;
             gap: 10px;
-            margin-bottom: 14px;
+            margin-bottom: 16px;
             flex-shrink: 0;
         }
-        .version-card {
+        .os-card {
             background: var(--surface);
             border: 2px solid var(--border);
             border-radius: var(--radius);
-            padding: 16px 18px;
+            padding: 20px 16px;
             cursor: pointer;
             transition: var(--transition);
-            position: relative;
-            overflow: hidden;
+            text-align: center;
             user-select: none;
+            position: relative;
         }
-        .version-card:hover {
+        .os-card:hover {
             border-color: var(--border-2);
             background: var(--surface-2);
             transform: translateY(-2px);
             box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
         }
-        .version-card--selected {
+        .os-card--selected {
             border-color: var(--accent) !important;
             background: var(--surface-2) !important;
             box-shadow: 0 0 0 6px var(--accent-glow), 0 12px 40px rgba(0, 0, 0, 0.4) !important;
             transform: translateY(-3px) !important;
         }
-        .version-card__badge {
-            display: inline-block;
-            font-size: 0.65rem;
+        .os-card__icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 10px;
+        }
+        .os-card__icon svg {
+            width: 100%;
+            height: 100%;
+            fill: #ffffffcc;
+        }
+        .os-card--selected .os-card__icon svg {
+            fill: var(--accent-2);
+        }
+        .os-card__name {
             font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 3px 8px;
-            border-radius: 20px;
-            margin-bottom: 8px;
+            font-size: 1.1rem;
+            letter-spacing: -0.01em;
         }
-        .badge--latest {
-            background: #2ed57322;
-            color: var(--success);
-            border: 1px solid #2ed57333;
+
+        .app-details {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+            flex-shrink: 0;
         }
-        .badge--stable {
-            background: #ffa50222;
-            color: var(--warning);
-            border: 1px solid #ffa50233;
+        .app-logo {
+            width: 68px;
+            height: 68px;
+            border-radius: 16px;
+            object-fit: cover;
+            background: var(--surface-3);
         }
-        .badge--beta {
-            background: #ff6b6b22;
-            color: var(--danger);
-            border: 1px solid #ff6b6b33;
+        .app-info {
+            flex: 1;
+            min-width: 0;
         }
-        .version-card__version {
+        .app-title {
             font-size: 1.3rem;
             font-weight: 700;
             letter-spacing: -0.02em;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
-        .version-card__date {
-            font-size: 0.7rem;
-            color: var(--text-3);
+        .app-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 0.8rem;
+            color: var(--text-2);
             margin-bottom: 6px;
         }
-        .version-card__changelog {
-            font-size: 0.75rem;
+        .app-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .app-desc {
+            font-size: 0.85rem;
             color: var(--text-2);
             line-height: 1.5;
-        }
-        .version-card__changelog li {
-            margin-bottom: 2px;
-            list-style: none;
-            padding-left: 14px;
-            position: relative;
-        }
-        .version-card__changelog li::before {
-            content: '•';
-            position: absolute;
-            left: 0;
-            color: var(--accent-2);
-        }
-        .version-card__radio {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 2px solid var(--border-2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: var(--transition);
-        }
-        .version-card--selected .version-card__radio {
-            border-color: var(--accent);
-            background: var(--accent);
-        }
-        .version-card--selected .version-card__radio::after {
-            content: '✓';
-            color: #fff;
-            font-size: 0.65rem;
-            font-weight: 700;
-        }
-
-        .os-badge {
-            position: absolute;
-            bottom: 8px;
-            right: 8px;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.07);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2;
-            transition: var(--transition);
-        }
-        .os-badge svg {
-            width: 12px;
-            height: 12px;
-            fill: #ffffffcc;
-        }
-        .version-card--selected .os-badge {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .format-selector {
@@ -625,8 +583,17 @@
                 font-size: 0.8rem;
                 margin-bottom: 6px;
             }
-            .version-cards {
-                display: none;
+            .os-cards {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .app-details {
+                flex-direction: column;
+                text-align: center;
+            }
+            .app-logo {
+                width: 56px;
+                height: 56px;
             }
             .format-selector {
                 display: none;
@@ -662,6 +629,24 @@
                 font-size: 0.65rem;
                 margin-bottom: 4px;
                 gap: 6px;
+            }
+            .os-card {
+                padding: 12px 10px;
+            }
+            .os-card__icon {
+                width: 36px;
+                height: 36px;
+                margin-bottom: 6px;
+            }
+            .os-card__name {
+                font-size: 0.9rem;
+            }
+            .app-logo {
+                width: 44px;
+                height: 44px;
+            }
+            .app-title {
+                font-size: 1rem;
             }
             .mobile-select {
                 padding: 10px 12px;
@@ -705,62 +690,39 @@
             <h1 class="hero__title">Dynamic Browser</h1>
         </section>
 
-        <section id="versions">
-            <h2 class="section-title">Выберите версию</h2>
-            <div class="version-cards" id="versionCards">
-                <div class="version-card version-card--selected" data-version="3.2.1" data-date="2026-06-04" data-zip-size="142 MB" data-exe-size="128 MB">
-                    <span class="os-badge" title="Windows">
+        <section id="osSelection">
+            <h2 class="section-title">Выберите платформу</h2>
+            <div class="os-cards" id="osCards">
+                <div class="os-card os-card--selected" data-os="windows">
+                    <div class="os-card__icon">
                         <svg viewBox="0 0 24 24"><path d="M3 5.47v4.16h4.74V5.47H3zm0 5.37v4.16h4.74v-4.16H3zm5.89 0v4.16h4.74v-4.16H8.89zm0-5.37v4.16h4.74V5.47H8.89zm5.88 0v4.16H20V5.47h-5.23zm0 5.37v4.16H20v-4.16h-5.23z"/></svg>
-                    </span>
-                    <span class="version-card__badge badge--latest">Последняя</span>
-                    <div class="version-card__version">v3.2.1</div>
-                    <div class="version-card__date">4 июня 2026</div>
-                    <ul class="version-card__changelog">
-                        <li>Ускоренный рендеринг страниц</li>
-                        <li>Новый менеджер вкладок</li>
-                        <li>Исправлены уязвимости</li>
-                    </ul>
-                    <div class="version-card__radio"></div>
+                    </div>
+                    <div class="os-card__name">Windows</div>
                 </div>
-                <div class="version-card" data-version="3.2.0" data-date="2026-05-12" data-zip-size="140 MB" data-exe-size="126 MB">
-                    <span class="os-badge" title="Windows">
-                        <svg viewBox="0 0 24 24"><path d="M3 5.47v4.16h4.74V5.47H3zm0 5.37v4.16h4.74v-4.16H3zm5.89 0v4.16h4.74v-4.16H8.89zm0-5.37v4.16h4.74V5.47H8.89zm5.88 0v4.16H20V5.47h-5.23zm0 5.37v4.16H20v-4.16h-5.23z"/></svg>
-                    </span>
-                    <span class="version-card__badge badge--stable">Стабильная</span>
-                    <div class="version-card__version">v3.2.0</div>
-                    <div class="version-card__date">12 мая 2026</div>
-                    <ul class="version-card__changelog">
-                        <li>Тёмная тема по умолчанию</li>
-                        <li>Поддержка WebAssembly 2.0</li>
-                        <li>Улучшена синхронизация</li>
-                    </ul>
-                    <div class="version-card__radio"></div>
-                </div>
-                <div class="version-card" data-version="3.1.5" data-date="2026-03-28" data-zip-size="138 MB" data-exe-size="124 MB">
-                    <span class="os-badge" title="Windows">
-                        <svg viewBox="0 0 24 24"><path d="M3 5.47v4.16h4.74V5.47H3zm0 5.37v4.16h4.74v-4.16H3zm5.89 0v4.16h4.74v-4.16H8.89zm0-5.37v4.16h4.74V5.47H8.89zm5.88 0v4.16H20V5.47h-5.23zm0 5.37v4.16H20v-4.16h-5.23z"/></svg>
-                    </span>
-                    <span class="version-card__badge badge--beta">LTS</span>
-                    <div class="version-card__version">v3.1.5</div>
-                    <div class="version-card__date">28 марта 2026</div>
-                    <ul class="version-card__changelog">
-                        <li>Долгосрочная поддержка</li>
-                        <li>Стабильность корп. среда</li>
-                        <li>Патчи безопасности</li>
-                    </ul>
-                    <div class="version-card__radio"></div>
+                <div class="os-card" data-os="android">
+                    <div class="os-card__icon">
+                        <svg viewBox="0 0 24 24"><path d="M6 18c0 .55.45 1 1 1h1v3.5a1.5 1.5 0 003 0V19h2v3.5a1.5 1.5 0 003 0V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v7c0 .83.67 1.5 1.5 1.5S5 17.33 5 16.5v-7C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5zm-4.97-5.84l1.62-2.8c.18-.3.07-.69-.23-.86-.3-.18-.69-.07-.86.23l-1.64 2.84C14.15 2.26 13.1 2 12 2c-1.1 0-2.15.26-3.08.73L7.28.73c-.17-.3-.56-.41-.86-.23-.3.18-.41.56-.23.86l1.62 2.8C5.18 5.61 3.5 7.88 3.03 10.5h17.94c-.47-2.62-2.15-4.89-4.44-6.34zM12 5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/></svg>
+                    </div>
+                    <div class="os-card__name">Android</div>
                 </div>
             </div>
-            <select class="mobile-select" id="versionMobileSelect">
-                <option value="3.2.1" selected>v3.2.1 — Последняя (4 июня 2026)</option>
-                <option value="3.2.0">v3.2.0 — Стабильная (12 мая 2026)</option>
-                <option value="3.1.5">v3.1.5 — LTS (28 марта 2026)</option>
-            </select>
+        </section>
+
+        <section id="appDetails" class="app-details">
+            <img src="Logo.png" alt="Dynamic Browser" class="app-logo" id="appLogo">
+            <div class="app-info">
+                <h2 class="app-title" id="appTitle">Dynamic Browser для Windows</h2>
+                <div class="app-meta">
+                    <span class="app-version">v3.2.1</span>
+                    <span class="app-rating">★★★★★ 4.9</span>
+                </div>
+                <p class="app-desc" id="appDesc">Быстрый, безопасный и современный браузер для Windows с поддержкой последних веб-технологий.</p>
+            </div>
         </section>
 
         <section id="formats">
-            <h2 class="section-title">Формат файла</h2>
-            <div class="format-selector" id="formatSelector">
+            <h2 class="section-title">Формат загрузки</h2>
+            <div class="format-selector" id="formatSelectorWindows">
                 <div class="format-card format-card--selected" data-format="exe">
                     <div class="format-card__icon">
                         <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
@@ -771,7 +733,7 @@
                     </div>
                     <div class="format-card__name">EXE — Установщик</div>
                     <div class="format-card__desc">Автоматическая установка с мастером настройки</div>
-                    <span class="format-card__size" id="exeSize">128 MB</span>
+                    <span class="format-card__size">128 MB</span>
                     <div class="format-card__check"></div>
                 </div>
                 <div class="format-card" data-format="zip">
@@ -784,13 +746,31 @@
                     </div>
                     <div class="format-card__name">ZIP — Портативная</div>
                     <div class="format-card__desc">Ручная распаковка, не требует прав администратора</div>
-                    <span class="format-card__size" id="zipSize">142 MB</span>
+                    <span class="format-card__size">142 MB</span>
                     <div class="format-card__check"></div>
                 </div>
             </div>
-            <select class="mobile-select" id="formatMobileSelect">
+            <div class="format-selector" id="formatSelectorAndroid" style="display: none;">
+                <div class="format-card format-card--selected" data-format="apk">
+                    <div class="format-card__icon">
+                        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                            <line x1="12" y1="22.08" x2="12" y2="12" />
+                        </svg>
+                    </div>
+                    <div class="format-card__name">APK — Приложение</div>
+                    <div class="format-card__desc">Установочный файл для Android</div>
+                    <span class="format-card__size">95 MB</span>
+                    <div class="format-card__check"></div>
+                </div>
+            </div>
+            <select class="mobile-select" id="formatMobileWindows">
                 <option value="exe" selected>EXE — Установщик (128 MB)</option>
                 <option value="zip">ZIP — Портативная (142 MB)</option>
+            </select>
+            <select class="mobile-select" id="formatMobileAndroid" style="display: none;">
+                <option value="apk" selected>APK — Приложение (95 MB)</option>
             </select>
         </section>
 
@@ -839,74 +819,105 @@
 
     <script>
         const state = {
-            selectedVersion: '3.2.1',
-            selectedFormat: 'exe',
-            versionData: {}
+            selectedOS: 'windows',
+            selectedFormat: 'exe'
         };
 
-        document.querySelectorAll('.version-card').forEach(card => {
-            const v = card.dataset.version;
-            state.versionData[v] = {
-                date: card.dataset.date,
-                zipSize: card.dataset.zipSize,
-                exeSize: card.dataset.exeSize,
-            };
-        });
+        const appData = {
+            windows: {
+                title: 'Dynamic Browser для Windows',
+                desc: 'Быстрый, безопасный и современный браузер для Windows с поддержкой последних веб-технологий.',
+                defaultFormat: 'exe',
+                formats: ['exe', 'zip'],
+                sizes: { exe: '128 MB', zip: '142 MB' }
+            },
+            android: {
+                title: 'Dynamic Browser для Android',
+                desc: 'Лёгкий и энергоэффективный браузер для вашего Android-устройства с синхронизацией.',
+                defaultFormat: 'apk',
+                formats: ['apk'],
+                sizes: { apk: '95 MB' }
+            }
+        };
 
         function updateUI() {
-            const vd = state.versionData[state.selectedVersion];
-            const sizeKey = state.selectedFormat === 'exe' ? 'exeSize' : 'zipSize';
-            const size = vd ? vd[sizeKey] : '—';
-            document.getElementById('downloadInfo').textContent = `v${state.selectedVersion} • ${state.selectedFormat.toUpperCase()} • ${size}`;
-            if (vd) {
-                document.getElementById('exeSize').textContent = vd.exeSize;
-                document.getElementById('zipSize').textContent = vd.zipSize;
+            const osData = appData[state.selectedOS];
+            document.getElementById('appTitle').textContent = osData.title;
+            document.getElementById('appDesc').textContent = osData.desc;
+
+            const formatWindows = document.getElementById('formatSelectorWindows');
+            const formatAndroid = document.getElementById('formatSelectorAndroid');
+            const mobileWindows = document.getElementById('formatMobileWindows');
+            const mobileAndroid = document.getElementById('formatMobileAndroid');
+
+            if (state.selectedOS === 'windows') {
+                formatWindows.style.display = 'flex';
+                formatAndroid.style.display = 'none';
+                mobileWindows.style.display = 'block';
+                mobileAndroid.style.display = 'none';
+            } else {
+                formatWindows.style.display = 'none';
+                formatAndroid.style.display = 'flex';
+                mobileWindows.style.display = 'none';
+                mobileAndroid.style.display = 'block';
+                state.selectedFormat = 'apk';
             }
-            const versionMobile = document.getElementById('versionMobileSelect');
-            if (versionMobile.value !== state.selectedVersion) {
-                versionMobile.value = state.selectedVersion;
+
+            document.querySelectorAll('.format-card').forEach(card => card.classList.remove('format-card--selected'));
+            if (state.selectedOS === 'windows') {
+                const selectedCard = document.querySelector(`#formatSelectorWindows .format-card[data-format="${state.selectedFormat}"]`);
+                if (selectedCard) selectedCard.classList.add('format-card--selected');
+                if (mobileWindows.value !== state.selectedFormat) mobileWindows.value = state.selectedFormat;
+            } else {
+                const apkCard = document.querySelector('#formatSelectorAndroid .format-card[data-format="apk"]');
+                if (apkCard) apkCard.classList.add('format-card--selected');
+                if (mobileAndroid.value !== 'apk') mobileAndroid.value = 'apk';
             }
-            const formatMobile = document.getElementById('formatMobileSelect');
-            if (formatMobile.value !== state.selectedFormat) {
-                formatMobile.value = state.selectedFormat;
-            }
+
+            const size = osData.sizes[state.selectedFormat];
+            document.getElementById('downloadInfo').textContent = `v3.2.1 • ${state.selectedFormat.toUpperCase()} • ${size}`;
         }
 
-        document.getElementById('versionCards').addEventListener('click', function(e) {
-            const card = e.target.closest('.version-card');
+        document.getElementById('osCards').addEventListener('click', function(e) {
+            const card = e.target.closest('.os-card');
             if (!card) return;
-            this.querySelectorAll('.version-card').forEach(c => c.classList.remove('version-card--selected'));
-            card.classList.add('version-card--selected');
-            state.selectedVersion = card.dataset.version;
-            updateUI();
-        });
-
-        document.getElementById('versionMobileSelect').addEventListener('change', function() {
-            state.selectedVersion = this.value;
-            document.querySelectorAll('.version-card').forEach(c => c.classList.remove('version-card--selected'));
-            const selectedCard = document.querySelector(`.version-card[data-version="${this.value}"]`);
-            if (selectedCard) {
-                selectedCard.classList.add('version-card--selected');
+            this.querySelectorAll('.os-card').forEach(c => c.classList.remove('os-card--selected'));
+            card.classList.add('os-card--selected');
+            const newOS = card.dataset.os;
+            if (state.selectedOS !== newOS) {
+                state.selectedOS = newOS;
+                state.selectedFormat = appData[newOS].defaultFormat;
             }
             updateUI();
         });
 
-        document.getElementById('formatSelector').addEventListener('click', function(e) {
+        document.getElementById('formatSelectorWindows').addEventListener('click', function(e) {
             const card = e.target.closest('.format-card');
-            if (!card) return;
+            if (!card || state.selectedOS !== 'windows') return;
             this.querySelectorAll('.format-card').forEach(c => c.classList.remove('format-card--selected'));
             card.classList.add('format-card--selected');
             state.selectedFormat = card.dataset.format;
             updateUI();
         });
 
-        document.getElementById('formatMobileSelect').addEventListener('change', function() {
+        document.getElementById('formatSelectorAndroid').addEventListener('click', function(e) {
+            const card = e.target.closest('.format-card');
+            if (!card || state.selectedOS !== 'android') return;
+            this.querySelectorAll('.format-card').forEach(c => c.classList.remove('format-card--selected'));
+            card.classList.add('format-card--selected');
+            state.selectedFormat = 'apk';
+            updateUI();
+        });
+
+        document.getElementById('formatMobileWindows').addEventListener('change', function() {
+            if (state.selectedOS !== 'windows') return;
             state.selectedFormat = this.value;
-            document.querySelectorAll('.format-card').forEach(c => c.classList.remove('format-card--selected'));
-            const selectedCard = document.querySelector(`.format-card[data-format="${this.value}"]`);
-            if (selectedCard) {
-                selectedCard.classList.add('format-card--selected');
-            }
+            updateUI();
+        });
+
+        document.getElementById('formatMobileAndroid').addEventListener('change', function() {
+            if (state.selectedOS !== 'android') return;
+            state.selectedFormat = 'apk';
             updateUI();
         });
 
@@ -919,14 +930,19 @@
         }
 
         function handleDownload() {
-            const vd = state.versionData[state.selectedVersion];
-            const sizeKey = state.selectedFormat === 'exe' ? 'exeSize' : 'zipSize';
-            const size = vd ? vd[sizeKey] : '—';
-            const ext = state.selectedFormat === 'exe' ? 'exe' : 'zip';
-            const fileName = state.selectedFormat === 'exe' ? `dynamic-browser-setup-${state.selectedVersion}.exe` : `dynamic-browser-portable-${state.selectedVersion}.zip`;
-            const link = `https://dynamicbrowser.app/dl/v${state.selectedVersion}/${fileName}`;
+            const osData = appData[state.selectedOS];
+            const size = osData.sizes[state.selectedFormat];
+            const version = '3.2.1';
+            let fileName, link;
 
-            showToast(`Загрузка Dynamic Browser v${state.selectedVersion} (${ext.toUpperCase()}, ${size}) началась!`);
+            if (state.selectedOS === 'windows') {
+                fileName = state.selectedFormat === 'exe' ? `dynamic-browser-setup-${version}.exe` : `dynamic-browser-portable-${version}.zip`;
+            } else {
+                fileName = `dynamic-browser-${version}.apk`;
+            }
+            link = `https://dynamicbrowser.app/dl/v${version}/${fileName}`;
+
+            showToast(`Загрузка Dynamic Browser v${version} (${state.selectedFormat.toUpperCase()}, ${size}) началась!`);
 
             const btn = document.getElementById('btnDownload');
             btn.style.transform = 'scale(0.94)';
