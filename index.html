@@ -748,27 +748,51 @@
         }
 
         async function loadScreenshots(os) {
-            const imgExtensions = ['png', 'jpg', 'jpeg', 'webp'];
-            let loadedImages = [];
-            for (let i = 1; i <= 20; i++) {
-                let found = false;
-                for (const ext of imgExtensions) {
-                    const url = `${os}/Screenshots/${i}.${ext}`;
-                    try {
-                        const img = new Image();
-                        await new Promise((resolve, reject) => {
-                            img.onload = () => {
-                                loadedImages.push(url);
-                                found = true;
-                                resolve();
-                            };
-                            img.onerror = () => reject();
-                            img.src = url;
-                        });
-                        if (found) break;
-                    } catch (e) {}
+            const loadedImages = [];
+            if (os === 'android') {
+                try {
+                    const instrResp = await fetch('Android/instruction.json');
+                    if (instrResp.ok) {
+                        const data = await instrResp.json();
+                        const files = data.files || {};
+                        for (const key of Object.keys(files)) {
+                            if (key.startsWith('Image_')) {
+                                const filename = files[key];
+                                const src = `Android/Screenshots/${filename}`;
+                                try {
+                                    await new Promise((resolve, reject) => {
+                                        const img = new Image();
+                                        img.onload = () => { loadedImages.push(src); resolve(); };
+                                        img.onerror = () => reject();
+                                        img.src = src;
+                                    });
+                                } catch (e) {}
+                            }
+                        }
+                    }
+                } catch (e) {}
+            } else {
+                const imgExtensions = ['png', 'jpg', 'jpeg', 'webp'];
+                for (let i = 1; i <= 20; i++) {
+                    let found = false;
+                    for (const ext of imgExtensions) {
+                        const url = `${os}/Screenshots/${i}.${ext}`;
+                        try {
+                            const img = new Image();
+                            await new Promise((resolve, reject) => {
+                                img.onload = () => {
+                                    loadedImages.push(url);
+                                    found = true;
+                                    resolve();
+                                };
+                                img.onerror = () => reject();
+                                img.src = url;
+                            });
+                            if (found) break;
+                        } catch (e) {}
+                    }
+                    if (!found) break;
                 }
-                if (!found) break;
             }
             return loadedImages;
         }
