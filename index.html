@@ -78,6 +78,7 @@
             align-items: center;
             flex: 1;
             justify-content: center;
+            min-height: 100%;
         }
 
         .platform-screen {
@@ -88,7 +89,7 @@
             width: 100%;
             gap: 32px;
             flex: 1;
-            transition: all 0.4s ease;
+            transition: opacity 0.4s ease, transform 0.4s ease;
         }
         .platform-screen.hidden {
             display: none;
@@ -148,6 +149,7 @@
             flex-direction: column;
             width: 100%;
             gap: 20px;
+            transition: opacity 0.4s ease, transform 0.4s ease;
         }
         .store-view.visible {
             display: flex;
@@ -609,6 +611,7 @@
     const lightboxClose = document.getElementById('lightboxClose');
 
     let currentInstruction = null;
+    let isAnimating = false;
 
     async function safeFetchText(url) {
         try {
@@ -696,14 +699,56 @@
         return '3.2.1';
     }
 
+    function transitionToStore() {
+        if (isAnimating) return;
+        isAnimating = true;
+        platformScreen.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        platformScreen.style.opacity = '0';
+        platformScreen.style.transform = 'translateY(-20px)';
+        setTimeout(() => {
+            platformScreen.style.display = 'none';
+            platformScreen.classList.add('hidden');
+            storeView.style.display = 'flex';
+            storeView.style.opacity = '0';
+            storeView.style.transform = 'translateY(20px)';
+            storeView.style.transition = 'none';
+            void storeView.offsetHeight;
+            storeView.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            storeView.style.opacity = '1';
+            storeView.style.transform = 'translateY(0)';
+            storeView.classList.add('visible');
+            isAnimating = false;
+        }, 400);
+    }
+
+    function transitionToPlatform() {
+        if (isAnimating) return;
+        isAnimating = true;
+        storeView.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        storeView.style.opacity = '0';
+        storeView.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            storeView.style.display = 'none';
+            storeView.classList.remove('visible');
+            platformScreen.style.display = 'flex';
+            platformScreen.style.opacity = '0';
+            platformScreen.style.transform = 'translateY(-20px)';
+            platformScreen.style.transition = 'none';
+            void platformScreen.offsetHeight;
+            platformScreen.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            platformScreen.style.opacity = '1';
+            platformScreen.style.transform = 'translateY(0)';
+            platformScreen.classList.remove('hidden');
+            isAnimating = false;
+        }, 400);
+    }
+
     async function updateUI() {
         if (!state.selectedOS) {
-            platformScreen.classList.remove('hidden');
-            storeView.classList.remove('visible');
+            if (!platformScreen.classList.contains('hidden')) return;
+            transitionToPlatform();
             return;
         }
-        platformScreen.classList.add('hidden');
-        storeView.classList.add('visible');
 
         const osData = appData[state.selectedOS];
         appName.textContent = osData.title;
@@ -738,6 +783,9 @@
         let imagesObj = currentInstruction?.Images || null;
         const screenshots = await loadScreenshots(state.selectedOS, imagesObj);
         renderScreenshots(screenshots);
+
+        if (platformScreen.classList.contains('hidden')) return;
+        transitionToStore();
     }
 
     platformCards.forEach(card => {
