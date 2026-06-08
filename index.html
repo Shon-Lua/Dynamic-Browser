@@ -24,7 +24,6 @@
             --radius-sm: 10px;
             --radius: 16px;
             --radius-lg: 24px;
-            --radius-xl: 32px;
             --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             --shadow-lg: 0 25px 60px rgba(0, 0, 0, 0.5);
@@ -48,13 +47,16 @@
             font-family: var(--font);
             background: var(--bg);
             color: var(--text);
-            height: 100vh;
-            height: 100dvh;
-            overflow: hidden;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             line-height: 1.6;
             position: relative;
+            overflow-y: auto;
         }
 
         .bg-orb {
@@ -126,82 +128,77 @@
             -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
         }
 
-        .container {
+        .main-container {
             position: relative;
             z-index: 2;
+            width: 100%;
             max-width: 900px;
-            margin: 0 auto;
-            height: 100%;
+            padding: 24px;
             display: flex;
             flex-direction: column;
-            padding: 20px 24px 20px;
-            transition: justify-content 0.4s ease, align-items 0.4s ease;
-        }
-
-        .container.os-selection-mode {
-            justify-content: center;
             align-items: center;
         }
 
-        .os-section {
+        .platform-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             width: 100%;
-            flex-shrink: 0;
             transition: all 0.4s ease;
         }
-
-        .container.os-selection-mode .os-section {
-            max-width: 500px;
-            margin: 0 auto;
+        .platform-container.initial {
+            flex-grow: 1;
+            justify-content: center;
         }
-
+        .platform-title {
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-3);
+            margin-bottom: 24px;
+            text-align: center;
+        }
         .os-cards {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
-
-        .container.os-selection-mode .os-cards {
-            gap: 20px;
-        }
-
         .os-card {
             background: var(--surface);
             border: 2px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 24px 16px;
+            border-radius: var(--radius);
+            padding: 28px 24px;
             cursor: pointer;
             transition: var(--transition);
             text-align: center;
             user-select: none;
-            position: relative;
+            min-width: 160px;
+            flex: 1 1 160px;
+            max-width: 200px;
         }
         .os-card:hover {
             border-color: var(--border-2);
             background: var(--surface-2);
             transform: translateY(-3px);
-            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
         }
         .os-card--selected {
             border-color: var(--accent) !important;
             background: var(--surface-2) !important;
-            box-shadow: 0 0 0 8px var(--accent-glow), 0 14px 45px rgba(0, 0, 0, 0.5) !important;
+            box-shadow: 0 0 0 6px var(--accent-glow), 0 12px 40px rgba(0, 0, 0, 0.4) !important;
             transform: translateY(-4px) !important;
         }
         .os-card__icon {
             width: 56px;
             height: 56px;
-            margin: 0 auto 12px;
-            transition: width 0.4s, height 0.4s;
-        }
-        .container.os-selection-mode .os-card__icon {
-            width: 80px;
-            height: 80px;
+            margin: 0 auto 14px;
         }
         .os-card__icon svg {
             width: 100%;
             height: 100%;
             fill: #ffffffcc;
-            transition: fill 0.3s;
         }
         .os-card--selected .os-card__icon svg {
             fill: var(--accent-2);
@@ -211,51 +208,22 @@
             font-size: 1.2rem;
             letter-spacing: -0.01em;
         }
-        .container.os-selection-mode .os-card__name {
-            font-size: 1.5rem;
-        }
 
-        .platform-content {
+        .store-content {
             display: none;
             flex-direction: column;
-            flex: 1;
-            margin-top: 24px;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.4s ease, transform 0.4s ease;
+            width: 100%;
+            margin-top: 28px;
         }
-        .platform-content--visible {
+        .store-content.visible {
             display: flex;
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .section-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            color: var(--text-3);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-        }
-        .section-title::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border-2);
-            border-radius: 1px;
         }
 
         .app-details {
             display: flex;
             align-items: center;
             gap: 14px;
-            margin-bottom: 16px;
-            flex-shrink: 0;
+            margin-bottom: 20px;
         }
         .app-logo {
             width: 68px;
@@ -272,7 +240,7 @@
             font-size: 1.3rem;
             font-weight: 700;
             letter-spacing: -0.02em;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
         .app-desc {
             font-size: 0.85rem;
@@ -280,11 +248,29 @@
             line-height: 1.5;
         }
 
+        .section-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-3);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-2);
+            border-radius: 1px;
+        }
+
         .format-selector {
             display: flex;
             gap: 10px;
-            margin-bottom: 14px;
-            flex-shrink: 0;
+            margin-bottom: 20px;
         }
         .format-card {
             flex: 1;
@@ -373,31 +359,9 @@
             font-weight: 700;
         }
 
-        .mobile-select {
-            display: none;
-            width: 100%;
-            padding: 12px 14px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--text);
-            background: var(--surface-2);
-            border: 2px solid var(--border-2);
-            border-radius: var(--radius);
-            cursor: pointer;
-            outline: none;
-            appearance: none;
-            -webkit-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23b0b0c0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 14px center;
-            background-size: 16px;
-            margin-bottom: 12px;
-        }
-
         .download-section {
             text-align: center;
-            margin-top: auto;
-            flex-shrink: 0;
+            margin-top: 8px;
         }
         .btn-download {
             display: inline-flex;
@@ -414,8 +378,6 @@
             background: linear-gradient(135deg, var(--accent), #8b7cf0);
             box-shadow: 0 8px 35px var(--accent-glow), 0 2px 8px rgba(0, 0, 0, 0.3);
             transition: var(--transition-slow);
-            position: relative;
-            overflow: hidden;
             text-decoration: none;
         }
         .btn-download:hover {
@@ -448,12 +410,11 @@
 
         .footer {
             text-align: center;
-            padding: 12px 0 4px;
+            padding: 16px 0 4px;
             color: var(--text-3);
             font-size: 0.7rem;
             border-top: 1px solid var(--border);
-            margin-top: 8px;
-            flex-shrink: 0;
+            margin-top: 24px;
         }
         .footer a {
             color: var(--accent-2);
@@ -566,34 +527,21 @@
             margin-bottom: 0.7em;
         }
 
-        @media (max-width: 640px), (max-height: 700px) {
-            body {
-                overflow-y: auto;
-                height: auto;
-                min-height: 100vh;
-                min-height: 100dvh;
+        @media (max-width: 640px) {
+            .main-container {
+                padding: 16px;
             }
-            .container {
-                height: auto;
-                min-height: 100vh;
-                min-height: 100dvh;
-                padding: 12px 12px 12px;
-                justify-content: flex-start;
-            }
-            .container.os-selection-mode {
-                justify-content: center;
-            }
-            .os-section {
-                max-width: 400px;
-                margin: 0 auto;
+            .os-card {
+                padding: 20px 16px;
+                min-width: 140px;
             }
             .os-card__icon {
-                width: 48px;
-                height: 48px;
+                width: 44px;
+                height: 44px;
+                margin-bottom: 10px;
             }
-            .container.os-selection-mode .os-card__icon {
-                width: 64px;
-                height: 64px;
+            .os-card__name {
+                font-size: 1rem;
             }
             .app-details {
                 flex-direction: column;
@@ -604,79 +552,11 @@
                 height: 56px;
             }
             .format-selector {
-                display: none;
-            }
-            .mobile-select {
-                display: block;
+                flex-direction: column;
             }
             .btn-download {
                 width: 100%;
                 justify-content: center;
-                padding: 12px 20px;
-                font-size: 0.9rem;
-            }
-            .footer {
-                font-size: 0.65rem;
-                padding: 8px 0 2px;
-                margin-top: 8px;
-            }
-            .platform-content {
-                margin-top: 16px;
-            }
-        }
-
-        @media (max-height: 580px) {
-            .container {
-                padding: 6px 10px 6px;
-            }
-            .os-card {
-                padding: 14px 10px;
-            }
-            .os-card__icon {
-                width: 40px;
-                height: 40px;
-                margin-bottom: 6px;
-            }
-            .container.os-selection-mode .os-card__icon {
-                width: 50px;
-                height: 50px;
-            }
-            .os-card__name {
-                font-size: 1rem;
-            }
-            .app-logo {
-                width: 44px;
-                height: 44px;
-            }
-            .app-title {
-                font-size: 1rem;
-            }
-            .mobile-select {
-                padding: 10px 12px;
-                font-size: 0.8rem;
-                margin-bottom: 8px;
-            }
-            .btn-download {
-                padding: 8px 16px;
-                font-size: 0.75rem;
-                gap: 6px;
-            }
-            .btn-download__icon {
-                width: 18px;
-                height: 18px;
-            }
-            .btn-download__info {
-                font-size: 0.6rem;
-            }
-            .footer {
-                font-size: 0.55rem;
-                padding: 4px 0 2px;
-                margin-top: 4px;
-            }
-            .toast {
-                padding: 8px 16px;
-                font-size: 0.75rem;
-                bottom: 10px;
             }
         }
     </style>
@@ -688,35 +568,40 @@
     <div class="noise-overlay"></div>
     <div class="grid-lines"></div>
 
-    <div class="container os-selection-mode" id="mainContainer">
-        <section class="os-section" id="osSection">
+    <div class="main-container">
+        <div class="platform-container initial" id="platformContainer">
+            <h2 class="platform-title">Выберите платформу</h2>
             <div class="os-cards" id="osCards">
-                <div class="os-card os-card--selected" data-os="windows">
+                <div class="os-card" data-os="windows">
                     <div class="os-card__icon">
-                        <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm0 10h8v8H3v-8zm10-10h8v8h-8V3zm0 10h8v8h-8v-8z" fill="currentColor"/></svg>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M3 12h8V4H3v8zm0 2v6h8v-6H3zm10-2h8V4h-8v8zm0 2v6h8v-6h-8z"/>
+                        </svg>
                     </div>
                     <div class="os-card__name">Windows</div>
                 </div>
                 <div class="os-card" data-os="android">
                     <div class="os-card__icon">
-                        <svg viewBox="0 0 24 24"><path d="M6 18c0 .55.45 1 1 1h1v3.5a1.5 1.5 0 003 0V19h2v3.5a1.5 1.5 0 003 0V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v7c0 .83.67 1.5 1.5 1.5S5 17.33 5 16.5v-7C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5zm-4.97-5.84l1.62-2.8c.18-.3.07-.69-.23-.86-.3-.18-.69-.07-.86.23l-1.64 2.84C14.15 2.26 13.1 2 12 2c-1.1 0-2.15.26-3.08.73L7.28.73c-.17-.3-.56-.41-.86-.23-.3.18-.41.56-.23.86l1.62 2.8C5.18 5.61 3.5 7.88 3.03 10.5h17.94c-.47-2.62-2.15-4.89-4.44-6.34zM12 5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z" fill="currentColor"/></svg>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M6 18c0 .55.45 1 1 1h1v3.5a1.5 1.5 0 003 0V19h2v3.5a1.5 1.5 0 003 0V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v7c0 .83.67 1.5 1.5 1.5S5 17.33 5 16.5v-7C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5zm-4.97-5.84l1.62-2.8c.18-.3.07-.69-.23-.86-.3-.18-.69-.07-.86.23l-1.64 2.84C14.15 2.26 13.1 2 12 2c-1.1 0-2.15.26-3.08.73L7.28.73c-.17-.3-.56-.41-.86-.23-.3.18-.41.56-.23.86l1.62 2.8C5.18 5.61 3.5 7.88 3.03 10.5h17.94c-.47-2.62-2.15-4.89-4.44-6.34zM12 5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
+                        </svg>
                     </div>
                     <div class="os-card__name">Android</div>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <div class="platform-content" id="platformContent">
-            <section class="app-details">
+        <div class="store-content" id="storeContent">
+            <div class="app-details">
                 <img src="Logo.png" alt="Dynamic Browser" class="app-logo" id="appLogo">
                 <div class="app-info">
-                    <h2 class="app-title" id="appTitle">Dynamic Browser для Windows</h2>
-                    <p class="app-desc" id="appDesc">Быстрый, безопасный и современный браузер для Windows с поддержкой последних веб-технологий.</p>
+                    <h2 class="app-title" id="appTitle">Dynamic Browser</h2>
+                    <p class="app-desc" id="appDesc"></p>
                 </div>
-            </section>
+            </div>
 
-            <section id="formatsSection">
-                <h2 class="section-title" id="formatsTitle">Формат загрузки</h2>
+            <div id="formatsSection" style="display: none;">
+                <h2 class="section-title">Формат загрузки</h2>
                 <div class="format-selector" id="formatSelectorWindows">
                     <div class="format-card format-card--selected" data-format="exe">
                         <div class="format-card__icon">
@@ -745,13 +630,9 @@
                         <div class="format-card__check"></div>
                     </div>
                 </div>
-                <select class="mobile-select" id="formatMobileWindows">
-                    <option value="exe" selected>EXE — Установщик (128 MB)</option>
-                    <option value="zip">ZIP — Портативная (142 MB)</option>
-                </select>
-            </section>
+            </div>
 
-            <section class="download-section">
+            <div class="download-section">
                 <button class="btn-download" id="btnDownload" onclick="handleDownload()">
                     <span class="btn-download__icon">
                         <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
@@ -762,10 +643,10 @@
                     </span>
                     <span>
                         Скачать Dynamic Browser
-                        <span class="btn-download__info" id="downloadInfo">v3.2.1 • EXE • 128 MB</span>
+                        <span class="btn-download__info" id="downloadInfo"></span>
                     </span>
                 </button>
-            </section>
+            </div>
 
             <footer class="footer">
                 © 2026 Dynamic Browser. Все права защищены.
@@ -797,101 +678,83 @@
 
     <script>
         const state = {
-            selectedOS: 'windows',
-            selectedFormat: 'exe',
-            platformSelected: true
+            selectedOS: null,
+            selectedFormat: 'exe'
         };
 
         const appData = {
             windows: {
                 title: 'Dynamic Browser для Windows',
                 desc: 'Быстрый, безопасный и современный браузер для Windows с поддержкой последних веб-технологий.',
-                defaultFormat: 'exe',
                 formats: ['exe', 'zip'],
                 sizes: { exe: '128 MB', zip: '142 MB' },
-                version: '3.2.1'
+                defaultFormat: 'exe'
             },
             android: {
                 title: 'Dynamic Browser для Android',
                 desc: 'Лёгкий и энергоэффективный браузер для вашего Android-устройства с синхронизацией.',
-                defaultFormat: 'apk',
                 formats: ['apk'],
                 sizes: { apk: '95 MB' },
-                version: '3.2.1'
+                defaultFormat: 'apk'
             }
         };
 
-        const mainContainer = document.getElementById('mainContainer');
-        const platformContent = document.getElementById('platformContent');
-        const osCards = document.getElementById('osCards');
-        const formatSection = document.getElementById('formatsSection');
+        const platformContainer = document.getElementById('platformContainer');
+        const storeContent = document.getElementById('storeContent');
+        const formatsSection = document.getElementById('formatsSection');
         const formatWindows = document.getElementById('formatSelectorWindows');
-        const mobileWindows = document.getElementById('formatMobileWindows');
-
-        function switchToPlatformView() {
-            mainContainer.classList.remove('os-selection-mode');
-            platformContent.classList.add('platform-content--visible');
-            state.platformSelected = true;
-            updateUI();
-        }
+        const appTitle = document.getElementById('appTitle');
+        const appDesc = document.getElementById('appDesc');
+        const downloadInfo = document.getElementById('downloadInfo');
+        const osCards = document.querySelectorAll('.os-card');
 
         function updateUI() {
-            const osData = appData[state.selectedOS];
-            document.getElementById('appTitle').textContent = osData.title;
-            document.getElementById('appDesc').textContent = osData.desc;
-
-            if (state.selectedOS === 'windows') {
-                formatSection.style.display = 'block';
-                formatWindows.style.display = 'flex';
-                mobileWindows.style.display = 'block';
-                if (!osData.formats.includes(state.selectedFormat)) {
-                    state.selectedFormat = osData.defaultFormat;
-                }
-            } else {
-                formatSection.style.display = 'none';
-                state.selectedFormat = 'apk';
+            if (!state.selectedOS) {
+                platformContainer.classList.add('initial');
+                storeContent.classList.remove('visible');
+                formatsSection.style.display = 'none';
+                return;
             }
 
-            document.querySelectorAll('.format-card').forEach(card => card.classList.remove('format-card--selected'));
+            platformContainer.classList.remove('initial');
+            storeContent.classList.add('visible');
+
+            const osData = appData[state.selectedOS];
+            appTitle.textContent = osData.title;
+            appDesc.textContent = osData.desc;
+
             if (state.selectedOS === 'windows') {
+                formatsSection.style.display = 'block';
+                document.querySelectorAll('#formatSelectorWindows .format-card').forEach(card => card.classList.remove('format-card--selected'));
                 const selectedCard = document.querySelector(`#formatSelectorWindows .format-card[data-format="${state.selectedFormat}"]`);
                 if (selectedCard) selectedCard.classList.add('format-card--selected');
-                if (mobileWindows.value !== state.selectedFormat) mobileWindows.value = state.selectedFormat;
+                const size = osData.sizes[state.selectedFormat];
+                downloadInfo.textContent = `v3.2.1 • ${state.selectedFormat.toUpperCase()} • ${size}`;
+            } else {
+                formatsSection.style.display = 'none';
+                state.selectedFormat = 'apk';
+                downloadInfo.textContent = `v3.2.1 • APK • ${osData.sizes.apk}`;
             }
-
-            const size = osData.sizes[state.selectedFormat];
-            document.getElementById('downloadInfo').textContent = `v${osData.version} • ${state.selectedFormat.toUpperCase()} • ${size}`;
         }
 
-        osCards.addEventListener('click', function(e) {
-            const card = e.target.closest('.os-card');
-            if (!card) return;
-            const newOS = card.dataset.os;
-            if (state.selectedOS !== newOS || !state.platformSelected) {
-                this.querySelectorAll('.os-card').forEach(c => c.classList.remove('os-card--selected'));
-                card.classList.add('os-card--selected');
-                state.selectedOS = newOS;
-                state.selectedFormat = appData[newOS].defaultFormat;
-                if (!state.platformSelected) {
-                    switchToPlatformView();
-                } else {
-                    updateUI();
-                }
-            }
+        osCards.forEach(card => {
+            card.addEventListener('click', function() {
+                const os = this.dataset.os;
+                if (state.selectedOS === os) return;
+                osCards.forEach(c => c.classList.remove('os-card--selected'));
+                this.classList.add('os-card--selected');
+                state.selectedOS = os;
+                state.selectedFormat = appData[os].defaultFormat;
+                updateUI();
+            });
         });
 
-        document.getElementById('formatSelectorWindows').addEventListener('click', function(e) {
+        formatWindows.addEventListener('click', function(e) {
             const card = e.target.closest('.format-card');
             if (!card || state.selectedOS !== 'windows') return;
             this.querySelectorAll('.format-card').forEach(c => c.classList.remove('format-card--selected'));
             card.classList.add('format-card--selected');
             state.selectedFormat = card.dataset.format;
-            updateUI();
-        });
-
-        mobileWindows.addEventListener('change', function() {
-            if (state.selectedOS !== 'windows') return;
-            state.selectedFormat = this.value;
             updateUI();
         });
 
@@ -904,9 +767,10 @@
         }
 
         function handleDownload() {
+            if (!state.selectedOS) return;
             const osData = appData[state.selectedOS];
             const size = osData.sizes[state.selectedFormat];
-            const version = osData.version;
+            const version = '3.2.1';
             let fileName, link;
 
             if (state.selectedOS === 'windows') {
@@ -934,7 +798,7 @@
         document.addEventListener('keydown', function(e) {
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                 e.preventDefault();
-                if (state.platformSelected) handleDownload();
+                handleDownload();
             }
         });
 
