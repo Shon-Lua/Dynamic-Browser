@@ -706,7 +706,6 @@
             windows: {
                 title: 'Dynamic Browser для Windows',
                 shortDesc: 'Быстрый, безопасный и современный браузер.',
-                fullDesc: 'Dynamic Browser — это новый уровень веб-сёрфинга. Мгновенная загрузка страниц, встроенная защита от трекеров, удобное управление вкладками и поддержка всех современных веб-стандартов. Идеально подходит для работы, учёбы и развлечений.',
                 formats: ['exe', 'zip'],
                 sizes: { exe: '128 MB', zip: '142 MB' },
                 defaultFormat: 'exe',
@@ -715,7 +714,6 @@
             android: {
                 title: 'Dynamic Browser для Android',
                 shortDesc: 'Лёгкий и энергоэффективный браузер.',
-                fullDesc: 'Dynamic Browser для Android обеспечивает плавную работу даже на слабых устройствах. Экономия трафика, ночной режим, блокировка рекламы и синхронизация с облаком. Ваши закладки и пароли всегда под рукой.',
                 formats: ['apk'],
                 sizes: { apk: '95 MB' },
                 defaultFormat: 'apk',
@@ -736,65 +734,53 @@
         const osCards = document.querySelectorAll('.os-card');
         const backBtn = document.getElementById('backBtn');
 
-        async function loadDescription(os) {
+        let currentInstruction = null;
+
+        async function loadInstruction(os) {
             try {
-                const response = await fetch(`${os}/desc.txt`);
+                const response = await fetch(`${os}/instruction.json`);
                 if (response.ok) {
-                    const text = await response.text();
-                    return text.trim();
+                    const data = await response.json();
+                    return data;
                 }
             } catch (e) {}
-            return appData[os].fullDesc;
+            return null;
         }
 
-        async function loadScreenshots(os) {
-            const loadedImages = [];
-            if (os === 'android') {
-                try {
-                    const instrResp = await fetch('Android/instruction.json');
-                    if (instrResp.ok) {
-                        const data = await instrResp.json();
-                        const files = data.files || {};
-                        for (const key of Object.keys(files)) {
-                            if (key.startsWith('Image_')) {
-                                const filename = files[key];
-                                const src = `Android/Screenshots/${filename}`;
-                                try {
-                                    await new Promise((resolve, reject) => {
-                                        const img = new Image();
-                                        img.onload = () => { loadedImages.push(src); resolve(); };
-                                        img.onerror = () => reject();
-                                        img.src = src;
-                                    });
-                                } catch (e) {}
-                            }
-                        }
-                    }
-                } catch (e) {}
-            } else {
-                const imgExtensions = ['png', 'jpg', 'jpeg', 'webp'];
-                for (let i = 1; i <= 20; i++) {
-                    let found = false;
-                    for (const ext of imgExtensions) {
-                        const url = `${os}/Screenshots/${i}.${ext}`;
-                        try {
-                            const img = new Image();
-                            await new Promise((resolve, reject) => {
-                                img.onload = () => {
-                                    loadedImages.push(url);
-                                    found = true;
-                                    resolve();
-                                };
-                                img.onerror = () => reject();
-                                img.src = url;
-                            });
-                            if (found) break;
-                        } catch (e) {}
-                    }
-                    if (!found) break;
+        async function loadDescriptionFromPath(basePath, descPath) {
+            try {
+                const response = await fetch(`${basePath}/${descPath}`);
+                if (response.ok) {
+                    return await response.text();
+                }
+            } catch (e) {}
+            return appData[basePath].fullDesc || 'Описание отсутствует.';
+        }
+
+        async function loadScreenshotsFromPaths(basePath, imagesObj) {
+            const imageUrls = [];
+            if (imagesObj && typeof imagesObj === 'object') {
+                const keys = Object.keys(imagesObj).sort((a, b) => {
+                    const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+                    const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+                    return numA - numB;
+                });
+                for (const key of keys) {
+                    const src = `${basePath}/${imagesObj[key]}`;
+                    try {
+                        const img = new Image();
+                        await new Promise((resolve, reject) => {
+                            img.onload = () => {
+                                imageUrls.push(src);
+                                resolve();
+                            };
+                            img.onerror = reject;
+                            img.src = src;
+                        });
+                    } catch (e) {}
                 }
             }
-            return loadedImages;
+            return imageUrls;
         }
 
         function renderScreenshots(images) {
@@ -826,7 +812,12 @@
             appTitle.textContent = osData.title;
             appShortDesc.textContent = osData.shortDesc;
 
-            const desc = await loadDescription(state.selectedOS);
+            currentInstruction = await loadInstruction(state.selectedOS);
+            let descPath = '';
+            if (currentInstruction && currentInstruction.desc) {
+                descPath = currentInstruction.desc;
+            }
+            const desc = await loadDescriptionFromPath(state.selectedOS, descPath);
             fullDesc.textContent = desc;
 
             permissionsList.innerHTML = osData.permissions.map(p => `<li>${p}</li>`).join('');
@@ -844,7 +835,11 @@
                 downloadInfo.textContent = `v3.2.1 • APK • ${osData.sizes.apk}`;
             }
 
-            const screenshots = await loadScreenshots(state.selectedOS);
+            let imagesObj = null;
+            if (currentInstruction && currentInstruction.Images) {
+                imagesObj = currentInstruction.Images;
+            }
+            const screenshots = await loadScreenshotsFromPaths(state.selectedOS, imagesObj);
             renderScreenshots(screenshots);
         }
 
@@ -863,6 +858,7 @@
         backBtn.addEventListener('click', () => {
             state.selectedOS = null;
             osCards.forEach(c => c.classList.remove('os-card--selected'));
+            currentInstruction = null;
             updateUI();
         });
 
@@ -883,21 +879,32 @@
             toast._timeout = setTimeout(() => { toast.classList.remove('toast--visible'); }, 2800);
         }
 
+        function getDownloadFileName() {
+            if (currentInstruction && currentInstruction.app) {
+                if (state.selectedOS === 'windows') {
+                    if (state.selectedFormat === 'exe' && currentInstruction.exe) return currentInstruction.exe;
+                    if (state.selectedFormat === 'zip' && currentInstruction.zip) return currentInstruction.zip;
+                } else {
+                    return currentInstruction.app;
+                }
+            }
+            const osData = appData[state.selectedOS];
+            const version = '3.2.1';
+            if (state.selectedOS === 'windows') {
+                return state.selectedFormat === 'exe' ? `dynamic-browser-setup-${version}.exe` : `dynamic-browser-portable-${version}.zip`;
+            } else {
+                return `dynamic-browser-${version}.apk`;
+            }
+        }
+
         function handleDownload() {
             if (!state.selectedOS) return;
             const osData = appData[state.selectedOS];
             const size = osData.sizes[state.selectedFormat];
-            const version = '3.2.1';
-            let fileName, link;
+            const fileName = getDownloadFileName();
+            const link = `https://dynamicbrowser.app/dl/${fileName}`;
 
-            if (state.selectedOS === 'windows') {
-                fileName = state.selectedFormat === 'exe' ? `dynamic-browser-setup-${version}.exe` : `dynamic-browser-portable-${version}.zip`;
-            } else {
-                fileName = `dynamic-browser-${version}.apk`;
-            }
-            link = `https://dynamicbrowser.app/dl/v${version}/${fileName}`;
-
-            showToast(`Загрузка Dynamic Browser v${version} (${state.selectedFormat.toUpperCase()}, ${size}) началась!`);
+            showToast(`Загрузка ${fileName} (${size}) началась!`);
 
             const btn = document.getElementById('btnDownload');
             btn.style.transform = 'scale(0.94)';
