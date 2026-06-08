@@ -613,11 +613,11 @@
         <div class="platform-container" id="platformContainer">
             <h2 class="platform-title">Выберите платформу</h2>
             <div class="os-cards" id="osCards">
-                <div class="os-card" data-os="windows">
+                <div class="os-card" data-os="Windows">
                     <span class="os-card__icon"><i class="fab fa-windows"></i></span>
                     <div class="os-card__name">Windows</div>
                 </div>
-                <div class="os-card" data-os="android">
+                <div class="os-card" data-os="Android">
                     <span class="os-card__icon"><i class="fab fa-android"></i></span>
                     <div class="os-card__name">Android</div>
                 </div>
@@ -703,7 +703,7 @@
         };
 
         const appData = {
-            windows: {
+            Windows: {
                 title: 'Dynamic Browser для Windows',
                 shortDesc: 'Быстрый, безопасный и современный браузер.',
                 formats: ['exe', 'zip'],
@@ -711,7 +711,7 @@
                 defaultFormat: 'exe',
                 permissions: ['Интернет-соединение', 'Доступ к файловой системе (при сохранении файлов)', 'Геолокация (по желанию)']
             },
-            android: {
+            Android: {
                 title: 'Dynamic Browser для Android',
                 shortDesc: 'Лёгкий и энергоэффективный браузер.',
                 formats: ['apk'],
@@ -829,7 +829,7 @@
 
             permissionsList.innerHTML = osData.permissions.map(p => `<li>${p}</li>`).join('');
 
-            if (state.selectedOS === 'windows') {
+            if (state.selectedOS === 'Windows') {
                 formatsSection.style.display = 'block';
                 document.querySelectorAll('#formatSelectorWindows .format-card').forEach(card => card.classList.remove('format-card--selected'));
                 const selectedCard = document.querySelector(`#formatSelectorWindows .format-card[data-format="${state.selectedFormat}"]`);
@@ -871,7 +871,7 @@
 
         formatWindows.addEventListener('click', function(e) {
             const card = e.target.closest('.format-card');
-            if (!card || state.selectedOS !== 'windows') return;
+            if (!card || state.selectedOS !== 'Windows') return;
             this.querySelectorAll('.format-card').forEach(c => c.classList.remove('format-card--selected'));
             card.classList.add('format-card--selected');
             state.selectedFormat = card.dataset.format;
@@ -888,7 +888,7 @@
 
         function getDownloadFileName() {
             if (currentInstruction && currentInstruction.app) {
-                if (state.selectedOS === 'windows') {
+                if (state.selectedOS === 'Windows') {
                     if (state.selectedFormat === 'exe' && currentInstruction.exe) return currentInstruction.exe;
                     if (state.selectedFormat === 'zip' && currentInstruction.zip) return currentInstruction.zip;
                 } else {
@@ -896,7 +896,7 @@
                 }
             }
             const version = '3.2.1';
-            if (state.selectedOS === 'windows') {
+            if (state.selectedOS === 'Windows') {
                 return state.selectedFormat === 'exe' ? `dynamic-browser-setup-${version}.exe` : `dynamic-browser-portable-${version}.zip`;
             } else {
                 return `dynamic-browser-${version}.apk`;
