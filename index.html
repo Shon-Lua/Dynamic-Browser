@@ -260,9 +260,10 @@
         }
         .install-meta {
             font-size: 0.75rem;
-            color: var(--text-3);
-            margin-top: 4px;
+            color: rgba(255,255,255,0.85);
+            margin-top: 2px;
             display: block;
+            font-weight: 500;
         }
 
         .screenshots-section {
@@ -304,6 +305,11 @@
             flex-shrink: 0;
             box-shadow: 0 6px 18px rgba(0,0,0,0.5);
             border: 1px solid var(--border-2);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .screenshot-img:hover {
+            transform: scale(1.03);
         }
 
         .description-card {
@@ -340,25 +346,6 @@
             color: var(--accent-2);
             width: 18px;
             text-align: center;
-        }
-
-        .version-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--surface);
-            border-radius: var(--radius);
-            padding: 16px 20px;
-            border: 1px solid var(--border);
-            font-size: 0.95rem;
-            color: var(--text-2);
-        }
-        .version-badge {
-            background: var(--surface-3);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-weight: 600;
-            color: var(--accent-2);
         }
 
         .footer {
@@ -452,6 +439,42 @@
             cursor: pointer;
         }
 
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.92);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .lightbox.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 2.5rem;
+            color: #fff;
+            cursor: pointer;
+            z-index: 2001;
+            background: none;
+            border: none;
+        }
+        .lightbox-img {
+            max-width: 90vw;
+            max-height: 85vh;
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+
         @media (max-width: 640px) {
             body { padding: 16px; }
             .platform-cards { gap: 16px; }
@@ -514,11 +537,6 @@
             <div id="permissionsList"></div>
         </div>
 
-        <div class="version-row">
-            <span>Версия</span>
-            <span class="version-badge">3.2.1</span>
-        </div>
-
         <div class="footer">
             © 2026 Dynamic Browser.
             <a href="#" id="privacyLink">Политика конфиденциальности</a>
@@ -539,6 +557,11 @@
             <div class="modal-body" id="modalBody">Загрузка...</div>
         </div>
     </div>
+</div>
+
+<div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightboxClose">&times;</button>
+    <img class="lightbox-img" id="lightboxImg" src="" alt="Скриншот">
 </div>
 
 <script>
@@ -580,6 +603,10 @@
     const platformCards = document.querySelectorAll('.platform-card');
     const backBtn = document.getElementById('backBtn');
     const btnInstall = document.getElementById('btnInstall');
+
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxClose = document.getElementById('lightboxClose');
 
     let currentInstruction = null;
 
@@ -639,9 +666,28 @@
             img.src = src;
             img.className = 'screenshot-img';
             img.alt = 'Скриншот';
+            img.addEventListener('click', () => {
+                lightboxImg.src = src;
+                lightbox.classList.add('visible');
+            });
             screenshotsContainer.appendChild(img);
         });
     }
+
+    function closeLightbox() {
+        lightbox.classList.remove('visible');
+        lightboxImg.src = '';
+    }
+
+    lightboxClose.addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', (e) => {
+        if (e.target === lightbox) closeLightbox();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && lightbox.classList.contains('visible')) {
+            closeLightbox();
+        }
+    });
 
     async function updateUI() {
         if (!state.selectedOS) {
