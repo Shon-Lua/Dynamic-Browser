@@ -661,11 +661,7 @@
                 </button>
             </div>
 
-            <div class="screenshots">
-                <img src="https://via.placeholder.com/300x200/6c5ce7/ffffff?text=Screenshot+1" class="screenshot-img" alt="Скриншот 1">
-                <img src="https://via.placeholder.com/300x200/6c5ce7/ffffff?text=Screenshot+2" class="screenshot-img" alt="Скриншот 2">
-                <img src="https://via.placeholder.com/300x200/6c5ce7/ffffff?text=Screenshot+3" class="screenshot-img" alt="Скриншот 3">
-            </div>
+            <div class="screenshots" id="screenshotsContainer"></div>
 
             <div class="store-details">
                 <h3>Описание</h3>
@@ -736,10 +732,63 @@
         const fullDesc = document.getElementById('fullDesc');
         const permissionsList = document.getElementById('permissionsList');
         const downloadInfo = document.getElementById('downloadInfo');
+        const screenshotsContainer = document.getElementById('screenshotsContainer');
         const osCards = document.querySelectorAll('.os-card');
         const backBtn = document.getElementById('backBtn');
 
-        function updateUI() {
+        async function loadDescription(os) {
+            try {
+                const response = await fetch(`${os}/desc.txt`);
+                if (response.ok) {
+                    const text = await response.text();
+                    return text.trim();
+                }
+            } catch (e) {}
+            return appData[os].fullDesc;
+        }
+
+        async function loadScreenshots(os) {
+            const imgExtensions = ['png', 'jpg', 'jpeg', 'webp'];
+            let loadedImages = [];
+            for (let i = 1; i <= 20; i++) {
+                let found = false;
+                for (const ext of imgExtensions) {
+                    const url = `${os}/Screenshots/${i}.${ext}`;
+                    try {
+                        const img = new Image();
+                        await new Promise((resolve, reject) => {
+                            img.onload = () => {
+                                loadedImages.push(url);
+                                found = true;
+                                resolve();
+                            };
+                            img.onerror = () => reject();
+                            img.src = url;
+                        });
+                        if (found) break;
+                    } catch (e) {}
+                }
+                if (!found) break;
+            }
+            return loadedImages;
+        }
+
+        function renderScreenshots(images) {
+            screenshotsContainer.innerHTML = '';
+            if (images.length === 0) {
+                screenshotsContainer.innerHTML = '<p style="color:var(--text-3);text-align:center;width:100%">Скриншоты не найдены</p>';
+                return;
+            }
+            images.forEach(src => {
+                const img = document.createElement('img');
+                img.src = src;
+                img.className = 'screenshot-img';
+                img.alt = 'Скриншот';
+                screenshotsContainer.appendChild(img);
+            });
+        }
+
+        async function updateUI() {
             if (!state.selectedOS) {
                 platformContainer.classList.remove('hidden');
                 storeContent.classList.remove('visible');
@@ -752,7 +801,9 @@
             const osData = appData[state.selectedOS];
             appTitle.textContent = osData.title;
             appShortDesc.textContent = osData.shortDesc;
-            fullDesc.textContent = osData.fullDesc;
+
+            const desc = await loadDescription(state.selectedOS);
+            fullDesc.textContent = desc;
 
             permissionsList.innerHTML = osData.permissions.map(p => `<li>${p}</li>`).join('');
 
@@ -768,6 +819,9 @@
                 state.selectedFormat = 'apk';
                 downloadInfo.textContent = `v3.2.1 • APK • ${osData.sizes.apk}`;
             }
+
+            const screenshots = await loadScreenshots(state.selectedOS);
+            renderScreenshots(screenshots);
         }
 
         osCards.forEach(card => {
