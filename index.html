@@ -9,27 +9,24 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
-            --bg: #0a0a0f;
-            --surface: #12121a;
-            --surface-2: #1a1a26;
-            --surface-3: #222236;
-            --accent: #6c5ce7;
-            --accent-2: #a29bfe;
-            --accent-glow: #6c5ce766;
-            --cyan: #00d2d3;
-            --cyan-glow: #00d2d344;
-            --text: #e8e8f0;
-            --text-2: #b0b0c0;
-            --text-3: #787890;
-            --border: #ffffff0d;
-            --border-2: #ffffff14;
-            --radius-sm: 10px;
-            --radius: 16px;
-            --radius-lg: 24px;
-            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            --shadow-lg: 0 25px 60px rgba(0, 0, 0, 0.5);
-            --shadow-glow: 0 0 80px var(--accent-glow);
+            --bg: #0c0c14;
+            --surface: #161622;
+            --surface-2: #1e1e2f;
+            --surface-3: #282840;
+            --accent: #7c4dff;
+            --accent-2: #b388ff;
+            --accent-glow: #7c4dff55;
+            --cyan: #00e5ff;
+            --cyan-glow: #00e5ff44;
+            --text: #f0f0fa;
+            --text-2: #c0c0d0;
+            --text-3: #8888a0;
+            --border: #ffffff0a;
+            --border-2: #ffffff18;
+            --radius-sm: 12px;
+            --radius: 18px;
+            --radius-lg: 28px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             --font: 'Inter', system-ui, -apple-system, sans-serif;
         }
 
@@ -53,7 +50,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 40px 24px;
+            padding: 24px 20px;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             line-height: 1.6;
@@ -61,80 +58,21 @@
             overflow-y: auto;
         }
 
-        .bg-orb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(120px);
-            opacity: 0.35;
-            pointer-events: none;
-            z-index: 0;
-            animation: orbFloat 20s ease-in-out infinite;
-        }
-        .bg-orb--1 {
-            width: 600px;
-            height: 600px;
-            background: var(--accent);
-            top: -200px;
-            left: -150px;
-            animation-delay: 0s;
-        }
-        .bg-orb--2 {
-            width: 500px;
-            height: 500px;
-            background: var(--cyan);
-            bottom: -180px;
-            right: -120px;
-            animation-delay: -7s;
-            animation-duration: 24s;
-        }
-        .bg-orb--3 {
-            width: 350px;
-            height: 350px;
-            background: #e17055;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation-delay: -14s;
-            animation-duration: 28s;
-            opacity: 0.2;
-        }
-
-        @keyframes orbFloat {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            25% { transform: translate(80px, -60px) scale(1.15); }
-            50% { transform: translate(-40px, 70px) scale(0.9); }
-            75% { transform: translate(-90px, -30px) scale(1.1); }
-        }
-
-        .noise-overlay {
+        body::before {
+            content: '';
             position: fixed;
             inset: 0;
-            pointer-events: none;
-            z-index: 1;
-            opacity: 0.025;
-            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-            background-size: 200px 200px;
-        }
-
-        .grid-lines {
-            position: fixed;
-            inset: 0;
+            background: radial-gradient(circle at 20% 30%, rgba(124, 77, 255, 0.12) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 70%, rgba(0, 229, 255, 0.08) 0%, transparent 50%);
             pointer-events: none;
             z-index: 0;
-            opacity: 0.03;
-            background-image:
-                linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
-            background-size: 60px 60px;
-            mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
-            -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
         }
 
-        .main-container {
+        .container {
             position: relative;
             z-index: 2;
             width: 100%;
-            max-width: 900px;
+            max-width: 800px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -142,369 +80,334 @@
             justify-content: center;
         }
 
-        .platform-container {
+        .platform-screen {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             width: 100%;
-            transition: all 0.4s ease;
+            gap: 32px;
             flex: 1;
+            transition: all 0.4s ease;
         }
-        .platform-container.hidden {
+        .platform-screen.hidden {
             display: none;
         }
         .platform-title {
-            font-size: 1.1rem;
+            font-size: 1.4rem;
             font-weight: 700;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
             color: var(--text-3);
-            margin-bottom: 32px;
             text-align: center;
         }
-        .os-cards {
+        .platform-cards {
             display: flex;
             gap: 24px;
             flex-wrap: wrap;
             justify-content: center;
         }
-        .os-card {
+        .platform-card {
             background: var(--surface);
-            border: 2px solid var(--border);
+            border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 32px 28px;
+            padding: 36px 28px;
             cursor: pointer;
             transition: var(--transition);
             text-align: center;
             user-select: none;
-            min-width: 180px;
-            flex: 1 1 180px;
-            max-width: 220px;
+            min-width: 170px;
+            flex: 1 1 170px;
+            max-width: 200px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
         }
-        .os-card:hover {
+        .platform-card:hover {
             border-color: var(--border-2);
             background: var(--surface-2);
-            transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
         }
-        .os-card--selected {
-            border-color: var(--accent) !important;
-            background: var(--surface-2) !important;
-            box-shadow: 0 0 0 6px var(--accent-glow), 0 12px 40px rgba(0, 0, 0, 0.4) !important;
-            transform: translateY(-4px) !important;
-        }
-        .os-card__icon {
-            font-size: 3rem;
+        .platform-card i {
+            font-size: 2.8rem;
             color: #ffffffcc;
             margin-bottom: 16px;
             display: block;
+            transition: color 0.3s;
         }
-        .os-card--selected .os-card__icon {
+        .platform-card:hover i {
             color: var(--accent-2);
         }
-        .os-card__name {
+        .platform-card span {
             font-weight: 700;
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             letter-spacing: -0.01em;
         }
 
-        .store-content {
+        .store-view {
             display: none;
             flex-direction: column;
             width: 100%;
-            position: relative;
+            gap: 20px;
         }
-        .store-content.visible {
+        .store-view.visible {
             display: flex;
         }
 
         .back-btn {
-            position: absolute;
-            top: 0;
-            left: 0;
-            background: none;
-            border: none;
+            background: var(--surface);
+            border: 1px solid var(--border-2);
             color: var(--text-2);
-            font-size: 1.6rem;
-            cursor: pointer;
-            padding: 8px 12px;
-            border-radius: 50%;
-            transition: var(--transition);
-            z-index: 5;
-        }
-        .back-btn:hover {
-            color: #fff;
-            background: rgba(255,255,255,0.05);
-        }
-
-        .store-header {
-            text-align: center;
-            margin-bottom: 28px;
-        }
-        .store-app-icon {
-            width: 96px;
-            height: 96px;
-            border-radius: 24px;
-            object-fit: cover;
-            background: var(--surface-3);
-            margin-bottom: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-        }
-        .store-app-title {
-            font-size: 2rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            margin-bottom: 8px;
-            line-height: 1.2;
-        }
-        .store-app-short-desc {
+            border-radius: 50px;
+            padding: 8px 18px;
             font-size: 1rem;
-            color: var(--text-2);
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .download-section {
-            text-align: center;
-            margin-bottom: 28px;
-        }
-        .btn-download {
+            cursor: pointer;
+            transition: var(--transition);
+            align-self: flex-start;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            padding: 16px 36px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            letter-spacing: 0.02em;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
+            gap: 8px;
+            font-weight: 600;
+        }
+        .back-btn:hover {
+            background: var(--surface-2);
             color: #fff;
-            background: linear-gradient(135deg, var(--accent), #8b7cf0);
-            box-shadow: 0 8px 35px var(--accent-glow), 0 2px 8px rgba(0, 0, 0, 0.3);
-            transition: var(--transition-slow);
-            text-decoration: none;
-        }
-        .btn-download i {
-            font-size: 1.3rem;
-        }
-        .btn-download:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 14px 45px var(--accent-glow), 0 4px 14px rgba(0, 0, 0, 0.4);
-            background: linear-gradient(135deg, #7c6cf0, #9b8ff8);
-        }
-        .btn-download:active {
-            transform: scale(0.96);
-            transition: 0.1s;
-        }
-        .btn-download__info {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 400;
-            opacity: 0.8;
-            letter-spacing: 0.03em;
+            border-color: var(--accent);
         }
 
+        .app-header {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+        .app-icon {
+            width: 88px;
+            height: 88px;
+            border-radius: 20px;
+            object-fit: cover;
+            background: var(--surface-3);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+        }
+        .app-info {
+            flex: 1;
+        }
+        .app-name {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+            line-height: 1.2;
+        }
+        .app-short-desc {
+            font-size: 0.95rem;
+            color: var(--text-2);
+            margin-bottom: 12px;
+        }
+        .download-area {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
         .format-selector {
             display: flex;
-            gap: 10px;
-            margin-bottom: 18px;
-            justify-content: center;
+            gap: 8px;
         }
-        .format-card {
-            flex: 1;
-            min-width: 140px;
-            max-width: 220px;
-            background: var(--surface);
-            border: 2px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px 12px;
+        .format-chip {
+            background: var(--surface-3);
+            border: 2px solid transparent;
+            border-radius: 40px;
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 0.85rem;
             cursor: pointer;
             transition: var(--transition);
-            text-align: center;
+            color: var(--text-2);
             user-select: none;
-            position: relative;
         }
-        .format-card:hover {
-            border-color: var(--border-2);
-            background: var(--surface-2);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        .format-chip.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+            box-shadow: 0 0 14px var(--accent-glow);
         }
-        .format-card--selected {
-            border-color: var(--cyan) !important;
-            background: var(--surface-2) !important;
-            box-shadow: 0 0 0 6px var(--cyan-glow), 0 10px 30px rgba(0, 0, 0, 0.4) !important;
-            transform: translateY(-3px) !important;
-        }
-        .format-card__icon {
-            font-size: 2rem;
-            color: var(--text-2);
-            margin-bottom: 6px;
-            display: block;
-            transition: color 0.3s;
-        }
-        .format-card--selected .format-card__icon {
-            color: var(--cyan);
-        }
-        .format-card__name {
+        .btn-install {
+            background: linear-gradient(135deg, var(--accent), #9c7cff);
+            color: #fff;
+            border: none;
+            border-radius: 40px;
+            padding: 12px 28px;
             font-weight: 700;
-            font-size: 0.95rem;
-            letter-spacing: -0.01em;
-            margin-bottom: 2px;
-        }
-        .format-card__desc {
-            font-size: 0.7rem;
-            color: var(--text-3);
-            line-height: 1.4;
-        }
-        .format-card__size {
-            display: inline-block;
-            margin-top: 6px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            padding: 3px 10px;
-            border-radius: 14px;
-            background: var(--surface-3);
-            color: var(--text-2);
-        }
-        .format-card__check {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 2px solid var(--border-2);
+            font-size: 1rem;
+            cursor: pointer;
             transition: var(--transition);
-            display: flex;
+            box-shadow: 0 8px 24px var(--accent-glow);
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
+            gap: 8px;
+            letter-spacing: 0.02em;
         }
-        .format-card--selected .format-card__check {
-            border-color: var(--cyan);
-            background: var(--cyan);
+        .btn-install:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 32px var(--accent-glow);
+            background: linear-gradient(135deg, #8c5dff, #af8cff);
         }
-        .format-card--selected .format-card__check::after {
-            content: '✓';
-            color: #000;
-            font-size: 0.65rem;
-            font-weight: 700;
+        .btn-install:active {
+            transform: scale(0.97);
+        }
+        .install-meta {
+            font-size: 0.75rem;
+            color: var(--text-3);
+            margin-top: 4px;
+            display: block;
         }
 
-        .screenshots {
+        .screenshots-section {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+        .section-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-3);
+            margin-bottom: 14px;
+        }
+        .screenshots-scroll {
             display: flex;
             overflow-x: auto;
-            gap: 14px;
-            padding-bottom: 10px;
-            margin-bottom: 28px;
+            gap: 12px;
+            padding-bottom: 6px;
             scrollbar-width: thin;
             scrollbar-color: var(--accent) var(--surface-2);
         }
-        .screenshots::-webkit-scrollbar {
-            height: 6px;
+        .screenshots-scroll::-webkit-scrollbar {
+            height: 5px;
         }
-        .screenshots::-webkit-scrollbar-track {
+        .screenshots-scroll::-webkit-scrollbar-track {
             background: var(--surface-2);
             border-radius: 3px;
         }
-        .screenshots::-webkit-scrollbar-thumb {
+        .screenshots-scroll::-webkit-scrollbar-thumb {
             background: var(--accent);
             border-radius: 3px;
         }
         .screenshot-img {
-            border-radius: var(--radius);
-            max-height: 300px;
+            border-radius: 12px;
+            max-height: 260px;
             flex-shrink: 0;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.5);
             border: 1px solid var(--border-2);
         }
 
-        .store-details {
-            margin-top: 10px;
-            margin-bottom: 24px;
+        .description-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 1px solid var(--border);
         }
-        .store-details h3 {
-            font-size: 1rem;
-            font-weight: 700;
-            margin: 20px 0 8px;
-            color: var(--text-2);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .store-details p {
-            font-size: 0.9rem;
+        .description-text {
+            font-size: 0.95rem;
             color: var(--text-2);
             line-height: 1.7;
-            margin-bottom: 12px;
         }
-        .store-details ul {
-            list-style: none;
-            padding: 0;
+
+        .permissions-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+        .permission-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
             font-size: 0.9rem;
             color: var(--text-2);
         }
-        .store-details ul li {
-            padding: 6px 0 6px 28px;
-            position: relative;
-            border-bottom: 1px solid var(--border);
+        .permission-item:last-child {
+            border-bottom: none;
         }
-        .store-details ul li::before {
-            content: '•';
-            position: absolute;
-            left: 8px;
+        .permission-item i {
             color: var(--accent-2);
-            font-weight: bold;
+            width: 18px;
+            text-align: center;
+        }
+
+        .version-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            border: 1px solid var(--border);
+            font-size: 0.95rem;
+            color: var(--text-2);
+        }
+        .version-badge {
+            background: var(--surface-3);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            color: var(--accent-2);
         }
 
         .footer {
             text-align: center;
-            padding: 16px 0 4px;
+            padding: 20px 0 8px;
             color: var(--text-3);
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             border-top: 1px solid var(--border);
-            margin-top: 12px;
+            margin-top: 8px;
         }
         .footer a {
             color: var(--accent-2);
             text-decoration: none;
+            margin: 0 4px;
         }
 
         .toast {
             position: fixed;
-            bottom: 20px;
+            bottom: 24px;
             left: 50%;
             transform: translateX(-50%) translateY(120px);
             background: var(--surface-2);
             border: 1px solid var(--border-2);
-            border-radius: 50px;
-            padding: 12px 24px;
+            border-radius: 40px;
+            padding: 14px 28px;
             color: #fff;
             font-weight: 600;
             font-size: 0.9rem;
             z-index: 100;
-            box-shadow: 0 16px 50px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
-        .toast--visible {
+        .toast.visible {
             transform: translateX(-50%) translateY(0);
         }
-        .toast__icon i {
-            color: var(--success);
-            font-size: 1.2rem;
+        .toast i {
+            color: #2ed573;
         }
 
         .modal-overlay {
             display: flex;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             z-index: 1000;
             align-items: center;
             justify-content: center;
@@ -520,11 +423,11 @@
             background: var(--surface);
             border: 1px solid var(--border-2);
             border-radius: var(--radius-lg);
-            max-width: 700px;
+            max-width: 650px;
             width: 90%;
             position: relative;
             overflow: hidden;
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 30px 50px rgba(0,0,0,0.7);
             transform: scale(0.9);
             transition: transform 0.3s ease;
         }
@@ -534,20 +437,9 @@
         .modal-scroll {
             overflow-y: auto;
             max-height: 80vh;
-            padding: 24px;
+            padding: 28px;
             scrollbar-width: thin;
             scrollbar-color: var(--accent) var(--surface-2);
-        }
-        .modal-scroll::-webkit-scrollbar {
-            width: 6px;
-        }
-        .modal-scroll::-webkit-scrollbar-track {
-            background: var(--surface-2);
-            border-radius: 3px;
-        }
-        .modal-scroll::-webkit-scrollbar-thumb {
-            background: var(--accent);
-            border-radius: 3px;
         }
         .modal-close {
             position: absolute;
@@ -558,423 +450,337 @@
             color: var(--text-2);
             font-size: 1.8rem;
             cursor: pointer;
-            line-height: 1;
-            z-index: 2;
-        }
-        .modal-body {
-            color: var(--text);
-            font-size: 0.85rem;
-            line-height: 1.6;
-        }
-        .modal-body p {
-            margin-bottom: 0.7em;
         }
 
         @media (max-width: 640px) {
-            body {
-                padding: 24px 16px;
-            }
-            .os-card {
-                padding: 24px 16px;
-                min-width: 140px;
-            }
-            .os-card__icon {
-                font-size: 2.4rem;
-            }
-            .os-card__name {
-                font-size: 1.1rem;
-            }
-            .store-app-icon {
-                width: 72px;
-                height: 72px;
-                border-radius: 18px;
-            }
-            .store-app-title {
-                font-size: 1.6rem;
-            }
-            .format-selector {
-                flex-direction: column;
-                align-items: center;
-            }
-            .format-card {
-                max-width: 260px;
-            }
+            body { padding: 16px; }
+            .platform-cards { gap: 16px; }
+            .platform-card { padding: 28px 16px; }
+            .app-header { flex-direction: column; align-items: center; text-align: center; }
+            .app-icon { width: 72px; height: 72px; }
+            .download-area { justify-content: center; }
         }
     </style>
 </head>
 <body>
-    <div class="bg-orb bg-orb--1"></div>
-    <div class="bg-orb bg-orb--2"></div>
-    <div class="bg-orb bg-orb--3"></div>
-    <div class="noise-overlay"></div>
-    <div class="grid-lines"></div>
-
-    <div class="main-container">
-        <div class="platform-container" id="platformContainer">
-            <h2 class="platform-title">Выберите платформу</h2>
-            <div class="os-cards" id="osCards">
-                <div class="os-card" data-os="Windows">
-                    <span class="os-card__icon"><i class="fab fa-windows"></i></span>
-                    <div class="os-card__name">Windows</div>
-                </div>
-                <div class="os-card" data-os="Android">
-                    <span class="os-card__icon"><i class="fab fa-android"></i></span>
-                    <div class="os-card__name">Android</div>
-                </div>
+<div class="container">
+    <div class="platform-screen" id="platformScreen">
+        <h2 class="platform-title">Выберите вашу платформу</h2>
+        <div class="platform-cards" id="platformCards">
+            <div class="platform-card" data-os="Windows">
+                <i class="fab fa-windows"></i>
+                <span>Windows</span>
+            </div>
+            <div class="platform-card" data-os="Android">
+                <i class="fab fa-android"></i>
+                <span>Android</span>
             </div>
         </div>
+    </div>
 
-        <div class="store-content" id="storeContent">
-            <button class="back-btn" id="backBtn"><i class="fas fa-arrow-left"></i></button>
+    <div class="store-view" id="storeView">
+        <button class="back-btn" id="backBtn"><i class="fas fa-arrow-left"></i> Назад</button>
 
-            <div class="store-header">
-                <img src="Logo.png" alt="Dynamic Browser" class="store-app-icon" id="appLogo">
-                <h2 class="store-app-title" id="appTitle">Dynamic Browser</h2>
-                <p class="store-app-short-desc" id="appShortDesc"></p>
-            </div>
-
-            <div class="download-section">
-                <div id="formatsSection" style="display: none;">
-                    <div class="format-selector" id="formatSelectorWindows">
-                        <div class="format-card format-card--selected" data-format="exe">
-                            <span class="format-card__icon"><i class="fas fa-file-code"></i></span>
-                            <div class="format-card__name">EXE — Установщик</div>
-                            <div class="format-card__desc">Автоматическая установка с мастером</div>
-                            <span class="format-card__size">128 MB</span>
-                            <div class="format-card__check"></div>
-                        </div>
-                        <div class="format-card" data-format="zip">
-                            <span class="format-card__icon"><i class="fas fa-file-archive"></i></span>
-                            <div class="format-card__name">ZIP — Портативная</div>
-                            <div class="format-card__desc">Ручная распаковка, без прав администратора</div>
-                            <span class="format-card__size">142 MB</span>
-                            <div class="format-card__check"></div>
-                        </div>
+        <div class="app-header">
+            <img src="Logo.png" alt="Dynamic Browser" class="app-icon" id="appIcon">
+            <div class="app-info">
+                <h1 class="app-name" id="appName">Dynamic Browser</h1>
+                <p class="app-short-desc" id="appShortDesc"></p>
+                <div class="download-area">
+                    <div class="format-selector" id="formatSelector" style="display: none;">
+                        <span class="format-chip active" data-format="exe">EXE</span>
+                        <span class="format-chip" data-format="zip">ZIP</span>
                     </div>
-                </div>
-                <button class="btn-download" id="btnDownload" onclick="handleDownload()">
-                    <i class="fas fa-download"></i>
-                    <span>
-                        Скачать Dynamic Browser
-                        <span class="btn-download__info" id="downloadInfo"></span>
-                    </span>
-                </button>
-            </div>
-
-            <div class="screenshots" id="screenshotsContainer"></div>
-
-            <div class="store-details">
-                <h3>Описание</h3>
-                <p id="fullDesc"></p>
-                <h3>Версия</h3>
-                <p>3.2.1</p>
-                <h3>Права доступа</h3>
-                <ul id="permissionsList"></ul>
-            </div>
-
-            <footer class="footer">
-                © 2026 Dynamic Browser. Все права защищены.
-                <a href="#" id="privacyLink">Политика конфиденциальности</a> •
-                <a href="https://github.com/Shon-Lua/Dynamic-Browser" target="_blank" rel="noopener noreferrer" id="githubLink">GitHub</a>
-            </footer>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="privacyModal">
-        <div class="modal-content">
-            <button class="modal-close" id="modalClose">&times;</button>
-            <div class="modal-scroll">
-                <div class="modal-body" id="modalBody">
-                    Загрузка политики конфиденциальности...
+                    <button class="btn-install" id="btnInstall">
+                        <i class="fas fa-download"></i> Скачать
+                        <span class="install-meta" id="installMeta"></span>
+                    </button>
                 </div>
             </div>
         </div>
+
+        <div class="screenshots-section">
+            <h3 class="section-label">Скриншоты</h3>
+            <div class="screenshots-scroll" id="screenshotsContainer"></div>
+        </div>
+
+        <div class="description-card">
+            <h3 class="section-label">Описание</h3>
+            <p class="description-text" id="fullDesc"></p>
+        </div>
+
+        <div class="permissions-card">
+            <h3 class="section-label">Права доступа</h3>
+            <div id="permissionsList"></div>
+        </div>
+
+        <div class="version-row">
+            <span>Версия</span>
+            <span class="version-badge">3.2.1</span>
+        </div>
+
+        <div class="footer">
+            © 2026 Dynamic Browser.
+            <a href="#" id="privacyLink">Политика конфиденциальности</a>
+            <a href="https://github.com/Shon-Lua/Dynamic-Browser" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </div>
     </div>
+</div>
 
-    <div class="toast" id="toast">
-        <span class="toast__icon"><i class="fas fa-check"></i></span>
-        <span id="toastMessage">Загрузка началась!</span>
+<div class="toast" id="toast">
+    <i class="fas fa-check-circle"></i>
+    <span id="toastMessage"></span>
+</div>
+
+<div class="modal-overlay" id="privacyModal">
+    <div class="modal-content">
+        <button class="modal-close" id="modalClose">&times;</button>
+        <div class="modal-scroll">
+            <div class="modal-body" id="modalBody">Загрузка...</div>
+        </div>
     </div>
+</div>
 
-    <script>
-        const state = {
-            selectedOS: null,
-            selectedFormat: 'exe'
-        };
+<script>
+    const state = {
+        selectedOS: null,
+        selectedFormat: 'exe'
+    };
 
-        const appData = {
-            Windows: {
-                title: 'Dynamic Browser для Windows',
-                shortDesc: 'Быстрый, безопасный и современный браузер.',
-                formats: ['exe', 'zip'],
-                sizes: { exe: '128 MB', zip: '142 MB' },
-                defaultFormat: 'exe',
-                permissions: ['Интернет-соединение', 'Доступ к файловой системе (при сохранении файлов)', 'Геолокация (по желанию)']
-            },
-            Android: {
-                title: 'Dynamic Browser для Android',
-                shortDesc: 'Лёгкий и энергоэффективный браузер.',
-                formats: ['apk'],
-                sizes: { apk: '95 MB' },
-                defaultFormat: 'apk',
-                permissions: ['Интернет-соединение', 'Доступ к хранилищу (для загрузок)', 'Геолокация (по желанию)', 'Управление уведомлениями']
-            }
-        };
-
-        const platformContainer = document.getElementById('platformContainer');
-        const storeContent = document.getElementById('storeContent');
-        const formatsSection = document.getElementById('formatsSection');
-        const formatWindows = document.getElementById('formatSelectorWindows');
-        const appTitle = document.getElementById('appTitle');
-        const appShortDesc = document.getElementById('appShortDesc');
-        const fullDesc = document.getElementById('fullDesc');
-        const permissionsList = document.getElementById('permissionsList');
-        const downloadInfo = document.getElementById('downloadInfo');
-        const screenshotsContainer = document.getElementById('screenshotsContainer');
-        const osCards = document.querySelectorAll('.os-card');
-        const backBtn = document.getElementById('backBtn');
-
-        let currentInstruction = null;
-
-        async function safeFetchText(url) {
-            try {
-                const response = await fetch(url);
-                if (!response.ok) return null;
-                return await response.text();
-            } catch (e) {
-                return null;
-            }
+    const appData = {
+        Windows: {
+            title: 'Dynamic Browser для Windows',
+            shortDesc: 'Быстрый, безопасный и современный браузер.',
+            fullDesc: 'Dynamic Browser — это новый уровень веб-сёрфинга. Мгновенная загрузка страниц, встроенная защита от трекеров, удобное управление вкладками и поддержка всех современных веб-стандартов. Идеально подходит для работы, учёбы и развлечений.',
+            formats: ['exe', 'zip'],
+            sizes: { exe: '128 MB', zip: '142 MB' },
+            defaultFormat: 'exe',
+            permissions: ['Интернет-соединение', 'Доступ к файловой системе (при сохранении файлов)', 'Геолокация (по желанию)']
+        },
+        Android: {
+            title: 'Dynamic Browser для Android',
+            shortDesc: 'Лёгкий и энергоэффективный браузер.',
+            fullDesc: 'Dynamic Browser для Android обеспечивает плавную работу даже на слабых устройствах. Экономия трафика, ночной режим, блокировка рекламы и синхронизация с облаком. Ваши закладки и пароли всегда под рукой.',
+            formats: ['apk'],
+            sizes: { apk: '95 MB' },
+            defaultFormat: 'apk',
+            permissions: ['Интернет-соединение', 'Доступ к хранилищу (для загрузок)', 'Геолокация (по желанию)', 'Управление уведомлениями']
         }
+    };
 
-        async function safeFetchJson(url) {
-            try {
-                const response = await fetch(url);
-                if (!response.ok) return null;
-                const text = await response.text();
-                return JSON.parse(text);
-            } catch (e) {
-                return null;
-            }
-        }
+    const platformScreen = document.getElementById('platformScreen');
+    const storeView = document.getElementById('storeView');
+    const formatSelector = document.getElementById('formatSelector');
+    const appName = document.getElementById('appName');
+    const appShortDesc = document.getElementById('appShortDesc');
+    const fullDesc = document.getElementById('fullDesc');
+    const permissionsList = document.getElementById('permissionsList');
+    const installMeta = document.getElementById('installMeta');
+    const screenshotsContainer = document.getElementById('screenshotsContainer');
+    const platformCards = document.querySelectorAll('.platform-card');
+    const backBtn = document.getElementById('backBtn');
+    const btnInstall = document.getElementById('btnInstall');
 
-        async function loadInstruction(os) {
-            const data = await safeFetchJson(`${os}/instruction.json`);
-            return data;
-        }
+    let currentInstruction = null;
 
-        async function loadDescriptionFromPath(basePath, descPath) {
-            if (!descPath) return null;
-            const text = await safeFetchText(`${basePath}/${descPath}`);
-            return text;
-        }
+    async function safeFetchText(url) {
+        try {
+            const r = await fetch(url);
+            return r.ok ? await r.text() : null;
+        } catch { return null; }
+    }
 
-        async function loadScreenshotsFromPaths(basePath, imagesObj) {
-            const imageUrls = [];
-            if (!imagesObj || typeof imagesObj !== 'object') return imageUrls;
-            const keys = Object.keys(imagesObj).sort((a, b) => {
-                const numA = parseInt(a.match(/\d+/)?.[0] || 0);
-                const numB = parseInt(b.match(/\d+/)?.[0] || 0);
-                return numA - numB;
-            });
-            for (const key of keys) {
-                const src = `${basePath}/${imagesObj[key]}`;
-                const loaded = await new Promise(resolve => {
-                    const img = new Image();
-                    img.onload = () => resolve(true);
-                    img.onerror = () => resolve(false);
-                    img.src = src;
-                });
-                if (loaded) imageUrls.push(src);
-            }
-            return imageUrls;
-        }
+    async function safeFetchJson(url) {
+        try {
+            const r = await fetch(url);
+            if (!r.ok) return null;
+            return await r.json();
+        } catch { return null; }
+    }
 
-        function renderScreenshots(images) {
-            screenshotsContainer.innerHTML = '';
-            if (images.length === 0) {
-                screenshotsContainer.innerHTML = '<p style="color:var(--text-3);text-align:center;width:100%">Скриншоты не найдены</p>';
-                return;
-            }
-            images.forEach(src => {
-                const img = document.createElement('img');
+    async function loadInstruction(os) {
+        return await safeFetchJson(`${os}/instruction.json`);
+    }
+
+    async function loadDescription(base, descPath) {
+        if (!descPath) return null;
+        return await safeFetchText(`${base}/${descPath}`);
+    }
+
+    async function loadScreenshots(base, imagesObj) {
+        const urls = [];
+        if (!imagesObj || typeof imagesObj !== 'object') return urls;
+        const keys = Object.keys(imagesObj).sort((a, b) => {
+            const na = parseInt(a.match(/\d+/)?.[0] || 0);
+            const nb = parseInt(b.match(/\d+/)?.[0] || 0);
+            return na - nb;
+        });
+        for (const key of keys) {
+            const src = `${base}/${imagesObj[key]}`;
+            const loaded = await new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(false);
                 img.src = src;
-                img.className = 'screenshot-img';
-                img.alt = 'Скриншот';
-                screenshotsContainer.appendChild(img);
             });
+            if (loaded) urls.push(src);
+        }
+        return urls;
+    }
+
+    function renderScreenshots(images) {
+        screenshotsContainer.innerHTML = '';
+        if (!images.length) {
+            screenshotsContainer.innerHTML = '<p style="color:var(--text-3); text-align:center; width:100%">Скриншоты не найдены</p>';
+            return;
+        }
+        images.forEach(src => {
+            const img = document.createElement('img');
+            img.src = src;
+            img.className = 'screenshot-img';
+            img.alt = 'Скриншот';
+            screenshotsContainer.appendChild(img);
+        });
+    }
+
+    async function updateUI() {
+        if (!state.selectedOS) {
+            platformScreen.classList.remove('hidden');
+            storeView.classList.remove('visible');
+            return;
+        }
+        platformScreen.classList.add('hidden');
+        storeView.classList.add('visible');
+
+        const osData = appData[state.selectedOS];
+        appName.textContent = osData.title;
+        appShortDesc.textContent = osData.shortDesc;
+
+        currentInstruction = await loadInstruction(state.selectedOS);
+        let desc = osData.fullDesc;
+        if (currentInstruction?.desc) {
+            const fetched = await loadDescription(state.selectedOS, currentInstruction.desc);
+            if (fetched) desc = fetched;
+        }
+        fullDesc.textContent = desc;
+
+        permissionsList.innerHTML = osData.permissions.map(p =>
+            `<div class="permission-item"><i class="fas fa-check-circle"></i>${p}</div>`
+        ).join('');
+
+        if (state.selectedOS === 'Windows') {
+            formatSelector.style.display = 'flex';
+            document.querySelectorAll('.format-chip').forEach(c => c.classList.remove('active'));
+            const activeChip = document.querySelector(`.format-chip[data-format="${state.selectedFormat}"]`);
+            if (activeChip) activeChip.classList.add('active');
+            installMeta.textContent = `v3.2.1 · ${osData.sizes[state.selectedFormat]}`;
+        } else {
+            formatSelector.style.display = 'none';
+            state.selectedFormat = 'apk';
+            installMeta.textContent = `v3.2.1 · ${osData.sizes.apk}`;
         }
 
-        async function updateUI() {
-            if (!state.selectedOS) {
-                platformContainer.classList.remove('hidden');
-                storeContent.classList.remove('visible');
-                return;
-            }
+        let imagesObj = currentInstruction?.Images || null;
+        const screenshots = await loadScreenshots(state.selectedOS, imagesObj);
+        renderScreenshots(screenshots);
+    }
 
-            platformContainer.classList.add('hidden');
-            storeContent.classList.add('visible');
+    platformCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const os = card.dataset.os;
+            if (state.selectedOS === os) return;
+            state.selectedOS = os;
+            state.selectedFormat = appData[os].defaultFormat;
+            updateUI();
+        });
+    });
 
-            const osData = appData[state.selectedOS];
-            appTitle.textContent = osData.title;
-            appShortDesc.textContent = osData.shortDesc;
+    backBtn.addEventListener('click', () => {
+        state.selectedOS = null;
+        currentInstruction = null;
+        updateUI();
+    });
 
-            currentInstruction = await loadInstruction(state.selectedOS);
+    formatSelector.addEventListener('click', e => {
+        if (state.selectedOS !== 'Windows') return;
+        const chip = e.target.closest('.format-chip');
+        if (!chip) return;
+        state.selectedFormat = chip.dataset.format;
+        updateUI();
+    });
 
-            let descText = osData.fullDesc || '';
-            if (currentInstruction && currentInstruction.desc) {
-                const fetchedDesc = await loadDescriptionFromPath(state.selectedOS, currentInstruction.desc);
-                if (fetchedDesc) descText = fetchedDesc;
-            }
-            fullDesc.textContent = descText;
-
-            permissionsList.innerHTML = osData.permissions.map(p => `<li>${p}</li>`).join('');
-
+    btnInstall.addEventListener('click', () => {
+        if (!state.selectedOS) return;
+        const osData = appData[state.selectedOS];
+        const size = osData.sizes[state.selectedFormat];
+        let fileName;
+        if (currentInstruction?.app) {
             if (state.selectedOS === 'Windows') {
-                formatsSection.style.display = 'block';
-                document.querySelectorAll('#formatSelectorWindows .format-card').forEach(card => card.classList.remove('format-card--selected'));
-                const selectedCard = document.querySelector(`#formatSelectorWindows .format-card[data-format="${state.selectedFormat}"]`);
-                if (selectedCard) selectedCard.classList.add('format-card--selected');
-                const size = osData.sizes[state.selectedFormat];
-                downloadInfo.textContent = `v3.2.1 • ${state.selectedFormat.toUpperCase()} • ${size}`;
+                fileName = state.selectedFormat === 'exe' ? currentInstruction.exe : currentInstruction.zip;
             } else {
-                formatsSection.style.display = 'none';
-                state.selectedFormat = 'apk';
-                downloadInfo.textContent = `v3.2.1 • APK • ${osData.sizes.apk}`;
-            }
-
-            let imagesObj = null;
-            if (currentInstruction && currentInstruction.Images) {
-                imagesObj = currentInstruction.Images;
-            }
-            const screenshots = await loadScreenshotsFromPaths(state.selectedOS, imagesObj);
-            renderScreenshots(screenshots);
-        }
-
-        osCards.forEach(card => {
-            card.addEventListener('click', function() {
-                const os = this.dataset.os;
-                if (state.selectedOS === os) return;
-                osCards.forEach(c => c.classList.remove('os-card--selected'));
-                this.classList.add('os-card--selected');
-                state.selectedOS = os;
-                state.selectedFormat = appData[os].defaultFormat;
-                updateUI().catch(err => console.error('Update UI failed:', err));
-            });
-        });
-
-        backBtn.addEventListener('click', () => {
-            state.selectedOS = null;
-            osCards.forEach(c => c.classList.remove('os-card--selected'));
-            currentInstruction = null;
-            updateUI().catch(err => console.error('Update UI failed:', err));
-        });
-
-        formatWindows.addEventListener('click', function(e) {
-            const card = e.target.closest('.format-card');
-            if (!card || state.selectedOS !== 'Windows') return;
-            this.querySelectorAll('.format-card').forEach(c => c.classList.remove('format-card--selected'));
-            card.classList.add('format-card--selected');
-            state.selectedFormat = card.dataset.format;
-            updateUI().catch(err => console.error('Update UI failed:', err));
-        });
-
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toastMessage').textContent = message;
-            toast.classList.add('toast--visible');
-            clearTimeout(toast._timeout);
-            toast._timeout = setTimeout(() => { toast.classList.remove('toast--visible'); }, 2800);
-        }
-
-        function getDownloadFileName() {
-            if (currentInstruction && currentInstruction.app) {
-                if (state.selectedOS === 'Windows') {
-                    if (state.selectedFormat === 'exe' && currentInstruction.exe) return currentInstruction.exe;
-                    if (state.selectedFormat === 'zip' && currentInstruction.zip) return currentInstruction.zip;
-                } else {
-                    return currentInstruction.app;
-                }
-            }
-            const version = '3.2.1';
-            if (state.selectedOS === 'Windows') {
-                return state.selectedFormat === 'exe' ? `dynamic-browser-setup-${version}.exe` : `dynamic-browser-portable-${version}.zip`;
-            } else {
-                return `dynamic-browser-${version}.apk`;
+                fileName = currentInstruction.app;
             }
         }
-
-        function handleDownload() {
-            if (!state.selectedOS) return;
-            const osData = appData[state.selectedOS];
-            const size = osData.sizes[state.selectedFormat];
-            const fileName = getDownloadFileName();
-            const link = `https://dynamicbrowser.app/dl/${fileName}`;
-
-            showToast(`Загрузка ${fileName} (${size}) началась!`);
-
-            const btn = document.getElementById('btnDownload');
-            btn.style.transform = 'scale(0.94)';
-            setTimeout(() => { btn.style.transform = ''; }, 180);
-
-            const a = document.createElement('a');
-            a.href = link;
-            a.download = fileName;
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+        if (!fileName) {
+            const v = '3.2.1';
+            fileName = state.selectedOS === 'Windows'
+                ? (state.selectedFormat === 'exe' ? `dynamic-browser-setup-${v}.exe` : `dynamic-browser-portable-${v}.zip`)
+                : `dynamic-browser-${v}.apk`;
         }
+        const link = `https://dynamicbrowser.app/dl/${fileName}`;
+        showToast(`Загрузка ${fileName} (${size}) началась!`);
+        const a = document.createElement('a');
+        a.href = link;
+        a.download = fileName;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    });
 
-        document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                handleDownload();
-            }
-        });
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        document.getElementById('toastMessage').textContent = msg;
+        toast.classList.add('visible');
+        clearTimeout(toast._timeout);
+        toast._timeout = setTimeout(() => toast.classList.remove('visible'), 3000);
+    }
 
-        const privacyLink = document.getElementById('privacyLink');
-        const privacyModal = document.getElementById('privacyModal');
-        const modalClose = document.getElementById('modalClose');
-        const modalBody = document.getElementById('modalBody');
-
-        function loadPrivacyPolicy() {
-            fetch('POLITICS.txt')
-                .then(response => {
-                    if (!response.ok) throw new Error('Файл не найден');
-                    return response.text();
-                })
-                .then(text => {
-                    const paragraphs = text.split('\n\n').filter(p => p.trim() !== '');
-                    const html = paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
-                    modalBody.innerHTML = html;
-                })
-                .catch(() => {
-                    modalBody.innerHTML = '<p>Не удалось загрузить политику конфиденциальности. Пожалуйста, попробуйте позже.</p>';
-                });
-        }
-
-        loadPrivacyPolicy();
-
-        privacyLink.addEventListener('click', function(e) {
+    document.addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             e.preventDefault();
-            privacyModal.classList.add('modal--visible');
-        });
-
-        function closeModal() {
-            privacyModal.classList.remove('modal--visible');
+            btnInstall.click();
         }
+    });
 
-        modalClose.addEventListener('click', closeModal);
-        privacyModal.addEventListener('click', function(e) {
-            if (e.target === privacyModal) closeModal();
-        });
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && privacyModal.classList.contains('modal--visible')) {
-                closeModal();
-            }
-        });
+    const privacyLink = document.getElementById('privacyLink');
+    const privacyModal = document.getElementById('privacyModal');
+    const modalClose = document.getElementById('modalClose');
+    const modalBody = document.getElementById('modalBody');
 
-        updateUI().catch(err => console.error('Initial UI update failed:', err));
-    </script>
+    function loadPrivacy() {
+        fetch('POLITICS.txt')
+            .then(r => r.ok ? r.text() : Promise.reject())
+            .then(t => {
+                const ps = t.split('\n\n').filter(p => p.trim());
+                modalBody.innerHTML = ps.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+            })
+            .catch(() => modalBody.innerHTML = '<p>Не удалось загрузить политику.</p>');
+    }
+    loadPrivacy();
+
+    privacyLink.addEventListener('click', e => {
+        e.preventDefault();
+        privacyModal.classList.add('modal--visible');
+    });
+    modalClose.addEventListener('click', () => privacyModal.classList.remove('modal--visible'));
+    privacyModal.addEventListener('click', e => { if (e.target === privacyModal) privacyModal.classList.remove('modal--visible'); });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && privacyModal.classList.contains('modal--visible'))
+            privacyModal.classList.remove('modal--visible');
+    });
+
+    updateUI();
+</script>
 </body>
 </html>
