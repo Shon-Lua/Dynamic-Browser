@@ -56,12 +56,22 @@
             line-height: 1.6;
             position: relative;
             overflow-y: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent) var(--surface-2);
         }
 
         body::-webkit-scrollbar {
-            display: none;
+            width: 6px;
+        }
+
+        body::-webkit-scrollbar-track {
+            background: var(--surface-2);
+            border-radius: 3px;
+        }
+
+        body::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 3px;
         }
 
         body::before {
@@ -72,34 +82,6 @@
                         radial-gradient(circle at 80% 70%, rgba(0, 229, 255, 0.08) 0%, transparent 50%);
             pointer-events: none;
             z-index: 0;
-        }
-
-        #custom-scrollbar {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 10px;
-            height: 100%;
-            z-index: 10000;
-            pointer-events: none;
-        }
-
-        #custom-scrollbar-thumb {
-            position: absolute;
-            right: 2px;
-            width: 6px;
-            background: var(--accent-2);
-            border-radius: 3px;
-            opacity: 0.6;
-            transition: opacity 0.2s, background 0.2s;
-            pointer-events: auto;
-            cursor: pointer;
-            min-height: 20px;
-        }
-
-        #custom-scrollbar-thumb:hover {
-            opacity: 1;
-            background: var(--accent);
         }
 
         .container {
@@ -522,9 +504,6 @@
     </style>
 </head>
 <body>
-<div id="custom-scrollbar">
-    <div id="custom-scrollbar-thumb"></div>
-</div>
 <div class="container">
     <div class="platform-screen" id="platformScreen">
         <h2 class="platform-title">Выберите вашу платформу</h2>
@@ -647,63 +626,6 @@
     const lightboxImg = document.getElementById('lightboxImg');
     const lightboxClose = document.getElementById('lightboxClose');
 
-    const scrollbarThumb = document.getElementById('custom-scrollbar-thumb');
-    let isDragging = false;
-    let startY, startScrollY;
-
-    function updateScrollbar() {
-        if (isDragging) return;
-        const docHeight = document.documentElement.scrollHeight;
-        const winHeight = window.innerHeight;
-        if (docHeight <= winHeight) {
-            scrollbarThumb.style.display = 'none';
-            return;
-        }
-        scrollbarThumb.style.display = 'block';
-        const thumbHeightPercent = Math.max((winHeight / docHeight) * 100, 8);
-        scrollbarThumb.style.height = thumbHeightPercent + '%';
-        const maxScroll = docHeight - winHeight;
-        const scrollPercent = maxScroll > 0 ? window.scrollY / maxScroll : 0;
-        const maxTopPercent = 100 - thumbHeightPercent;
-        scrollbarThumb.style.top = (scrollPercent * maxTopPercent) + '%';
-    }
-
-    window.addEventListener('scroll', updateScrollbar);
-    window.addEventListener('resize', updateScrollbar);
-
-    const resizeObserver = new ResizeObserver(() => {
-        updateScrollbar();
-    });
-    resizeObserver.observe(document.body);
-
-    scrollbarThumb.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        startY = e.clientY;
-        startScrollY = window.scrollY;
-        document.body.style.userSelect = 'none';
-        e.preventDefault();
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        const docHeight = document.documentElement.scrollHeight;
-        const winHeight = window.innerHeight;
-        const thumbHeight = (winHeight / docHeight) * winHeight;
-        const maxThumbTop = winHeight - thumbHeight;
-        if (maxThumbTop <= 0) return;
-        const deltaY = e.clientY - startY;
-        const scale = (docHeight - winHeight) / maxThumbTop;
-        window.scrollTo(0, startScrollY + deltaY * scale);
-    });
-
-    document.addEventListener('mouseup', () => {
-        if (isDragging) {
-            isDragging = false;
-            document.body.style.userSelect = '';
-            updateScrollbar();
-        }
-    });
-
     let currentInstruction = null;
     let isAnimating = false;
 
@@ -812,7 +734,6 @@
             storeView.style.transform = 'translateY(0)';
             storeView.classList.add('visible');
             isAnimating = false;
-            updateScrollbar();
         }, 400);
     }
 
@@ -835,7 +756,6 @@
             platformScreen.style.transform = 'translateY(0)';
             platformScreen.classList.remove('hidden');
             isAnimating = false;
-            updateScrollbar();
         }, 400);
     }
 
@@ -980,7 +900,6 @@
     });
 
     updateUI();
-    updateScrollbar();
 </script>
 </body>
 </html>
