@@ -314,6 +314,27 @@
             color: var(--text-2);
             line-height: 1.7;
         }
+        .description-text.clamped {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .show-more-btn {
+            background: none;
+            border: none;
+            color: var(--accent-2);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-top: 8px;
+            padding: 0;
+            display: none;
+            transition: color 0.2s;
+        }
+        .show-more-btn:hover {
+            color: #fff;
+        }
 
         .permissions-card {
             background: var(--surface);
@@ -471,6 +492,11 @@
             .app-header { flex-direction: column; align-items: center; text-align: center; }
             .app-icon { width: 72px; height: 72px; }
             .download-area { justify-content: center; }
+            .screenshot-img {
+                max-width: 100%;
+                height: auto;
+                max-height: none;
+            }
         }
     </style>
 </head>
@@ -519,6 +545,7 @@
         <div class="description-card">
             <h3 class="section-label">Описание</h3>
             <p class="description-text" id="fullDesc"></p>
+            <button class="show-more-btn" id="showMoreBtn">Еще</button>
         </div>
 
         <div class="permissions-card">
@@ -586,6 +613,7 @@
     const appName = document.getElementById('appName');
     const appShortDesc = document.getElementById('appShortDesc');
     const fullDesc = document.getElementById('fullDesc');
+    const showMoreBtn = document.getElementById('showMoreBtn');
     const permissionsList = document.getElementById('permissionsList');
     const installMeta = document.getElementById('installMeta');
     const screenshotsContainer = document.getElementById('screenshotsContainer');
@@ -686,6 +714,22 @@
         return '3.2.1';
     }
 
+    function setupDescriptionToggle() {
+        fullDesc.classList.add('clamped');
+        showMoreBtn.style.display = 'none';
+        void fullDesc.offsetHeight;
+        if (fullDesc.scrollHeight > fullDesc.clientHeight) {
+            showMoreBtn.style.display = 'inline-block';
+        } else {
+            fullDesc.classList.remove('clamped');
+        }
+    }
+
+    showMoreBtn.addEventListener('click', () => {
+        fullDesc.classList.remove('clamped');
+        showMoreBtn.style.display = 'none';
+    });
+
     function transitionToStore() {
         if (isAnimating) return;
         isAnimating = true;
@@ -748,6 +792,7 @@
             if (fetched) desc = fetched;
         }
         fullDesc.textContent = desc;
+        setupDescriptionToggle();
 
         permissionsList.innerHTML = osData.permissions.map(p =>
             `<div class="permission-item"><i class="fas fa-check-circle"></i>${p}</div>`
