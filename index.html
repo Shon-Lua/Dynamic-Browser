@@ -167,10 +167,6 @@
             width: 100%;
             gap: 20px;
             transition: opacity 0.4s ease, transform 0.4s ease;
-            max-height: 100vh;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: var(--accent) var(--surface-2);
         }
         .store-view.visible {
             display: flex;
@@ -450,6 +446,17 @@
             padding: 28px;
             scrollbar-width: thin;
             scrollbar-color: var(--accent) var(--surface-2);
+        }
+        .modal-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .modal-scroll::-webkit-scrollbar-track {
+            background: var(--surface-2);
+            border-radius: 3px;
+        }
+        .modal-scroll::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 3px;
         }
         .modal-close {
             position: absolute;
