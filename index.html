@@ -309,18 +309,21 @@
             padding: 20px;
             border: 1px solid var(--border);
         }
+        .description-text-wrapper {
+            position: relative;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .description-text-wrapper.clamped {
+            max-height: 120px;
+        }
         .description-text {
             font-size: 0.95rem;
             color: var(--text-2);
             line-height: 1.7;
         }
-        .description-text.clamped {
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        .show-more-btn {
+        .expand-btn {
+            display: inline-block;
             background: none;
             border: none;
             color: var(--accent-2);
@@ -328,12 +331,13 @@
             font-size: 0.9rem;
             cursor: pointer;
             margin-top: 8px;
-            padding: 0;
-            display: none;
+            padding: 4px 0;
             transition: color 0.2s;
+            text-decoration: underline;
+            text-underline-offset: 2px;
         }
-        .show-more-btn:hover {
-            color: #fff;
+        .expand-btn:hover {
+            color: #ffffff;
         }
 
         .permissions-card {
@@ -492,7 +496,12 @@
             .app-header { flex-direction: column; align-items: center; text-align: center; }
             .app-icon { width: 72px; height: 72px; }
             .download-area { justify-content: center; }
+            .screenshots-scroll {
+                flex-direction: column;
+                overflow-x: visible;
+            }
             .screenshot-img {
+                width: 100%;
                 max-width: 100%;
                 height: auto;
                 max-height: none;
@@ -544,8 +553,10 @@
 
         <div class="description-card">
             <h3 class="section-label">Описание</h3>
-            <p class="description-text" id="fullDesc"></p>
-            <button class="show-more-btn" id="showMoreBtn">Еще</button>
+            <div class="description-text-wrapper clamped" id="descWrapper">
+                <p class="description-text" id="fullDesc"></p>
+            </div>
+            <button class="expand-btn" id="expandDescBtn" style="display:none;">Ещё</button>
         </div>
 
         <div class="permissions-card">
@@ -613,7 +624,8 @@
     const appName = document.getElementById('appName');
     const appShortDesc = document.getElementById('appShortDesc');
     const fullDesc = document.getElementById('fullDesc');
-    const showMoreBtn = document.getElementById('showMoreBtn');
+    const descWrapper = document.getElementById('descWrapper');
+    const expandDescBtn = document.getElementById('expandDescBtn');
     const permissionsList = document.getElementById('permissionsList');
     const installMeta = document.getElementById('installMeta');
     const screenshotsContainer = document.getElementById('screenshotsContainer');
@@ -627,6 +639,40 @@
 
     let currentInstruction = null;
     let isAnimating = false;
+
+    function setupDescriptionExpand() {
+        const lineHeight = parseFloat(getComputedStyle(fullDesc).lineHeight);
+        const maxHeight = lineHeight * 5;
+        const scrollHeight = fullDesc.scrollHeight;
+
+        if (scrollHeight > maxHeight + 2) {
+            expandDescBtn.style.display = 'inline-block';
+            descWrapper.classList.add('clamped');
+            descWrapper.style.maxHeight = maxHeight + 'px';
+            expandDescBtn.textContent = 'Ещё';
+            expandDescBtn.dataset.expanded = 'false';
+        } else {
+            expandDescBtn.style.display = 'none';
+            descWrapper.classList.remove('clamped');
+            descWrapper.style.maxHeight = 'none';
+        }
+    }
+
+    expandDescBtn.addEventListener('click', () => {
+        const expanded = expandDescBtn.dataset.expanded === 'true';
+        if (expanded) {
+            descWrapper.classList.add('clamped');
+            const lineHeight = parseFloat(getComputedStyle(fullDesc).lineHeight);
+            descWrapper.style.maxHeight = (lineHeight * 5) + 'px';
+            expandDescBtn.textContent = 'Ещё';
+            expandDescBtn.dataset.expanded = 'false';
+        } else {
+            descWrapper.classList.remove('clamped');
+            descWrapper.style.maxHeight = fullDesc.scrollHeight + 'px';
+            expandDescBtn.textContent = 'Свернуть';
+            expandDescBtn.dataset.expanded = 'true';
+        }
+    });
 
     async function safeFetchText(url) {
         try {
@@ -714,22 +760,6 @@
         return '3.2.1';
     }
 
-    function setupDescriptionToggle() {
-        fullDesc.classList.add('clamped');
-        showMoreBtn.style.display = 'none';
-        void fullDesc.offsetHeight;
-        if (fullDesc.scrollHeight > fullDesc.clientHeight) {
-            showMoreBtn.style.display = 'inline-block';
-        } else {
-            fullDesc.classList.remove('clamped');
-        }
-    }
-
-    showMoreBtn.addEventListener('click', () => {
-        fullDesc.classList.remove('clamped');
-        showMoreBtn.style.display = 'none';
-    });
-
     function transitionToStore() {
         if (isAnimating) return;
         isAnimating = true;
@@ -792,7 +822,10 @@
             if (fetched) desc = fetched;
         }
         fullDesc.textContent = desc;
-        setupDescriptionToggle();
+
+        requestAnimationFrame(() => {
+            setupDescriptionExpand();
+        });
 
         permissionsList.innerHTML = osData.permissions.map(p =>
             `<div class="permission-item"><i class="fas fa-check-circle"></i>${p}</div>`
