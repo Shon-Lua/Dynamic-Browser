@@ -297,10 +297,6 @@
             box-shadow: 0 6px 18px rgba(0,0,0,0.5);
             border: 1px solid var(--border-2);
             cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .screenshot-img:hover {
-            transform: scale(1.03);
         }
 
         .description-card {
@@ -310,12 +306,8 @@
             border: 1px solid var(--border);
         }
         .description-text-wrapper {
-            position: relative;
             overflow: hidden;
             transition: max-height 0.3s ease;
-        }
-        .description-text-wrapper.clamped {
-            max-height: 120px;
         }
         .description-text {
             font-size: 0.95rem;
@@ -553,7 +545,7 @@
 
         <div class="description-card">
             <h3 class="section-label">Описание</h3>
-            <div class="description-text-wrapper clamped" id="descWrapper">
+            <div class="description-text-wrapper" id="descWrapper">
                 <p class="description-text" id="fullDesc"></p>
             </div>
             <button class="expand-btn" id="expandDescBtn" style="display:none;">Ещё</button>
@@ -641,33 +633,37 @@
     let isAnimating = false;
 
     function setupDescriptionExpand() {
-        const lineHeight = parseFloat(getComputedStyle(fullDesc).lineHeight);
+        descWrapper.style.maxHeight = 'none';
+        expandDescBtn.style.display = 'none';
+        void descWrapper.offsetHeight;
+
+        const computedStyle = getComputedStyle(fullDesc);
+        const lineHeight = parseFloat(computedStyle.lineHeight);
+        if (isNaN(lineHeight)) {
+            return;
+        }
         const maxHeight = lineHeight * 5;
         const scrollHeight = fullDesc.scrollHeight;
 
         if (scrollHeight > maxHeight + 2) {
-            expandDescBtn.style.display = 'inline-block';
-            descWrapper.classList.add('clamped');
             descWrapper.style.maxHeight = maxHeight + 'px';
+            expandDescBtn.style.display = 'inline-block';
             expandDescBtn.textContent = 'Ещё';
             expandDescBtn.dataset.expanded = 'false';
-        } else {
-            expandDescBtn.style.display = 'none';
-            descWrapper.classList.remove('clamped');
-            descWrapper.style.maxHeight = 'none';
         }
     }
 
     expandDescBtn.addEventListener('click', () => {
         const expanded = expandDescBtn.dataset.expanded === 'true';
+        const computedStyle = getComputedStyle(fullDesc);
+        const lineHeight = parseFloat(computedStyle.lineHeight);
+
         if (expanded) {
-            descWrapper.classList.add('clamped');
-            const lineHeight = parseFloat(getComputedStyle(fullDesc).lineHeight);
-            descWrapper.style.maxHeight = (lineHeight * 5) + 'px';
+            const maxHeight = lineHeight * 5;
+            descWrapper.style.maxHeight = maxHeight + 'px';
             expandDescBtn.textContent = 'Ещё';
             expandDescBtn.dataset.expanded = 'false';
         } else {
-            descWrapper.classList.remove('clamped');
             descWrapper.style.maxHeight = fullDesc.scrollHeight + 'px';
             expandDescBtn.textContent = 'Свернуть';
             expandDescBtn.dataset.expanded = 'true';
