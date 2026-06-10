@@ -41,6 +41,7 @@
             scroll-behavior: smooth;
             font-size: 16px;
             height: 100%;
+            color-scheme: dark;
         }
 
         body {
@@ -57,11 +58,6 @@
             line-height: 1.6;
             position: relative;
             overflow-y: auto;
-            scrollbar-width: none;
-        }
-
-        body::-webkit-scrollbar {
-            display: none;
         }
 
         body::before {
@@ -161,19 +157,6 @@
             display: flex;
             max-height: 100vh;
             overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: var(--accent) var(--surface-2);
-        }
-        .store-view.visible::-webkit-scrollbar {
-            width: 6px;
-        }
-        .store-view.visible::-webkit-scrollbar-track {
-            background: var(--surface-2);
-            border-radius: 3px;
-        }
-        .store-view.visible::-webkit-scrollbar-thumb {
-            background: var(--accent);
-            border-radius: 3px;
         }
 
         .back-btn {
@@ -308,19 +291,6 @@
             overflow-x: auto;
             gap: 12px;
             padding-bottom: 6px;
-            scrollbar-width: thin;
-            scrollbar-color: var(--accent) var(--surface-2);
-        }
-        .screenshots-scroll::-webkit-scrollbar {
-            height: 5px;
-        }
-        .screenshots-scroll::-webkit-scrollbar-track {
-            background: var(--surface-2);
-            border-radius: 3px;
-        }
-        .screenshots-scroll::-webkit-scrollbar-thumb {
-            background: var(--accent);
-            border-radius: 3px;
         }
         .screenshot-img {
             border-radius: 12px;
@@ -448,19 +418,6 @@
             overflow-y: auto;
             max-height: 80vh;
             padding: 28px;
-            scrollbar-width: thin;
-            scrollbar-color: var(--accent) var(--surface-2);
-        }
-        .modal-scroll::-webkit-scrollbar {
-            width: 6px;
-        }
-        .modal-scroll::-webkit-scrollbar-track {
-            background: var(--surface-2);
-            border-radius: 3px;
-        }
-        .modal-scroll::-webkit-scrollbar-thumb {
-            background: var(--accent);
-            border-radius: 3px;
         }
         .modal-close {
             position: absolute;
