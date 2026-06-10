@@ -34,6 +34,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         html {
@@ -166,6 +167,10 @@
             width: 100%;
             gap: 20px;
             transition: opacity 0.4s ease, transform 0.4s ease;
+            max-height: 100vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent) var(--surface-2);
         }
         .store-view.visible {
             display: flex;
