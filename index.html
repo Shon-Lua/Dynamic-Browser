@@ -57,22 +57,11 @@
             line-height: 1.6;
             position: relative;
             overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: var(--accent) var(--surface-2);
+            scrollbar-width: none;
         }
 
         body::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        body::-webkit-scrollbar-track {
-            background: var(--surface-2);
-            border-radius: 3px;
-        }
-
-        body::-webkit-scrollbar-thumb {
-            background: var(--accent);
-            border-radius: 3px;
+            display: none;
         }
 
         body::before {
@@ -170,6 +159,21 @@
         }
         .store-view.visible {
             display: flex;
+            max-height: 100vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent) var(--surface-2);
+        }
+        .store-view.visible::-webkit-scrollbar {
+            width: 6px;
+        }
+        .store-view.visible::-webkit-scrollbar-track {
+            background: var(--surface-2);
+            border-radius: 3px;
+        }
+        .store-view.visible::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 3px;
         }
 
         .back-btn {
