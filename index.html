@@ -1090,6 +1090,8 @@
             storeView.style.transition = 'none';
             void storeView.offsetHeight;
             
+            setupDescriptionExpand();
+            
             storeView.style.transition = 'opacity 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.2), transform 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.2), filter 0.6s ease';
             storeView.style.opacity = '1';
             storeView.style.transform = 'scale(1) translateY(0)';
@@ -1184,9 +1186,10 @@
         const screenshots = await loadScreenshots(state.selectedOS, imagesObj);
         renderScreenshots(screenshots);
 
-        setupDescriptionExpand();
-
-        if (platformScreen.classList.contains('hidden')) return;
+        if (platformScreen.classList.contains('hidden')) {
+            setupDescriptionExpand();
+            return;
+        }
         transitionToStore();
     }
 
