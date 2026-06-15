@@ -94,15 +94,12 @@
             width: 100%;
             gap: 32px;
             flex: 1;
-            transition: opacity 0.35s ease-in-out, visibility 0.35s;
+            transition: opacity 0.4s ease, transform 0.4s ease;
             opacity: 1;
-            visibility: visible;
+            transform: translateY(0);
         }
         .platform-screen.hidden {
-            opacity: 0;
-            visibility: hidden;
-            position: absolute;
-            pointer-events: none;
+            display: none;
         }
         .platform-title {
             font-size: 1.4rem;
@@ -183,21 +180,14 @@
         }
 
         .store-view {
-            display: flex;
+            display: none;
             flex-direction: column;
             width: 100%;
             gap: 20px;
-            transition: opacity 0.35s ease-in-out, visibility 0.35s;
-            opacity: 0;
-            visibility: hidden;
-            position: absolute;
-            pointer-events: none;
+            transition: opacity 0.4s ease, transform 0.4s ease;
         }
         .store-view.visible {
-            opacity: 1;
-            visibility: visible;
-            position: relative;
-            pointer-events: auto;
+            display: flex;
         }
 
         .back-btn {
@@ -1048,12 +1038,13 @@
 
     function closeLightbox() {
         lightbox.classList.remove('visible');
-        lightboxImg.addEventListener('transitionend', function onTransitionEnd(e) {
-            if (e.target === lightbox && !lightbox.classList.contains('visible')) {
+        const onTransitionEnd = () => {
+            if (!lightbox.classList.contains('visible')) {
                 lightboxImg.src = '';
-                lightboxImg.removeEventListener('transitionend', onTransitionEnd);
+                lightbox.removeEventListener('transitionend', onTransitionEnd);
             }
-        });
+        };
+        lightbox.addEventListener('transitionend', onTransitionEnd, { once: true });
     }
 
     lightboxClose.addEventListener('click', closeLightbox);
@@ -1069,19 +1060,54 @@
         return '3.2.1';
     }
 
-    function showStore() {
-        platformScreen.classList.add('hidden');
-        storeView.classList.add('visible');
+    function transitionToStore() {
+        if (isAnimating) return;
+        isAnimating = true;
+        platformScreen.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        platformScreen.style.opacity = '0';
+        platformScreen.style.transform = 'translateY(-20px)';
+        setTimeout(() => {
+            platformScreen.style.display = 'none';
+            platformScreen.classList.add('hidden');
+            storeView.style.display = 'flex';
+            storeView.style.opacity = '0';
+            storeView.style.transform = 'translateY(20px)';
+            storeView.style.transition = 'none';
+            void storeView.offsetHeight;
+            storeView.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            storeView.style.opacity = '1';
+            storeView.style.transform = 'translateY(0)';
+            storeView.classList.add('visible');
+            isAnimating = false;
+        }, 400);
     }
 
-    function showPlatform() {
-        storeView.classList.remove('visible');
-        platformScreen.classList.remove('hidden');
+    function transitionToPlatform() {
+        if (isAnimating) return;
+        isAnimating = true;
+        storeView.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        storeView.style.opacity = '0';
+        storeView.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            storeView.style.display = 'none';
+            storeView.classList.remove('visible');
+            platformScreen.style.display = 'flex';
+            platformScreen.style.opacity = '0';
+            platformScreen.style.transform = 'translateY(-20px)';
+            platformScreen.style.transition = 'none';
+            void platformScreen.offsetHeight;
+            platformScreen.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            platformScreen.style.opacity = '1';
+            platformScreen.style.transform = 'translateY(0)';
+            platformScreen.classList.remove('hidden');
+            isAnimating = false;
+        }, 400);
     }
 
     async function updateUI() {
         if (!state.selectedOS) {
-            if (platformScreen.classList.contains('hidden')) showPlatform();
+            if (!platformScreen.classList.contains('hidden')) return;
+            transitionToPlatform();
             return;
         }
 
@@ -1130,7 +1156,8 @@
         const screenshots = await loadScreenshots(state.selectedOS, imagesObj);
         renderScreenshots(screenshots);
 
-        if (!storeView.classList.contains('visible')) showStore();
+        if (platformScreen.classList.contains('hidden')) return;
+        transitionToStore();
     }
 
     platformCards.forEach(card => {
