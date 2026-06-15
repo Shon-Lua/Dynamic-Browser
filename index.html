@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Dynamic Browser</title>
     <link rel="icon" href="Logo.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,7 +14,6 @@
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
-
         :root {
             --bg: #000000;
             --surface: rgba(0, 0, 0, 0.75);
@@ -37,14 +36,12 @@
             --glass-bg: rgba(0, 0, 0, 0.7);
             --glass-border: rgba(255, 255, 255, 0.12);
         }
-
         html {
             scroll-behavior: smooth;
             font-size: 16px;
             height: 100%;
             color-scheme: dark;
         }
-
         body {
             font-family: var(--font);
             background: #000000;
@@ -61,7 +58,6 @@
             overflow-y: auto;
             isolation: isolate;
         }
-
         canvas#wave-canvas {
             position: fixed;
             top: 0;
@@ -71,8 +67,9 @@
             display: block;
             z-index: 0;
             pointer-events: none;
+            transform: translateZ(0);
+            will-change: transform;
         }
-
         .container {
             position: relative;
             z-index: 2;
@@ -85,7 +82,6 @@
             justify-content: center;
             min-height: 100%;
         }
-
         .platform-screen {
             display: flex;
             flex-direction: column;
@@ -178,7 +174,6 @@
             font-size: 1.2rem;
             letter-spacing: -0.01em;
         }
-
         .store-view {
             display: none;
             flex-direction: column;
@@ -189,7 +184,6 @@
         .store-view.visible {
             display: flex;
         }
-
         .back-btn {
             background: var(--glass-bg);
             backdrop-filter: blur(12px);
@@ -217,7 +211,6 @@
             transform: translateX(-4px);
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
         }
-
         .app-header {
             display: flex;
             gap: 20px;
@@ -381,7 +374,6 @@
         .file-full-info.visible {
             display: block;
         }
-
         .screenshots-section {
             background: var(--glass-bg);
             backdrop-filter: blur(var(--glass-blur));
@@ -429,7 +421,6 @@
         .screenshot-img:hover {
             border-color: rgba(255, 255, 255, 0.5);
         }
-
         .description-card {
             background: var(--glass-bg);
             backdrop-filter: blur(var(--glass-blur));
@@ -466,7 +457,6 @@
         .expand-btn:hover {
             color: #ffffff;
         }
-
         .permissions-card {
             background: var(--glass-bg);
             backdrop-filter: blur(var(--glass-blur));
@@ -494,7 +484,6 @@
             width: 18px;
             text-align: center;
         }
-
         .footer {
             text-align: center;
             padding: 20px 0 8px;
@@ -508,7 +497,6 @@
             text-decoration: none;
             margin: 0 4px;
         }
-
         .toast {
             position: fixed;
             bottom: 24px;
@@ -536,7 +524,6 @@
         .toast i {
             color: #ffffff;
         }
-
         .modal-overlay {
             display: flex;
             position: fixed;
@@ -587,7 +574,6 @@
             font-size: 1.8rem;
             cursor: pointer;
         }
-
         .lightbox {
             position: fixed;
             inset: 0;
@@ -623,7 +609,6 @@
             border-radius: 12px;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
         }
-
         @media (max-width: 640px) {
             body { padding: 16px; }
             .platform-cards { gap: 16px; }
@@ -663,10 +648,8 @@
             </div>
         </div>
     </div>
-
     <div class="store-view" id="storeView">
         <button class="back-btn" id="backBtn"><i class="fas fa-arrow-left"></i> Назад</button>
-
         <div class="app-header">
             <img src="Logo.png" alt="Dynamic Browser" class="app-icon" id="appIcon">
             <div class="app-info">
@@ -691,12 +674,10 @@
                 <div class="file-full-info" id="fileFullInfo"></div>
             </div>
         </div>
-
         <div class="screenshots-section">
             <h3 class="section-label">Скриншоты</h3>
             <div class="screenshots-scroll" id="screenshotsContainer"></div>
         </div>
-
         <div class="description-card">
             <h3 class="section-label">Описание</h3>
             <div class="description-text-wrapper" id="descWrapper">
@@ -704,12 +685,10 @@
             </div>
             <button class="expand-btn" id="expandDescBtn" style="display:none;">Ещё</button>
         </div>
-
         <div class="permissions-card">
             <h3 class="section-label">Права доступа</h3>
             <div id="permissionsList"></div>
         </div>
-
         <div class="footer">
             © 2026 Dynamic Browser.
             <a href="#" id="privacyLink">Политика конфиденциальности</a>
@@ -717,12 +696,10 @@
         </div>
     </div>
 </div>
-
 <div class="toast" id="toast">
     <i class="fas fa-check-circle"></i>
     <span id="toastMessage"></span>
 </div>
-
 <div class="modal-overlay" id="privacyModal">
     <div class="modal-content">
         <button class="modal-close" id="modalClose">&times;</button>
@@ -731,12 +708,10 @@
         </div>
     </div>
 </div>
-
 <div class="lightbox" id="lightbox">
     <button class="lightbox-close" id="lightboxClose">&times;</button>
     <img class="lightbox-img" id="lightboxImg" src="" alt="Скриншот">
 </div>
-
 <script type="importmap">
     {
         "imports": {
@@ -744,85 +719,104 @@
         }
     }
 </script>
-
 <script type="module">
     import * as THREE from 'three';
-
-    const canvas = document.getElementById('wave-canvas');
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
-    scene.fog = new THREE.FogExp2(0x000000, 0.012);
-
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(12, 8, 14);
-    camera.lookAt(0, 0, 0);
-
-    const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-
-    const widthSegments = 80;
-    const heightSegments = 80;
-    const planeWidth = 18;
-    const planeHeight = 18;
-    const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, widthSegments, heightSegments);
-    geometry.rotateX(-Math.PI / 2);
-    const positions = geometry.attributes.position.array;
-    const originalY = new Float32Array(positions.length / 3);
-    for (let i = 0; i < positions.length / 3; i++) {
-        originalY[i] = positions[i*3 + 1];
-    }
-
-    const material = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
-        wireframe: true,
-        emissive: 0x111111,
-        roughness: 0.4,
-        metalness: 0.8
-    });
-    const waveMesh = new THREE.Mesh(geometry, material);
-    scene.add(waveMesh);
-
-    const ambientLight = new THREE.AmbientLight(0x222222);
-    scene.add(ambientLight);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-    dirLight.position.set(5, 10, 7);
-    scene.add(dirLight);
-    const backLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    backLight.position.set(-3, 5, -5);
-    scene.add(backLight);
-
-    const gridHelper = new THREE.GridHelper(25, 20, 0xffffff, 0x444444);
-    gridHelper.position.y = -2.2;
-    gridHelper.material.transparent = true;
-    gridHelper.material.opacity = 0.2;
-    scene.add(gridHelper);
-
-    const starGeometry = new THREE.BufferGeometry();
-    const starCount = 1200;
-    const starPositions = new Float32Array(starCount * 3);
-    for (let i = 0; i < starCount; i++) {
-        starPositions[i*3] = (Math.random() - 0.5) * 200;
-        starPositions[i*3+1] = (Math.random() - 0.5) * 60;
-        starPositions[i*3+2] = (Math.random() - 0.5) * 80 - 40;
-    }
-    starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-    const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.08, transparent: true, opacity: 0.6 });
-    const stars = new THREE.Points(starGeometry, starMaterial);
-    scene.add(stars);
-
+    let scene, camera, renderer, waveMesh, stars, geometry, originalY;
     let time = 0;
+    let animationId = null;
+    let contextLost = false;
+    const canvas = document.getElementById('wave-canvas');
+    function initThree() {
+        if (renderer) {
+            if (animationId) cancelAnimationFrame(animationId);
+            if (renderer.domElement && renderer.domElement.parentNode) {
+                renderer.domElement.remove();
+            }
+        }
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+        scene.fog = new THREE.FogExp2(0x000000, 0.012);
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(12, 8, 14);
+        camera.lookAt(0, 0, 0);
+        renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.contextLost = false;
+        canvas.addEventListener('webglcontextlost', handleContextLost, false);
+        canvas.addEventListener('webglcontextrestored', handleContextRestored, false);
+        const widthSegments = 45;
+        const heightSegments = 45;
+        const planeWidth = 18;
+        const planeHeight = 18;
+        geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, widthSegments, heightSegments);
+        geometry.rotateX(-Math.PI / 2);
+        const positions = geometry.attributes.position.array;
+        originalY = new Float32Array(positions.length / 3);
+        for (let i = 0; i < positions.length / 3; i++) {
+            originalY[i] = positions[i*3 + 1];
+        }
+        const material = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            wireframe: true,
+            emissive: 0x111111,
+            roughness: 0.4,
+            metalness: 0.8
+        });
+        waveMesh = new THREE.Mesh(geometry, material);
+        scene.add(waveMesh);
+        const ambientLight = new THREE.AmbientLight(0x222222);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(5, 10, 7);
+        scene.add(dirLight);
+        const backLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        backLight.position.set(-3, 5, -5);
+        scene.add(backLight);
+        const gridHelper = new THREE.GridHelper(25, 20, 0xffffff, 0x444444);
+        gridHelper.position.y = -2.2;
+        gridHelper.material.transparent = true;
+        gridHelper.material.opacity = 0.2;
+        scene.add(gridHelper);
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = 600;
+        const starPositions = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+            starPositions[i*3] = (Math.random() - 0.5) * 200;
+            starPositions[i*3+1] = (Math.random() - 0.5) * 60;
+            starPositions[i*3+2] = (Math.random() - 0.5) * 80 - 40;
+        }
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.08, transparent: true, opacity: 0.6 });
+        stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+        contextLost = false;
+        animate();
+    }
+    function handleContextLost(event) {
+        event.preventDefault();
+        contextLost = true;
+        if (animationId) cancelAnimationFrame(animationId);
+        animationId = null;
+    }
+    function handleContextRestored() {
+        contextLost = false;
+        initThree();
+    }
     function animateWave() {
+        if (!geometry || contextLost) return;
         time += 0.018;
         const positionsAttr = geometry.attributes.position;
         const array = positionsAttr.array;
-        const width = widthSegments + 1;
-        const height = heightSegments + 1;
+        const widthSegments = 45;
+        const heightSegments = 45;
+        const planeWidth = 18;
+        const planeHeight = 18;
         for (let i = 0; i <= widthSegments; i++) {
             const x = (i / widthSegments - 0.5) * planeWidth;
             for (let j = 0; j <= heightSegments; j++) {
                 const z = (j / heightSegments - 0.5) * planeHeight;
-                const idx = (j * width + i) * 3;
+                const idx = (j * (widthSegments + 1) + i) * 3;
                 const y1 = Math.sin(x * 0.9 + time) * Math.cos(z * 0.7 + time * 0.7) * 0.6;
                 const y2 = Math.sin(x * 1.8 - time * 1.2) * 0.3;
                 const y3 = Math.cos(z * 1.5 + time * 0.9) * 0.3;
@@ -833,28 +827,39 @@
         positionsAttr.needsUpdate = true;
         geometry.computeVertexNormals();
     }
-
     function animate() {
-        requestAnimationFrame(animate);
+        if (contextLost) {
+            animationId = requestAnimationFrame(animate);
+            return;
+        }
+        animationId = requestAnimationFrame(animate);
         animateWave();
-        stars.rotation.y += 0.0005;
-        stars.rotation.x += 0.0003;
-        camera.lookAt(0, 0.5, 0);
-        renderer.render(scene, camera);
+        if (stars) {
+            stars.rotation.y += 0.0005;
+            stars.rotation.x += 0.0003;
+        }
+        if (camera) camera.lookAt(0, 0.5, 0);
+        if (renderer && scene && camera) {
+            renderer.render(scene, camera);
+        }
     }
-    animate();
-
     window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        if (camera) {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        }
+        if (renderer) renderer.setSize(window.innerWidth, window.innerHeight);
     });
-
-    const state = {
-        selectedOS: null,
-        selectedFormat: 'exe'
-    };
-
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            if (animationId) cancelAnimationFrame(animationId);
+            animationId = null;
+        } else if (!animationId && !contextLost) {
+            animate();
+        }
+    });
+    initThree();
+    const state = { selectedOS: null, selectedFormat: 'exe' };
     const appData = {
         Windows: {
             title: 'Dynamic Browser для Windows',
@@ -875,7 +880,6 @@
             permissions: ['Интернет-соединение', 'Доступ к хранилищу (для загрузок)', 'Геолокация (по желанию)', 'Управление уведомлениями']
         }
     };
-
     const platformScreen = document.getElementById('platformScreen');
     const storeView = document.getElementById('storeView');
     const formatSelector = document.getElementById('formatSelector');
@@ -897,18 +901,15 @@
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightboxImg');
     const lightboxClose = document.getElementById('lightboxClose');
-
     let currentInstruction = null;
     let isAnimating = false;
     let currentFileName = '';
     let currentFileSize = '';
     let lastDescriptionText = null;
-
     function truncateFileName(name, maxLen = 40) {
         if (name.length <= maxLen) return name;
         return name.substring(0, maxLen) + '...';
     }
-
     function updateFileDisplay() {
         if (!currentFileName) {
             fileInfoRow.style.display = 'none';
@@ -926,7 +927,6 @@
             fileFullInfo.classList.remove('visible');
         }
     }
-
     fileToggleBtn.addEventListener('click', () => {
         if (fileFullInfo.classList.contains('visible')) {
             fileFullInfo.classList.remove('visible');
@@ -936,19 +936,16 @@
             fileToggleBtn.querySelector('span').textContent = 'Свернуть';
         }
     });
-
     function resetDescriptionState() {
         descWrapper.style.maxHeight = 'none';
         expandDescBtn.style.display = 'none';
         expandDescBtn.dataset.expanded = 'false';
         expandDescBtn.textContent = 'Ещё';
     }
-
     function setupDescriptionExpand() {
         const currentText = fullDesc.textContent;
         if (currentText === lastDescriptionText) return;
         lastDescriptionText = currentText;
-
         resetDescriptionState();
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
@@ -969,7 +966,6 @@
             });
         });
     }
-
     expandDescBtn.addEventListener('click', () => {
         const expanded = expandDescBtn.dataset.expanded === 'true';
         const computedStyle = getComputedStyle(fullDesc);
@@ -985,14 +981,12 @@
             expandDescBtn.dataset.expanded = 'true';
         }
     });
-
     async function safeFetchText(url) {
         try {
             const r = await fetch(url);
             return r.ok ? await r.text() : null;
         } catch { return null; }
     }
-
     async function safeFetchJson(url) {
         try {
             const r = await fetch(url);
@@ -1000,16 +994,13 @@
             return await r.json();
         } catch { return null; }
     }
-
     async function loadInstruction(os) {
         return await safeFetchJson(`${os}/instruction.json`);
     }
-
     async function loadDescription(base, descPath) {
         if (!descPath) return null;
         return await safeFetchText(`${base}/${descPath}`);
     }
-
     async function loadScreenshots(base, imagesObj) {
         const urls = [];
         if (!imagesObj || typeof imagesObj !== 'object') return urls;
@@ -1030,7 +1021,6 @@
         }
         return urls;
     }
-
     function renderScreenshots(images) {
         screenshotsContainer.innerHTML = '';
         if (!images.length) {
@@ -1049,7 +1039,6 @@
             screenshotsContainer.appendChild(img);
         });
     }
-
     function closeLightbox() {
         lightbox.classList.remove('visible');
         const onTransitionEnd = () => {
@@ -1060,7 +1049,6 @@
         };
         lightbox.addEventListener('transitionend', onTransitionEnd, { once: true });
     }
-
     lightboxClose.addEventListener('click', closeLightbox);
     lightbox.addEventListener('click', (e) => {
         if (e.target === lightbox) closeLightbox();
@@ -1068,22 +1056,18 @@
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && lightbox.classList.contains('visible')) closeLightbox();
     });
-
     function getAppVersion() {
         if (currentInstruction && currentInstruction.version) return currentInstruction.version;
         return '3.2.1';
     }
-
     function transitionToStore() {
         if (isAnimating) return;
         isAnimating = true;
-        
         platformScreen.style.transition = 'opacity 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1), transform 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1), filter 0.5s ease';
         platformScreen.style.opacity = '0';
         platformScreen.style.transform = 'scale(0.96) translateY(-15px)';
         platformScreen.style.filter = 'blur(12px)';
         platformScreen.style.pointerEvents = 'none';
-        
         setTimeout(() => {
             platformScreen.style.display = 'none';
             platformScreen.classList.add('hidden');
@@ -1091,7 +1075,6 @@
             platformScreen.style.filter = '';
             platformScreen.style.opacity = '';
             platformScreen.style.pointerEvents = '';
-            
             storeView.style.display = 'flex';
             storeView.style.opacity = '0';
             storeView.style.transform = 'scale(0.96) translateY(20px)';
@@ -1099,30 +1082,24 @@
             storeView.style.pointerEvents = 'none';
             storeView.style.transition = 'none';
             void storeView.offsetHeight;
-            
             setupDescriptionExpand();
-            
             storeView.style.transition = 'opacity 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.2), transform 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.2), filter 0.6s ease';
             storeView.style.opacity = '1';
             storeView.style.transform = 'scale(1) translateY(0)';
             storeView.style.filter = 'blur(0px)';
             storeView.classList.add('visible');
             storeView.style.pointerEvents = 'auto';
-            
             isAnimating = false;
         }, 500);
     }
-
     function transitionToPlatform() {
         if (isAnimating) return;
         isAnimating = true;
-        
         storeView.style.transition = 'opacity 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1), transform 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1), filter 0.5s ease';
         storeView.style.opacity = '0';
         storeView.style.transform = 'scale(0.96) translateY(20px)';
         storeView.style.filter = 'blur(12px)';
         storeView.style.pointerEvents = 'none';
-        
         setTimeout(() => {
             storeView.style.display = 'none';
             storeView.classList.remove('visible');
@@ -1130,7 +1107,6 @@
             storeView.style.filter = '';
             storeView.style.opacity = '';
             storeView.style.pointerEvents = '';
-            
             platformScreen.style.display = 'flex';
             platformScreen.style.opacity = '0';
             platformScreen.style.transform = 'scale(0.96) translateY(-15px)';
@@ -1138,29 +1114,24 @@
             platformScreen.style.pointerEvents = 'none';
             platformScreen.style.transition = 'none';
             void platformScreen.offsetHeight;
-            
             platformScreen.style.transition = 'opacity 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.2), transform 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.2), filter 0.6s ease';
             platformScreen.style.opacity = '1';
             platformScreen.style.transform = 'scale(1) translateY(0)';
             platformScreen.style.filter = 'blur(0px)';
             platformScreen.classList.remove('hidden');
             platformScreen.style.pointerEvents = 'auto';
-            
             isAnimating = false;
         }, 500);
     }
-
     async function updateUI() {
         if (!state.selectedOS) {
             if (!platformScreen.classList.contains('hidden')) return;
             transitionToPlatform();
             return;
         }
-
         const osData = appData[state.selectedOS];
         appName.textContent = osData.title;
         appShortDesc.textContent = osData.shortDesc;
-
         currentInstruction = await loadInstruction(state.selectedOS);
         let desc = osData.fullDesc;
         if (currentInstruction?.desc) {
@@ -1168,9 +1139,7 @@
             if (fetched) desc = fetched;
         }
         fullDesc.textContent = desc;
-        
         permissionsList.innerHTML = osData.permissions.map(p => `<div class="permission-item"><i class="fas fa-check-circle"></i>${p}</div>`).join('');
-
         const version = getAppVersion();
         let fileName = '';
         if (currentInstruction?.app) {
@@ -1183,7 +1152,6 @@
         const size = osData.sizes[state.selectedFormat] || '';
         currentFileName = fileName;
         currentFileSize = size;
-
         if (state.selectedOS === 'Windows') {
             formatSelector.style.display = 'flex';
             document.querySelectorAll('.format-chip').forEach(c => c.classList.remove('active'));
@@ -1196,18 +1164,15 @@
             installMeta.textContent = `v${version} · ${osData.sizes.apk}`;
         }
         updateFileDisplay();
-
         let imagesObj = currentInstruction?.Images || null;
         const screenshots = await loadScreenshots(state.selectedOS, imagesObj);
         renderScreenshots(screenshots);
-
         if (platformScreen.classList.contains('hidden')) {
             setupDescriptionExpand();
             return;
         }
         transitionToStore();
     }
-
     platformCards.forEach(card => {
         card.addEventListener('click', () => {
             const os = card.dataset.os;
@@ -1217,7 +1182,6 @@
             updateUI();
         });
     });
-
     backBtn.addEventListener('click', () => {
         state.selectedOS = null;
         currentInstruction = null;
@@ -1225,7 +1189,6 @@
         lastDescriptionText = null;
         updateUI();
     });
-
     formatSelector.addEventListener('click', e => {
         if (state.selectedOS !== 'Windows') return;
         const chip = e.target.closest('.format-chip');
@@ -1233,7 +1196,6 @@
         state.selectedFormat = chip.dataset.format;
         updateUI();
     });
-
     btnInstall.addEventListener('click', () => {
         if (!state.selectedOS || !currentFileName) return;
         const link = `https://dynamicbrowser.app/dl/${currentFileName}`;
@@ -1246,7 +1208,6 @@
         a.click();
         document.body.removeChild(a);
     });
-
     function showToast(msg) {
         const toastEl = document.getElementById('toast');
         document.getElementById('toastMessage').textContent = msg;
@@ -1254,19 +1215,16 @@
         clearTimeout(toastEl._timeout);
         toastEl._timeout = setTimeout(() => toastEl.classList.remove('visible'), 3000);
     }
-
     document.addEventListener('keydown', e => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             e.preventDefault();
             btnInstall.click();
         }
     });
-
     const privacyLink = document.getElementById('privacyLink');
     const privacyModal = document.getElementById('privacyModal');
     const modalClose = document.getElementById('modalClose');
     const modalBody = document.getElementById('modalBody');
-
     function loadPrivacy() {
         fetch('POLITICS.txt')
             .then(r => r.ok ? r.text() : Promise.reject())
@@ -1277,7 +1235,6 @@
             .catch(() => modalBody.innerHTML = '<p>Не удалось загрузить политику.</p>');
     }
     loadPrivacy();
-
     privacyLink.addEventListener('click', e => {
         e.preventDefault();
         privacyModal.classList.add('modal--visible');
@@ -1287,7 +1244,6 @@
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && privacyModal.classList.contains('modal--visible')) privacyModal.classList.remove('modal--visible');
     });
-
     updateUI();
 </script>
 </body>
