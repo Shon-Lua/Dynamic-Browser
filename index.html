@@ -114,7 +114,6 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             transform: translateZ(0);
             backface-visibility: hidden;
-            will-change: transform, backdrop-filter;
         }
         .platform-cards {
             display: flex;
@@ -141,7 +140,6 @@
             overflow: hidden;
             transform: translateZ(0);
             backface-visibility: hidden;
-            will-change: transform, backdrop-filter;
         }
         .platform-card::after {
             content: '';
@@ -211,7 +209,6 @@
             letter-spacing: 0.02em;
             transform: translateZ(0);
             backface-visibility: hidden;
-            will-change: transform, backdrop-filter;
         }
         .back-btn:hover {
             background: rgba(0, 0, 0, 0.85);
@@ -235,7 +232,6 @@
             position: relative;
             transform: translateZ(0);
             backface-visibility: hidden;
-            will-change: transform, backdrop-filter;
         }
         .app-icon {
             width: 88px;
@@ -395,7 +391,6 @@
             border: 1px solid var(--glass-border);
             transform: translateZ(0);
             backface-visibility: hidden;
-            will-change: transform, backdrop-filter;
         }
         .section-label {
             font-size: 0.85rem;
@@ -444,7 +439,6 @@
             border: 1px solid var(--glass-border);
             transform: translateZ(0);
             backface-visibility: hidden;
-            will-change: transform, backdrop-filter;
         }
         .description-text-wrapper {
             overflow: hidden;
@@ -482,7 +476,6 @@
             border: 1px solid var(--glass-border);
             transform: translateZ(0);
             backface-visibility: hidden;
-            will-change: transform, backdrop-filter;
         }
         .permission-item {
             display: flex;
@@ -943,23 +936,30 @@
         }
     });
 
-    function setupDescriptionExpand() {
+    function resetDescriptionState() {
         descWrapper.style.maxHeight = 'none';
-        void descWrapper.offsetHeight;
-        const computedStyle = getComputedStyle(fullDesc);
-        const lineHeight = parseFloat(computedStyle.lineHeight);
-        if (isNaN(lineHeight)) return;
-        const maxHeight = lineHeight * 5;
-        const scrollHeight = fullDesc.scrollHeight;
-        if (scrollHeight > maxHeight + 2) {
-            descWrapper.style.maxHeight = maxHeight + 'px';
-            expandDescBtn.style.display = 'inline-block';
-            expandDescBtn.textContent = 'Ещё';
-            expandDescBtn.dataset.expanded = 'false';
-        } else {
-            expandDescBtn.style.display = 'none';
-            descWrapper.style.maxHeight = 'none';
-        }
+        expandDescBtn.style.display = 'none';
+        expandDescBtn.dataset.expanded = 'false';
+    }
+
+    function setupDescriptionExpand() {
+        resetDescriptionState();
+        requestAnimationFrame(() => {
+            const computedStyle = getComputedStyle(fullDesc);
+            const lineHeight = parseFloat(computedStyle.lineHeight);
+            if (isNaN(lineHeight)) return;
+            const maxHeight = lineHeight * 5;
+            const scrollHeight = fullDesc.scrollHeight;
+            if (scrollHeight > maxHeight + 2) {
+                descWrapper.style.maxHeight = maxHeight + 'px';
+                expandDescBtn.style.display = 'inline-block';
+                expandDescBtn.textContent = 'Ещё';
+                expandDescBtn.dataset.expanded = 'false';
+            } else {
+                descWrapper.style.maxHeight = 'none';
+                expandDescBtn.style.display = 'none';
+            }
+        });
     }
 
     expandDescBtn.addEventListener('click', () => {
@@ -1150,9 +1150,7 @@
             if (fetched) desc = fetched;
         }
         fullDesc.textContent = desc;
-        await new Promise(r => setTimeout(r, 20));
-        setupDescriptionExpand();
-
+        
         permissionsList.innerHTML = osData.permissions.map(p => `<div class="permission-item"><i class="fas fa-check-circle"></i>${p}</div>`).join('');
 
         const version = getAppVersion();
@@ -1184,6 +1182,8 @@
         let imagesObj = currentInstruction?.Images || null;
         const screenshots = await loadScreenshots(state.selectedOS, imagesObj);
         renderScreenshots(screenshots);
+
+        setupDescriptionExpand();
 
         if (platformScreen.classList.contains('hidden')) return;
         transitionToStore();
