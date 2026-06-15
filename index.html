@@ -8,6 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         :root {
             --bg: #000000;
             --surface: rgba(0, 0, 0, 0.65);
@@ -29,13 +36,6 @@
             --glass-blur: 22px;
             --glass-bg: rgba(0, 0, 0, 0.55);
             --glass-border: rgba(255, 255, 255, 0.12);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
         }
 
         html {
@@ -94,7 +94,9 @@
             width: 100%;
             gap: 32px;
             flex: 1;
-            transition: opacity 0.4s ease, transform 0.4s ease;
+            transition: transform 0.35s ease-out, opacity 0.2s ease;
+            transform: translateY(0);
+            opacity: 1;
         }
         .platform-screen.hidden {
             display: none;
@@ -112,6 +114,9 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            will-change: transform, backdrop-filter;
         }
         .platform-cards {
             display: flex;
@@ -136,6 +141,9 @@
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
             position: relative;
             overflow: hidden;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            will-change: transform, backdrop-filter;
         }
         .platform-card::after {
             content: '';
@@ -151,7 +159,7 @@
         .platform-card:hover {
             border-color: rgba(255, 255, 255, 0.5);
             background: rgba(0, 0, 0, 0.8);
-            transform: translateY(-8px);
+            transform: translateY(-8px) translateZ(0);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 255, 255, 0.15);
         }
         .platform-card i {
@@ -176,7 +184,9 @@
             flex-direction: column;
             width: 100%;
             gap: 20px;
-            transition: opacity 0.4s ease, transform 0.4s ease;
+            transition: transform 0.35s ease-out, opacity 0.2s ease;
+            transform: translateY(0);
+            opacity: 1;
         }
         .store-view.visible {
             display: flex;
@@ -199,6 +209,9 @@
             gap: 8px;
             font-weight: 600;
             letter-spacing: 0.02em;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            will-change: transform, backdrop-filter;
         }
         .back-btn:hover {
             background: rgba(0, 0, 0, 0.85);
@@ -219,6 +232,9 @@
             border: 1px solid var(--glass-border);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
             position: relative;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            will-change: transform, backdrop-filter;
         }
         .app-icon {
             width: 88px;
@@ -267,6 +283,8 @@
             transition: var(--transition);
             color: var(--text-2);
             user-select: none;
+            transform: translateZ(0);
+            backface-visibility: hidden;
         }
         .format-chip.active {
             background: rgba(255, 255, 255, 0.2);
@@ -291,15 +309,17 @@
             align-items: center;
             gap: 8px;
             letter-spacing: 0.02em;
+            transform: translateZ(0);
+            backface-visibility: hidden;
         }
         .btn-install:hover {
-            transform: translateY(-2px);
+            transform: translateY(-2px) translateZ(0);
             background: rgba(255, 255, 255, 0.25);
             border-color: rgba(255, 255, 255, 0.7);
             box-shadow: 0 14px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 255, 255, 0.2);
         }
         .btn-install:active {
-            transform: scale(0.97);
+            transform: scale(0.97) translateZ(0);
         }
         .install-meta {
             font-size: 0.75rem;
@@ -372,6 +392,9 @@
             border-radius: var(--radius);
             padding: 20px;
             border: 1px solid var(--glass-border);
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            will-change: transform, backdrop-filter;
         }
         .section-label {
             font-size: 0.85rem;
@@ -418,6 +441,9 @@
             border-radius: var(--radius);
             padding: 20px;
             border: 1px solid var(--glass-border);
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            will-change: transform, backdrop-filter;
         }
         .description-text-wrapper {
             overflow: hidden;
@@ -453,6 +479,9 @@
             border-radius: var(--radius);
             padding: 20px;
             border: 1px solid var(--glass-border);
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            will-change: transform, backdrop-filter;
         }
         .permission-item {
             display: flex;
@@ -789,7 +818,6 @@
     scene.add(stars);
 
     let time = 0;
-
     function animateWave() {
         time += 0.018;
         const positionsAttr = geometry.attributes.position;
@@ -820,15 +848,13 @@
         camera.lookAt(0, 0.5, 0);
         renderer.render(scene, camera);
     }
-
     animate();
 
-    window.addEventListener('resize', onWindowResize, false);
-    function onWindowResize() {
+    window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
-    }
+    });
 
     const state = {
         selectedOS: null,
@@ -895,8 +921,7 @@
             return;
         }
         fileInfoRow.style.display = 'flex';
-        const short = truncateFileName(currentFileName);
-        fileNameShort.textContent = short;
+        fileNameShort.textContent = truncateFileName(currentFileName);
         fileFullInfo.textContent = `${currentFileName} (${currentFileSize})`;
         if (currentFileName.length <= 40) {
             fileToggleBtn.style.display = 'none';
@@ -939,8 +964,7 @@
         const computedStyle = getComputedStyle(fullDesc);
         const lineHeight = parseFloat(computedStyle.lineHeight);
         if (expanded) {
-            const maxHeight = lineHeight * 5;
-            descWrapper.style.maxHeight = maxHeight + 'px';
+            descWrapper.style.maxHeight = (lineHeight * 5) + 'px';
             expandDescBtn.textContent = 'Ещё';
             expandDescBtn.dataset.expanded = 'false';
         } else {
@@ -1024,60 +1048,56 @@
         if (e.target === lightbox) closeLightbox();
     });
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && lightbox.classList.contains('visible')) {
-            closeLightbox();
-        }
+        if (e.key === 'Escape' && lightbox.classList.contains('visible')) closeLightbox();
     });
 
     function getAppVersion() {
-        if (currentInstruction && currentInstruction.version) {
-            return currentInstruction.version;
-        }
+        if (currentInstruction && currentInstruction.version) return currentInstruction.version;
         return '3.2.1';
     }
 
     function transitionToStore() {
         if (isAnimating) return;
         isAnimating = true;
-        platformScreen.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        platformScreen.style.transition = 'transform 0.3s ease-out, opacity 0.2s ease';
+        platformScreen.style.transform = 'translateY(-30px)';
         platformScreen.style.opacity = '0';
-        platformScreen.style.transform = 'translateY(-20px)';
         setTimeout(() => {
             platformScreen.style.display = 'none';
             platformScreen.classList.add('hidden');
+            platformScreen.style.transform = '';
+            platformScreen.style.opacity = '';
             storeView.style.display = 'flex';
-            storeView.style.opacity = '0';
-            storeView.style.transform = 'translateY(20px)';
-            storeView.style.transition = 'none';
-            void storeView.offsetHeight;
-            storeView.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-            storeView.style.opacity = '1';
-            storeView.style.transform = 'translateY(0)';
             storeView.classList.add('visible');
+            storeView.style.transform = 'translateY(30px)';
+            storeView.style.opacity = '1';
+            requestAnimationFrame(() => {
+                storeView.style.transition = 'transform 0.35s ease-out';
+                storeView.style.transform = 'translateY(0)';
+            });
             isAnimating = false;
-        }, 400);
+        }, 320);
     }
 
     function transitionToPlatform() {
         if (isAnimating) return;
         isAnimating = true;
-        storeView.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-        storeView.style.opacity = '0';
-        storeView.style.transform = 'translateY(20px)';
+        storeView.style.transition = 'transform 0.3s ease-out';
+        storeView.style.transform = 'translateY(30px)';
         setTimeout(() => {
             storeView.style.display = 'none';
             storeView.classList.remove('visible');
+            storeView.style.transform = '';
             platformScreen.style.display = 'flex';
-            platformScreen.style.opacity = '0';
-            platformScreen.style.transform = 'translateY(-20px)';
-            platformScreen.style.transition = 'none';
-            void platformScreen.offsetHeight;
-            platformScreen.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-            platformScreen.style.opacity = '1';
-            platformScreen.style.transform = 'translateY(0)';
             platformScreen.classList.remove('hidden');
+            platformScreen.style.transform = 'translateY(-30px)';
+            platformScreen.style.opacity = '1';
+            requestAnimationFrame(() => {
+                platformScreen.style.transition = 'transform 0.35s ease-out';
+                platformScreen.style.transform = 'translateY(0)';
+            });
             isAnimating = false;
-        }, 400);
+        }, 320);
     }
 
     async function updateUI() {
@@ -1098,32 +1118,19 @@
             if (fetched) desc = fetched;
         }
         fullDesc.textContent = desc;
+        requestAnimationFrame(() => requestAnimationFrame(() => setupDescriptionExpand()));
 
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                setupDescriptionExpand();
-            });
-        });
-
-        permissionsList.innerHTML = osData.permissions.map(p =>
-            `<div class="permission-item"><i class="fas fa-check-circle"></i>${p}</div>`
-        ).join('');
+        permissionsList.innerHTML = osData.permissions.map(p => `<div class="permission-item"><i class="fas fa-check-circle"></i>${p}</div>`).join('');
 
         const version = getAppVersion();
         let fileName = '';
         if (currentInstruction?.app) {
-            if (state.selectedOS === 'Windows') {
-                fileName = state.selectedFormat === 'exe' ? currentInstruction.exe : currentInstruction.zip;
-            } else {
-                fileName = currentInstruction.app;
-            }
+            if (state.selectedOS === 'Windows') fileName = state.selectedFormat === 'exe' ? currentInstruction.exe : currentInstruction.zip;
+            else fileName = currentInstruction.app;
         }
         if (!fileName) {
-            fileName = state.selectedOS === 'Windows'
-                ? (state.selectedFormat === 'exe' ? `dynamic-browser-setup-${version}.exe` : `dynamic-browser-portable-${version}.zip`)
-                : `dynamic-browser-${version}.apk`;
+            fileName = state.selectedOS === 'Windows' ? (state.selectedFormat === 'exe' ? `dynamic-browser-setup-${version}.exe` : `dynamic-browser-portable-${version}.zip`) : `dynamic-browser-${version}.apk`;
         }
-
         const size = osData.sizes[state.selectedFormat] || '';
         currentFileName = fileName;
         currentFileSize = size;
@@ -1139,7 +1146,6 @@
             state.selectedFormat = 'apk';
             installMeta.textContent = `v${version} · ${osData.sizes.apk}`;
         }
-
         updateFileDisplay();
 
         let imagesObj = currentInstruction?.Images || null;
@@ -1189,11 +1195,11 @@
     });
 
     function showToast(msg) {
-        const toast = document.getElementById('toast');
+        const toastEl = document.getElementById('toast');
         document.getElementById('toastMessage').textContent = msg;
-        toast.classList.add('visible');
-        clearTimeout(toast._timeout);
-        toast._timeout = setTimeout(() => toast.classList.remove('visible'), 3000);
+        toastEl.classList.add('visible');
+        clearTimeout(toastEl._timeout);
+        toastEl._timeout = setTimeout(() => toastEl.classList.remove('visible'), 3000);
     }
 
     document.addEventListener('keydown', e => {
@@ -1226,8 +1232,7 @@
     modalClose.addEventListener('click', () => privacyModal.classList.remove('modal--visible'));
     privacyModal.addEventListener('click', e => { if (e.target === privacyModal) privacyModal.classList.remove('modal--visible'); });
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && privacyModal.classList.contains('modal--visible'))
-            privacyModal.classList.remove('modal--visible');
+        if (e.key === 'Escape' && privacyModal.classList.contains('modal--visible')) privacyModal.classList.remove('modal--visible');
     });
 
     updateUI();
