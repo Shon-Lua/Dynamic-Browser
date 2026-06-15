@@ -902,6 +902,7 @@
     let isAnimating = false;
     let currentFileName = '';
     let currentFileSize = '';
+    let lastDescriptionText = null;
 
     function truncateFileName(name, maxLen = 40) {
         if (name.length <= maxLen) return name;
@@ -944,23 +945,29 @@
     }
 
     function setupDescriptionExpand() {
+        const currentText = fullDesc.textContent;
+        if (currentText === lastDescriptionText) return;
+        lastDescriptionText = currentText;
+
         resetDescriptionState();
-        setTimeout(() => {
-            const computedStyle = getComputedStyle(fullDesc);
-            const lineHeight = parseFloat(computedStyle.lineHeight);
-            if (isNaN(lineHeight)) return;
-            const maxHeight = lineHeight * 5;
-            const scrollHeight = fullDesc.scrollHeight;
-            if (scrollHeight > maxHeight + 2) {
-                descWrapper.style.maxHeight = maxHeight + 'px';
-                expandDescBtn.style.display = 'inline-block';
-                expandDescBtn.textContent = 'Ещё';
-                expandDescBtn.dataset.expanded = 'false';
-            } else {
-                descWrapper.style.maxHeight = 'none';
-                expandDescBtn.style.display = 'none';
-            }
-        }, 20);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                const computedStyle = getComputedStyle(fullDesc);
+                const lineHeight = parseFloat(computedStyle.lineHeight);
+                if (isNaN(lineHeight)) return;
+                const maxHeight = lineHeight * 5;
+                const scrollHeight = fullDesc.scrollHeight;
+                if (scrollHeight > maxHeight + 2) {
+                    descWrapper.style.maxHeight = maxHeight + 'px';
+                    expandDescBtn.style.display = 'inline-block';
+                    expandDescBtn.textContent = 'Ещё';
+                    expandDescBtn.dataset.expanded = 'false';
+                } else {
+                    descWrapper.style.maxHeight = 'none';
+                    expandDescBtn.style.display = 'none';
+                }
+            });
+        });
     }
 
     expandDescBtn.addEventListener('click', () => {
@@ -1075,6 +1082,7 @@
         platformScreen.style.opacity = '0';
         platformScreen.style.transform = 'scale(0.96) translateY(-15px)';
         platformScreen.style.filter = 'blur(12px)';
+        platformScreen.style.pointerEvents = 'none';
         
         setTimeout(() => {
             platformScreen.style.display = 'none';
@@ -1082,11 +1090,13 @@
             platformScreen.style.transform = '';
             platformScreen.style.filter = '';
             platformScreen.style.opacity = '';
+            platformScreen.style.pointerEvents = '';
             
             storeView.style.display = 'flex';
             storeView.style.opacity = '0';
             storeView.style.transform = 'scale(0.96) translateY(20px)';
             storeView.style.filter = 'blur(12px)';
+            storeView.style.pointerEvents = 'none';
             storeView.style.transition = 'none';
             void storeView.offsetHeight;
             
@@ -1097,6 +1107,7 @@
             storeView.style.transform = 'scale(1) translateY(0)';
             storeView.style.filter = 'blur(0px)';
             storeView.classList.add('visible');
+            storeView.style.pointerEvents = 'auto';
             
             isAnimating = false;
         }, 500);
@@ -1110,6 +1121,7 @@
         storeView.style.opacity = '0';
         storeView.style.transform = 'scale(0.96) translateY(20px)';
         storeView.style.filter = 'blur(12px)';
+        storeView.style.pointerEvents = 'none';
         
         setTimeout(() => {
             storeView.style.display = 'none';
@@ -1117,11 +1129,13 @@
             storeView.style.transform = '';
             storeView.style.filter = '';
             storeView.style.opacity = '';
+            storeView.style.pointerEvents = '';
             
             platformScreen.style.display = 'flex';
             platformScreen.style.opacity = '0';
             platformScreen.style.transform = 'scale(0.96) translateY(-15px)';
             platformScreen.style.filter = 'blur(12px)';
+            platformScreen.style.pointerEvents = 'none';
             platformScreen.style.transition = 'none';
             void platformScreen.offsetHeight;
             
@@ -1130,6 +1144,7 @@
             platformScreen.style.transform = 'scale(1) translateY(0)';
             platformScreen.style.filter = 'blur(0px)';
             platformScreen.classList.remove('hidden');
+            platformScreen.style.pointerEvents = 'auto';
             
             isAnimating = false;
         }, 500);
@@ -1207,6 +1222,7 @@
         state.selectedOS = null;
         currentInstruction = null;
         currentFileName = '';
+        lastDescriptionText = null;
         updateUI();
     });
 
