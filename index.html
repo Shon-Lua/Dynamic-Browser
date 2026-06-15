@@ -449,7 +449,7 @@
         }
         .description-text-wrapper {
             overflow: hidden;
-            transition: max-height 0.35s ease;
+            transition: max-height 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
         }
         .description-text {
             font-size: 0.95rem;
@@ -867,18 +867,18 @@
         Windows: {
             title: 'Dynamic Browser для Windows',
             shortDesc: 'Быстрый, безопасный и современный браузер.',
-            fullDesc: 'nil',
+            fullDesc: 'Dynamic Browser для Windows предлагает молниеносную скорость работы, встроенную защиту от отслеживания и уникальную волновую анимацию фона. Поддерживает все современные веб-стандарты, имеет встроенный блокировщик рекламы и режим энергосбережения. Легко настраивается через темы и расширения. Обновления выходят ежемесячно с новыми функциями и улучшениями безопасности.',
             formats: ['exe', 'zip'],
-            sizes: { exe: 'nil MB', zip: 'nil MB' },
+            sizes: { exe: '48.2 MB', zip: '32.5 MB' },
             defaultFormat: 'exe',
             permissions: ['Интернет-соединение', 'Доступ к файловой системе (при сохранении файлов)', 'Геолокация (по желанию)']
         },
         Android: {
             title: 'Dynamic Browser для Android',
-            shortDesc: 'Лёгкий и удобный браузер.',
-            fullDesc: 'nil',
+            shortDesc: 'Лёгкий и удобный браузер для мобильных устройств.',
+            fullDesc: 'Мобильная версия Dynamic Browser создана с учётом потребностей современных пользователей. Минималистичный интерфейс, ночная тема, встроенный менеджер загрузок и экономия трафика. Быстрый доступ к закладкам, режим инкогнито и защита от фишинговых сайтов. Идеально подходит для повседневного сёрфинга, потребляет мало памяти и бережно расходует заряд батареи.',
             formats: ['apk'],
-            sizes: { apk: 'nil MB' },
+            sizes: { apk: '28.3 MB' },
             defaultFormat: 'apk',
             permissions: ['Интернет-соединение', 'Доступ к хранилищу (для загрузок)', 'Геолокация (по желанию)', 'Управление уведомлениями']
         }
@@ -946,7 +946,6 @@
 
     function setupDescriptionExpand() {
         descWrapper.style.maxHeight = 'none';
-        expandDescBtn.style.display = 'none';
         void descWrapper.offsetHeight;
         const computedStyle = getComputedStyle(fullDesc);
         const lineHeight = parseFloat(computedStyle.lineHeight);
@@ -958,6 +957,9 @@
             expandDescBtn.style.display = 'inline-block';
             expandDescBtn.textContent = 'Ещё';
             expandDescBtn.dataset.expanded = 'false';
+        } else {
+            expandDescBtn.style.display = 'none';
+            descWrapper.style.maxHeight = 'none';
         }
     }
 
@@ -966,7 +968,8 @@
         const computedStyle = getComputedStyle(fullDesc);
         const lineHeight = parseFloat(computedStyle.lineHeight);
         if (expanded) {
-            descWrapper.style.maxHeight = (lineHeight * 5) + 'px';
+            const maxHeight = lineHeight * 5;
+            descWrapper.style.maxHeight = maxHeight + 'px';
             expandDescBtn.textContent = 'Ещё';
             expandDescBtn.dataset.expanded = 'false';
         } else {
@@ -1148,7 +1151,8 @@
             if (fetched) desc = fetched;
         }
         fullDesc.textContent = desc;
-        requestAnimationFrame(() => requestAnimationFrame(() => setupDescriptionExpand()));
+        await new Promise(r => setTimeout(r, 20));
+        setupDescriptionExpand();
 
         permissionsList.innerHTML = osData.permissions.map(p => `<div class="permission-item"><i class="fas fa-check-circle"></i>${p}</div>`).join('');
 
