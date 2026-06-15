@@ -94,21 +94,11 @@
             width: 100%;
             gap: 32px;
             flex: 1;
-            transition: opacity 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1), transform 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1), filter 0.5s ease;
-            transform: scale(1) translateY(0);
-            opacity: 1;
-            filter: blur(0px);
-        }
-        .platform-screen.transition-out {
-            transform: scale(0.92) translateY(-12px);
-            opacity: 0;
-            filter: blur(6px);
-            pointer-events: none;
+            will-change: transform, opacity, filter;
         }
         .platform-screen.hidden {
             display: none;
         }
-
         .platform-title {
             font-size: 1.4rem;
             font-weight: 700;
@@ -140,7 +130,7 @@
             border-radius: var(--radius);
             padding: 36px 28px;
             cursor: pointer;
-            transition: var(--transition);
+            transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1), box-shadow 0.3s ease, border-color 0.2s;
             text-align: center;
             user-select: none;
             min-width: 170px;
@@ -167,8 +157,12 @@
         .platform-card:hover {
             border-color: rgba(255, 255, 255, 0.5);
             background: rgba(0, 0, 0, 0.8);
-            transform: translateY(-8px) translateZ(0);
+            transform: translateY(-8px) scale(1.02) translateZ(0);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 255, 255, 0.15);
+        }
+        .platform-card:active {
+            transform: scale(0.98);
+            transition: transform 0.1s;
         }
         .platform-card i {
             font-size: 2.8rem;
@@ -188,31 +182,14 @@
         }
 
         .store-view {
-            display: flex;
+            display: none;
             flex-direction: column;
             width: 100%;
             gap: 20px;
-            transition: opacity 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1), transform 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1), filter 0.5s ease;
-            transform: scale(0.96) translateY(15px);
-            opacity: 0;
-            filter: blur(6px);
-            pointer-events: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+            will-change: transform, opacity, filter;
         }
         .store-view.visible {
-            transform: scale(1) translateY(0);
-            opacity: 1;
-            filter: blur(0px);
-            pointer-events: auto;
-            position: relative;
-        }
-        .store-view.transition-in {
-            transform: scale(1) translateY(0);
-            opacity: 1;
-            filter: blur(0px);
+            display: flex;
         }
 
         .back-btn {
@@ -225,7 +202,7 @@
             padding: 8px 20px;
             font-size: 1rem;
             cursor: pointer;
-            transition: var(--transition);
+            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
             align-self: flex-start;
             display: inline-flex;
             align-items: center;
@@ -240,6 +217,7 @@
             background: rgba(0, 0, 0, 0.85);
             color: #fff;
             border-color: rgba(255, 255, 255, 0.4);
+            transform: translateX(-4px);
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
         }
 
@@ -303,7 +281,7 @@
             font-weight: 600;
             font-size: 0.85rem;
             cursor: pointer;
-            transition: var(--transition);
+            transition: all 0.2s ease;
             color: var(--text-2);
             user-select: none;
             transform: translateZ(0);
@@ -326,7 +304,7 @@
             font-weight: 700;
             font-size: 1rem;
             cursor: pointer;
-            transition: var(--transition);
+            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
             display: inline-flex;
             align-items: center;
@@ -336,13 +314,13 @@
             backface-visibility: hidden;
         }
         .btn-install:hover {
-            transform: translateY(-2px) translateZ(0);
+            transform: translateY(-3px) scale(1.02);
             background: rgba(255, 255, 255, 0.25);
             border-color: rgba(255, 255, 255, 0.7);
             box-shadow: 0 14px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 255, 255, 0.2);
         }
         .btn-install:active {
-            transform: scale(0.97) translateZ(0);
+            transform: scale(0.97);
         }
         .install-meta {
             font-size: 0.75rem;
@@ -451,9 +429,10 @@
             box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.15);
             cursor: pointer;
-            transition: border-color 0.2s;
+            transition: transform 0.2s ease, border-color 0.2s;
         }
         .screenshot-img:hover {
+            transform: scale(1.02);
             border-color: rgba(255, 255, 255, 0.5);
         }
 
@@ -928,7 +907,7 @@
     const lightboxClose = document.getElementById('lightboxClose');
 
     let currentInstruction = null;
-    let isTransitioning = false;
+    let isAnimating = false;
     let currentFileName = '';
     let currentFileSize = '';
 
@@ -1086,37 +1065,68 @@
     }
 
     function transitionToStore() {
-        if (isTransitioning) return;
-        isTransitioning = true;
+        if (isAnimating) return;
+        isAnimating = true;
         
-        platformScreen.classList.add('transition-out');
+        platformScreen.style.transition = 'opacity 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1), transform 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1), filter 0.5s ease';
+        platformScreen.style.opacity = '0';
+        platformScreen.style.transform = 'scale(0.96) translateY(-15px)';
+        platformScreen.style.filter = 'blur(12px)';
         
         setTimeout(() => {
             platformScreen.style.display = 'none';
             platformScreen.classList.add('hidden');
-            platformScreen.classList.remove('transition-out');
+            platformScreen.style.transform = '';
+            platformScreen.style.filter = '';
+            platformScreen.style.opacity = '';
             
             storeView.style.display = 'flex';
+            storeView.style.opacity = '0';
+            storeView.style.transform = 'scale(0.96) translateY(20px)';
+            storeView.style.filter = 'blur(12px)';
+            storeView.style.transition = 'none';
+            void storeView.offsetHeight;
+            
+            storeView.style.transition = 'opacity 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.2), transform 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.2), filter 0.6s ease';
+            storeView.style.opacity = '1';
+            storeView.style.transform = 'scale(1) translateY(0)';
+            storeView.style.filter = 'blur(0px)';
             storeView.classList.add('visible');
             
-            isTransitioning = false;
+            isAnimating = false;
         }, 500);
     }
 
     function transitionToPlatform() {
-        if (isTransitioning) return;
-        isTransitioning = true;
+        if (isAnimating) return;
+        isAnimating = true;
         
-        storeView.classList.remove('visible');
+        storeView.style.transition = 'opacity 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1), transform 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1), filter 0.5s ease';
+        storeView.style.opacity = '0';
+        storeView.style.transform = 'scale(0.96) translateY(20px)';
+        storeView.style.filter = 'blur(12px)';
         
         setTimeout(() => {
             storeView.style.display = 'none';
+            storeView.classList.remove('visible');
+            storeView.style.transform = '';
+            storeView.style.filter = '';
+            storeView.style.opacity = '';
+            
             platformScreen.style.display = 'flex';
+            platformScreen.style.opacity = '0';
+            platformScreen.style.transform = 'scale(0.96) translateY(-15px)';
+            platformScreen.style.filter = 'blur(12px)';
+            platformScreen.style.transition = 'none';
+            void platformScreen.offsetHeight;
+            
+            platformScreen.style.transition = 'opacity 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.2), transform 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.2), filter 0.6s ease';
+            platformScreen.style.opacity = '1';
+            platformScreen.style.transform = 'scale(1) translateY(0)';
+            platformScreen.style.filter = 'blur(0px)';
             platformScreen.classList.remove('hidden');
             
-            requestAnimationFrame(() => {
-                isTransitioning = false;
-            });
+            isAnimating = false;
         }, 500);
     }
 
