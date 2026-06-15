@@ -14,6 +14,7 @@
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
+
         :root {
             --bg: #000000;
             --surface: rgba(0, 0, 0, 0.65);
@@ -36,12 +37,14 @@
             --glass-bg: rgba(0, 0, 0, 0.55);
             --glass-border: rgba(255, 255, 255, 0.12);
         }
+
         html {
             scroll-behavior: smooth;
             font-size: 16px;
             height: 100%;
             color-scheme: dark;
         }
+
         body {
             font-family: var(--font);
             background: #000000;
@@ -58,6 +61,7 @@
             overflow-y: auto;
             isolation: isolate;
         }
+
         canvas#wave-canvas {
             position: fixed;
             top: 0;
@@ -68,6 +72,7 @@
             z-index: 0;
             pointer-events: none;
         }
+
         .container {
             position: relative;
             z-index: 2;
@@ -80,6 +85,7 @@
             justify-content: center;
             min-height: 100%;
         }
+
         .platform-screen {
             display: flex;
             flex-direction: column;
@@ -88,12 +94,15 @@
             width: 100%;
             gap: 32px;
             flex: 1;
-            transition: opacity 0.25s ease, transform 0.3s ease-out;
+            transition: opacity 0.35s ease-in-out, visibility 0.35s;
             opacity: 1;
-            transform: translateY(0);
+            visibility: visible;
         }
         .platform-screen.hidden {
-            display: none;
+            opacity: 0;
+            visibility: hidden;
+            position: absolute;
+            pointer-events: none;
         }
         .platform-title {
             font-size: 1.4rem;
@@ -109,7 +118,8 @@
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             transform: translateZ(0);
-            will-change: backdrop-filter, transform;
+            backface-visibility: hidden;
+            will-change: transform, backdrop-filter;
         }
         .platform-cards {
             display: flex;
@@ -125,7 +135,7 @@
             border-radius: var(--radius);
             padding: 36px 28px;
             cursor: pointer;
-            transition: transform 0.25s ease, border-color 0.25s, background 0.25s, box-shadow 0.25s;
+            transition: var(--transition);
             text-align: center;
             user-select: none;
             min-width: 170px;
@@ -135,6 +145,7 @@
             position: relative;
             overflow: hidden;
             transform: translateZ(0);
+            backface-visibility: hidden;
             will-change: transform, backdrop-filter;
         }
         .platform-card::after {
@@ -143,7 +154,7 @@
             inset: 0;
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
             opacity: 0;
-            transition: opacity 0.25s;
+            transition: opacity 0.3s;
         }
         .platform-card:hover::after {
             opacity: 1;
@@ -159,7 +170,7 @@
             color: rgba(255, 255, 255, 0.9);
             margin-bottom: 16px;
             display: block;
-            transition: color 0.25s;
+            transition: color 0.3s;
             filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
         }
         .platform-card:hover i {
@@ -170,18 +181,25 @@
             font-size: 1.2rem;
             letter-spacing: -0.01em;
         }
+
         .store-view {
-            display: none;
+            display: flex;
             flex-direction: column;
             width: 100%;
             gap: 20px;
-            transition: opacity 0.25s ease, transform 0.3s ease-out;
-            opacity: 1;
-            transform: translateY(0);
+            transition: opacity 0.35s ease-in-out, visibility 0.35s;
+            opacity: 0;
+            visibility: hidden;
+            position: absolute;
+            pointer-events: none;
         }
         .store-view.visible {
-            display: flex;
+            opacity: 1;
+            visibility: visible;
+            position: relative;
+            pointer-events: auto;
         }
+
         .back-btn {
             background: var(--glass-bg);
             backdrop-filter: blur(12px);
@@ -192,7 +210,7 @@
             padding: 8px 20px;
             font-size: 1rem;
             cursor: pointer;
-            transition: background 0.2s, border-color 0.2s, transform 0.2s;
+            transition: var(--transition);
             align-self: flex-start;
             display: inline-flex;
             align-items: center;
@@ -200,7 +218,8 @@
             font-weight: 600;
             letter-spacing: 0.02em;
             transform: translateZ(0);
-            will-change: backdrop-filter, transform;
+            backface-visibility: hidden;
+            will-change: transform, backdrop-filter;
         }
         .back-btn:hover {
             background: rgba(0, 0, 0, 0.85);
@@ -208,6 +227,7 @@
             border-color: rgba(255, 255, 255, 0.4);
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
         }
+
         .app-header {
             display: flex;
             gap: 20px;
@@ -221,7 +241,8 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
             position: relative;
             transform: translateZ(0);
-            will-change: backdrop-filter;
+            backface-visibility: hidden;
+            will-change: transform, backdrop-filter;
         }
         .app-icon {
             width: 88px;
@@ -267,10 +288,11 @@
             font-weight: 600;
             font-size: 0.85rem;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--transition);
             color: var(--text-2);
             user-select: none;
             transform: translateZ(0);
+            backface-visibility: hidden;
         }
         .format-chip.active {
             background: rgba(255, 255, 255, 0.2);
@@ -289,14 +311,14 @@
             font-weight: 700;
             font-size: 1rem;
             cursor: pointer;
-            transition: transform 0.2s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+            transition: var(--transition);
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
             display: inline-flex;
             align-items: center;
             gap: 8px;
             letter-spacing: 0.02em;
             transform: translateZ(0);
-            will-change: backdrop-filter;
+            backface-visibility: hidden;
         }
         .btn-install:hover {
             transform: translateY(-2px) translateZ(0);
@@ -370,6 +392,7 @@
         .file-full-info.visible {
             display: block;
         }
+
         .screenshots-section {
             background: var(--glass-bg);
             backdrop-filter: blur(var(--glass-blur));
@@ -378,7 +401,8 @@
             padding: 20px;
             border: 1px solid var(--glass-border);
             transform: translateZ(0);
-            will-change: backdrop-filter;
+            backface-visibility: hidden;
+            will-change: transform, backdrop-filter;
         }
         .section-label {
             font-size: 0.85rem;
@@ -417,6 +441,7 @@
         .screenshot-img:hover {
             border-color: rgba(255, 255, 255, 0.5);
         }
+
         .description-card {
             background: var(--glass-bg);
             backdrop-filter: blur(var(--glass-blur));
@@ -425,7 +450,8 @@
             padding: 20px;
             border: 1px solid var(--glass-border);
             transform: translateZ(0);
-            will-change: backdrop-filter;
+            backface-visibility: hidden;
+            will-change: transform, backdrop-filter;
         }
         .description-text-wrapper {
             overflow: hidden;
@@ -453,6 +479,7 @@
         .expand-btn:hover {
             color: #ffffff;
         }
+
         .permissions-card {
             background: var(--glass-bg);
             backdrop-filter: blur(var(--glass-blur));
@@ -461,7 +488,8 @@
             padding: 20px;
             border: 1px solid var(--glass-border);
             transform: translateZ(0);
-            will-change: backdrop-filter;
+            backface-visibility: hidden;
+            will-change: transform, backdrop-filter;
         }
         .permission-item {
             display: flex;
@@ -480,6 +508,7 @@
             width: 18px;
             text-align: center;
         }
+
         .footer {
             text-align: center;
             padding: 20px 0 8px;
@@ -493,6 +522,7 @@
             text-decoration: none;
             margin: 0 4px;
         }
+
         .toast {
             position: fixed;
             bottom: 24px;
@@ -520,6 +550,7 @@
         .toast i {
             color: #ffffff;
         }
+
         .modal-overlay {
             display: flex;
             position: fixed;
@@ -570,6 +601,7 @@
             font-size: 1.8rem;
             cursor: pointer;
         }
+
         .lightbox {
             position: fixed;
             inset: 0;
@@ -605,6 +637,7 @@
             border-radius: 12px;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
         }
+
         @media (max-width: 640px) {
             body { padding: 16px; }
             .platform-cards { gap: 16px; }
@@ -644,8 +677,10 @@
             </div>
         </div>
     </div>
+
     <div class="store-view" id="storeView">
         <button class="back-btn" id="backBtn"><i class="fas fa-arrow-left"></i> Назад</button>
+
         <div class="app-header">
             <img src="Logo.png" alt="Dynamic Browser" class="app-icon" id="appIcon">
             <div class="app-info">
@@ -670,10 +705,12 @@
                 <div class="file-full-info" id="fileFullInfo"></div>
             </div>
         </div>
+
         <div class="screenshots-section">
             <h3 class="section-label">Скриншоты</h3>
             <div class="screenshots-scroll" id="screenshotsContainer"></div>
         </div>
+
         <div class="description-card">
             <h3 class="section-label">Описание</h3>
             <div class="description-text-wrapper" id="descWrapper">
@@ -681,10 +718,12 @@
             </div>
             <button class="expand-btn" id="expandDescBtn" style="display:none;">Ещё</button>
         </div>
+
         <div class="permissions-card">
             <h3 class="section-label">Права доступа</h3>
             <div id="permissionsList"></div>
         </div>
+
         <div class="footer">
             © 2026 Dynamic Browser.
             <a href="#" id="privacyLink">Политика конфиденциальности</a>
@@ -692,10 +731,12 @@
         </div>
     </div>
 </div>
+
 <div class="toast" id="toast">
     <i class="fas fa-check-circle"></i>
     <span id="toastMessage"></span>
 </div>
+
 <div class="modal-overlay" id="privacyModal">
     <div class="modal-content">
         <button class="modal-close" id="modalClose">&times;</button>
@@ -704,10 +745,12 @@
         </div>
     </div>
 </div>
+
 <div class="lightbox" id="lightbox">
     <button class="lightbox-close" id="lightboxClose">&times;</button>
     <img class="lightbox-img" id="lightboxImg" src="" alt="Скриншот">
 </div>
+
 <script type="importmap">
     {
         "imports": {
@@ -715,24 +758,35 @@
         }
     }
 </script>
+
 <script type="module">
     import * as THREE from 'three';
+
     const canvas = document.getElementById('wave-canvas');
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
     scene.fog = new THREE.FogExp2(0x000000, 0.012);
+
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(12, 8, 14);
     camera.lookAt(0, 0, 0);
+
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
+
     const widthSegments = 80;
     const heightSegments = 80;
     const planeWidth = 18;
     const planeHeight = 18;
     const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, widthSegments, heightSegments);
     geometry.rotateX(-Math.PI / 2);
+    const positions = geometry.attributes.position.array;
+    const originalY = new Float32Array(positions.length / 3);
+    for (let i = 0; i < positions.length / 3; i++) {
+        originalY[i] = positions[i*3 + 1];
+    }
+
     const material = new THREE.MeshStandardMaterial({
         color: 0xffffff,
         wireframe: true,
@@ -742,6 +796,7 @@
     });
     const waveMesh = new THREE.Mesh(geometry, material);
     scene.add(waveMesh);
+
     const ambientLight = new THREE.AmbientLight(0x222222);
     scene.add(ambientLight);
     const dirLight = new THREE.DirectionalLight(0xffffff, 1);
@@ -750,11 +805,13 @@
     const backLight = new THREE.DirectionalLight(0xffffff, 0.5);
     backLight.position.set(-3, 5, -5);
     scene.add(backLight);
+
     const gridHelper = new THREE.GridHelper(25, 20, 0xffffff, 0x444444);
     gridHelper.position.y = -2.2;
     gridHelper.material.transparent = true;
     gridHelper.material.opacity = 0.2;
     scene.add(gridHelper);
+
     const starGeometry = new THREE.BufferGeometry();
     const starCount = 1200;
     const starPositions = new Float32Array(starCount * 3);
@@ -767,6 +824,7 @@
     const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.08, transparent: true, opacity: 0.6 });
     const stars = new THREE.Points(starGeometry, starMaterial);
     scene.add(stars);
+
     let time = 0;
     function animateWave() {
         time += 0.018;
@@ -789,6 +847,7 @@
         positionsAttr.needsUpdate = true;
         geometry.computeVertexNormals();
     }
+
     function animate() {
         requestAnimationFrame(animate);
         animateWave();
@@ -798,15 +857,18 @@
         renderer.render(scene, camera);
     }
     animate();
+
     window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
+
     const state = {
         selectedOS: null,
         selectedFormat: 'exe'
     };
+
     const appData = {
         Windows: {
             title: 'Dynamic Browser для Windows',
@@ -827,6 +889,7 @@
             permissions: ['Интернет-соединение', 'Доступ к хранилищу (для загрузок)', 'Геолокация (по желанию)', 'Управление уведомлениями']
         }
     };
+
     const platformScreen = document.getElementById('platformScreen');
     const storeView = document.getElementById('storeView');
     const formatSelector = document.getElementById('formatSelector');
@@ -848,14 +911,17 @@
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightboxImg');
     const lightboxClose = document.getElementById('lightboxClose');
+
     let currentInstruction = null;
     let isAnimating = false;
     let currentFileName = '';
     let currentFileSize = '';
+
     function truncateFileName(name, maxLen = 40) {
         if (name.length <= maxLen) return name;
         return name.substring(0, maxLen) + '...';
     }
+
     function updateFileDisplay() {
         if (!currentFileName) {
             fileInfoRow.style.display = 'none';
@@ -873,6 +939,7 @@
             fileFullInfo.classList.remove('visible');
         }
     }
+
     fileToggleBtn.addEventListener('click', () => {
         if (fileFullInfo.classList.contains('visible')) {
             fileFullInfo.classList.remove('visible');
@@ -882,6 +949,7 @@
             fileToggleBtn.querySelector('span').textContent = 'Свернуть';
         }
     });
+
     function setupDescriptionExpand() {
         descWrapper.style.maxHeight = 'none';
         expandDescBtn.style.display = 'none';
@@ -898,6 +966,7 @@
             expandDescBtn.dataset.expanded = 'false';
         }
     }
+
     expandDescBtn.addEventListener('click', () => {
         const expanded = expandDescBtn.dataset.expanded === 'true';
         const computedStyle = getComputedStyle(fullDesc);
@@ -912,12 +981,14 @@
             expandDescBtn.dataset.expanded = 'true';
         }
     });
+
     async function safeFetchText(url) {
         try {
             const r = await fetch(url);
             return r.ok ? await r.text() : null;
         } catch { return null; }
     }
+
     async function safeFetchJson(url) {
         try {
             const r = await fetch(url);
@@ -925,13 +996,16 @@
             return await r.json();
         } catch { return null; }
     }
+
     async function loadInstruction(os) {
         return await safeFetchJson(`${os}/instruction.json`);
     }
+
     async function loadDescription(base, descPath) {
         if (!descPath) return null;
         return await safeFetchText(`${base}/${descPath}`);
     }
+
     async function loadScreenshots(base, imagesObj) {
         const urls = [];
         if (!imagesObj || typeof imagesObj !== 'object') return urls;
@@ -952,6 +1026,7 @@
         }
         return urls;
     }
+
     function renderScreenshots(images) {
         screenshotsContainer.innerHTML = '';
         if (!images.length) {
@@ -970,14 +1045,17 @@
             screenshotsContainer.appendChild(img);
         });
     }
+
     function closeLightbox() {
         lightbox.classList.remove('visible');
-        const onTransitionEnd = () => {
-            lightboxImg.src = '';
-            lightbox.removeEventListener('transitionend', onTransitionEnd);
-        };
-        lightbox.addEventListener('transitionend', onTransitionEnd, { once: true });
+        lightboxImg.addEventListener('transitionend', function onTransitionEnd(e) {
+            if (e.target === lightbox && !lightbox.classList.contains('visible')) {
+                lightboxImg.src = '';
+                lightboxImg.removeEventListener('transitionend', onTransitionEnd);
+            }
+        });
     }
+
     lightboxClose.addEventListener('click', closeLightbox);
     lightbox.addEventListener('click', (e) => {
         if (e.target === lightbox) closeLightbox();
@@ -985,77 +1063,32 @@
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && lightbox.classList.contains('visible')) closeLightbox();
     });
+
     function getAppVersion() {
         if (currentInstruction && currentInstruction.version) return currentInstruction.version;
         return '3.2.1';
     }
-    function transitionToStore() {
-        if (isAnimating) return;
-        isAnimating = true;
-        platformScreen.style.transition = 'opacity 0.25s ease, transform 0.3s ease-out';
-        platformScreen.style.opacity = '0';
-        platformScreen.style.transform = 'translateY(-20px)';
-        const onPlatformHidden = () => {
-            platformScreen.style.display = 'none';
-            platformScreen.classList.add('hidden');
-            platformScreen.style.opacity = '';
-            platformScreen.style.transform = '';
-            storeView.style.display = 'flex';
-            storeView.classList.add('visible');
-            storeView.style.opacity = '0';
-            storeView.style.transform = 'translateY(20px)';
-            requestAnimationFrame(() => {
-                storeView.style.transition = 'opacity 0.25s ease, transform 0.35s ease-out';
-                storeView.style.opacity = '1';
-                storeView.style.transform = 'translateY(0)';
-                const onStoreShown = () => {
-                    isAnimating = false;
-                    storeView.removeEventListener('transitionend', onStoreShown);
-                };
-                storeView.addEventListener('transitionend', onStoreShown, { once: true });
-            });
-            platformScreen.removeEventListener('transitionend', onPlatformHidden);
-        };
-        platformScreen.addEventListener('transitionend', onPlatformHidden, { once: true });
+
+    function showStore() {
+        platformScreen.classList.add('hidden');
+        storeView.classList.add('visible');
     }
-    function transitionToPlatform() {
-        if (isAnimating) return;
-        isAnimating = true;
-        storeView.style.transition = 'opacity 0.25s ease, transform 0.3s ease-out';
-        storeView.style.opacity = '0';
-        storeView.style.transform = 'translateY(20px)';
-        const onStoreHidden = () => {
-            storeView.style.display = 'none';
-            storeView.classList.remove('visible');
-            storeView.style.opacity = '';
-            storeView.style.transform = '';
-            platformScreen.style.display = 'flex';
-            platformScreen.classList.remove('hidden');
-            platformScreen.style.opacity = '0';
-            platformScreen.style.transform = 'translateY(-20px)';
-            requestAnimationFrame(() => {
-                platformScreen.style.transition = 'opacity 0.25s ease, transform 0.35s ease-out';
-                platformScreen.style.opacity = '1';
-                platformScreen.style.transform = 'translateY(0)';
-                const onPlatformShown = () => {
-                    isAnimating = false;
-                    platformScreen.removeEventListener('transitionend', onPlatformShown);
-                };
-                platformScreen.addEventListener('transitionend', onPlatformShown, { once: true });
-            });
-            storeView.removeEventListener('transitionend', onStoreHidden);
-        };
-        storeView.addEventListener('transitionend', onStoreHidden, { once: true });
+
+    function showPlatform() {
+        storeView.classList.remove('visible');
+        platformScreen.classList.remove('hidden');
     }
+
     async function updateUI() {
         if (!state.selectedOS) {
-            if (!platformScreen.classList.contains('hidden')) return;
-            transitionToPlatform();
+            if (platformScreen.classList.contains('hidden')) showPlatform();
             return;
         }
+
         const osData = appData[state.selectedOS];
         appName.textContent = osData.title;
         appShortDesc.textContent = osData.shortDesc;
+
         currentInstruction = await loadInstruction(state.selectedOS);
         let desc = osData.fullDesc;
         if (currentInstruction?.desc) {
@@ -1064,7 +1097,9 @@
         }
         fullDesc.textContent = desc;
         requestAnimationFrame(() => requestAnimationFrame(() => setupDescriptionExpand()));
+
         permissionsList.innerHTML = osData.permissions.map(p => `<div class="permission-item"><i class="fas fa-check-circle"></i>${p}</div>`).join('');
+
         const version = getAppVersion();
         let fileName = '';
         if (currentInstruction?.app) {
@@ -1077,6 +1112,7 @@
         const size = osData.sizes[state.selectedFormat] || '';
         currentFileName = fileName;
         currentFileSize = size;
+
         if (state.selectedOS === 'Windows') {
             formatSelector.style.display = 'flex';
             document.querySelectorAll('.format-chip').forEach(c => c.classList.remove('active'));
@@ -1089,12 +1125,14 @@
             installMeta.textContent = `v${version} · ${osData.sizes.apk}`;
         }
         updateFileDisplay();
+
         let imagesObj = currentInstruction?.Images || null;
         const screenshots = await loadScreenshots(state.selectedOS, imagesObj);
         renderScreenshots(screenshots);
-        if (platformScreen.classList.contains('hidden')) return;
-        transitionToStore();
+
+        if (!storeView.classList.contains('visible')) showStore();
     }
+
     platformCards.forEach(card => {
         card.addEventListener('click', () => {
             const os = card.dataset.os;
@@ -1104,12 +1142,14 @@
             updateUI();
         });
     });
+
     backBtn.addEventListener('click', () => {
         state.selectedOS = null;
         currentInstruction = null;
         currentFileName = '';
         updateUI();
     });
+
     formatSelector.addEventListener('click', e => {
         if (state.selectedOS !== 'Windows') return;
         const chip = e.target.closest('.format-chip');
@@ -1117,6 +1157,7 @@
         state.selectedFormat = chip.dataset.format;
         updateUI();
     });
+
     btnInstall.addEventListener('click', () => {
         if (!state.selectedOS || !currentFileName) return;
         const link = `https://dynamicbrowser.app/dl/${currentFileName}`;
@@ -1129,6 +1170,7 @@
         a.click();
         document.body.removeChild(a);
     });
+
     function showToast(msg) {
         const toastEl = document.getElementById('toast');
         document.getElementById('toastMessage').textContent = msg;
@@ -1136,16 +1178,19 @@
         clearTimeout(toastEl._timeout);
         toastEl._timeout = setTimeout(() => toastEl.classList.remove('visible'), 3000);
     }
+
     document.addEventListener('keydown', e => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             e.preventDefault();
             btnInstall.click();
         }
     });
+
     const privacyLink = document.getElementById('privacyLink');
     const privacyModal = document.getElementById('privacyModal');
     const modalClose = document.getElementById('modalClose');
     const modalBody = document.getElementById('modalBody');
+
     function loadPrivacy() {
         fetch('POLITICS.txt')
             .then(r => r.ok ? r.text() : Promise.reject())
@@ -1156,6 +1201,7 @@
             .catch(() => modalBody.innerHTML = '<p>Не удалось загрузить политику.</p>');
     }
     loadPrivacy();
+
     privacyLink.addEventListener('click', e => {
         e.preventDefault();
         privacyModal.classList.add('modal--visible');
@@ -1165,6 +1211,7 @@
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && privacyModal.classList.contains('modal--visible')) privacyModal.classList.remove('modal--visible');
     });
+
     updateUI();
 </script>
 </body>
