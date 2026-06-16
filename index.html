@@ -630,31 +630,198 @@ const backButton = document.getElementById('backBtn'), toastDiv = document.getEl
 const privacyModal = document.getElementById('privacyModal'), privacyContent = document.getElementById('privacyContent'), privacyBtn = document.getElementById('privacyBtn'), closePrivacy = document.getElementById('closePrivacy');
 const lightboxModal = document.getElementById('lightboxModal'), lightboxImg = document.getElementById('lightboxImg'), closeLightbox = document.getElementById('closeLightbox');
 
-let currentInstruction = null, isTransitioning = false, lastDesc = null;
+let currentInstruction = null, isTransitioning = false;
 
 function showToastMessage(msg) { toastTextSpan.innerText = msg; toastDiv.classList.add('visible'); clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => toastDiv.classList.remove('visible'), 2800); }
-function resetDescription() { descWrap.style.maxHeight = 'none'; expandDescBtn.style.display = 'none'; expandDescBtn.innerText = 'Показать полностью'; expandDescBtn.dataset.exp = 'false'; }
-function setupDescription() { if (descTextSpan.innerText === lastDesc) return; lastDesc = descTextSpan.innerText; resetDescription(); requestAnimationFrame(() => { const lineH = parseFloat(getComputedStyle(descTextSpan).lineHeight); if (!lineH) return; const maxH = lineH * 5; if (descTextSpan.scrollHeight > maxH + 3) { descWrap.style.maxHeight = maxH + 'px'; expandDescBtn.style.display = 'inline-block'; expandDescBtn.dataset.exp = 'false'; expandDescBtn.innerText = 'Показать полностью'; } else { descWrap.style.maxHeight = 'none'; expandDescBtn.style.display = 'none'; } }); }
-expandDescBtn.addEventListener('click', () => { const expanded = expandDescBtn.dataset.exp === 'true'; const lineH = parseFloat(getComputedStyle(descTextSpan).lineHeight); if (expanded) { descWrap.style.maxHeight = (lineH * 5) + 'px'; expandDescBtn.innerText = 'Показать полностью'; expandDescBtn.dataset.exp = 'false'; } else { descWrap.style.maxHeight = descTextSpan.scrollHeight + 'px'; expandDescBtn.innerText = 'Свернуть'; expandDescBtn.dataset.exp = 'true'; } });
+
+// Логика сворачивания описания (старая, проверенная)
+function resetDescription() {
+    descWrap.style.maxHeight = 'none';
+    expandDescBtn.style.display = 'none';
+    expandDescBtn.innerText = 'Показать полностью';
+    expandDescBtn.dataset.expanded = 'false';
+}
+
+function setupDescription() {
+    resetDescription();
+    // Ждём рендеринга
+    requestAnimationFrame(() => {
+        const lineHeight = parseFloat(getComputedStyle(descTextSpan).lineHeight);
+        if (!lineHeight) return;
+        const maxHeight = lineHeight * 5;
+        const scrollHeight = descTextSpan.scrollHeight;
+        if (scrollHeight > maxHeight + 2) {
+            descWrap.style.maxHeight = maxHeight + 'px';
+            expandDescBtn.style.display = 'inline-block';
+            expandDescBtn.innerText = 'Показать полностью';
+            expandDescBtn.dataset.expanded = 'false';
+        } else {
+            descWrap.style.maxHeight = 'none';
+            expandDescBtn.style.display = 'none';
+        }
+    });
+}
+
+expandDescBtn.addEventListener('click', () => {
+    const expanded = expandDescBtn.dataset.expanded === 'true';
+    if (expanded) {
+        // Сворачиваем
+        const lineHeight = parseFloat(getComputedStyle(descTextSpan).lineHeight);
+        const maxHeight = lineHeight * 5;
+        descWrap.style.maxHeight = maxHeight + 'px';
+        expandDescBtn.innerText = 'Показать полностью';
+        expandDescBtn.dataset.expanded = 'false';
+    } else {
+        // Разворачиваем
+        descWrap.style.maxHeight = descTextSpan.scrollHeight + 'px';
+        expandDescBtn.innerText = 'Свернуть';
+        expandDescBtn.dataset.expanded = 'true';
+    }
+});
+
 async function fetchJSON(url) { try { const r = await fetch(url); return r.ok ? await r.json() : null; } catch { return null; } }
 async function fetchText(url) { try { const r = await fetch(url); return r.ok ? await r.text() : null; } catch { return null; } }
 async function loadInstruction(os) { return await fetchJSON(`${os}/instruction.json`); }
 async function loadScreenshots(base, imagesMap) { if (!imagesMap) return []; const urls = []; for (const key of Object.keys(imagesMap).sort((a,b)=> (parseInt(a.match(/\d+/)?.[0]||0) - parseInt(b.match(/\d+/)?.[0]||0)))) { const src = `${base}/${imagesMap[key]}`; const imgTest = new Image(); await new Promise(res => { imgTest.onload = () => res(true); imgTest.onerror = () => res(false); imgTest.src = src; }); if (imgTest.complete && imgTest.naturalWidth) urls.push(src); } return urls; }
 function renderScreenshots(images) { screenshotStrip.innerHTML = images.length ? images.map(src => `<img src="${src}" class="screenshot-item" loading="lazy">`).join('') : '<div style="color:rgba(255,255,255,0.4); padding:20px;">Нет скриншотов</div>'; document.querySelectorAll('.screenshot-item').forEach(img => img.addEventListener('click', (e) => { lightboxImg.src = img.src; lightboxModal.classList.add('visible'); })); }
-async function refreshUI() { if (!currentOS) { if (!platformStage.classList.contains('hidden')) return; storeDash.classList.remove('visible'); platformStage.classList.remove('hidden'); platformStage.style.opacity = '1'; platformStage.style.transform = 'none'; return; }
-const osData = appMeta[currentOS]; appNameSpan.innerText = osData.title; appSubSpan.innerText = osData.short; currentInstruction = await loadInstruction(currentOS); let desc = osData.fullDesc; if (currentInstruction?.desc) { const fetched = await fetchText(`${currentOS}/${currentInstruction.desc}`); if (fetched) desc = fetched; } descTextSpan.innerText = desc; permListDiv.innerHTML = osData.permissions.map(p => `<div class="permission-row"><i class="fas fa-check-circle"></i> ${p}</div>`).join('');
-const ver = currentInstruction?.version || '3.2.1'; if (currentInstruction?.app) { if (currentOS === 'Windows') currentFileName = currentFormat === 'exe' ? currentInstruction.exe : currentInstruction.zip; else currentFileName = currentInstruction.app; } else { currentFileName = currentOS === 'Windows' ? (currentFormat === 'exe' ? `dynamic-browser-setup-${ver}.exe` : `dynamic-browser-portable-${ver}.zip`) : `dynamic-browser-${ver}.apk`; }
-if (currentOS === 'Windows') { formatGroup.style.display = 'flex'; document.querySelectorAll('.format-option').forEach(opt => opt.classList.remove('active')); const activeOpt = document.querySelector(`.format-option[data-format="${currentFormat}"]`); if (activeOpt) activeOpt.classList.add('active'); } else { formatGroup.style.display = 'none'; currentFormat = 'apk'; }
-const screens = await loadScreenshots(currentOS, currentInstruction?.Images || null); renderScreenshots(screens);
-setupDescription(); if (platformStage.classList.contains('hidden') === false) { platformStage.style.transition = 'opacity 0.5s ease, transform 0.5s'; platformStage.style.opacity = '0'; platformStage.style.transform = 'scale(0.96) translateY(-15px)'; setTimeout(() => { platformStage.classList.add('hidden'); storeDash.classList.add('visible'); storeDash.style.animation = 'none'; storeDash.offsetHeight; storeDash.style.animation = 'fadeSlideUp 0.6s ease'; }, 480); } }
 
-document.querySelectorAll('.platform-pill').forEach(card => { card.addEventListener('click', () => { const os = card.dataset.os; if (currentOS === os) return; currentOS = os; currentFormat = appMeta[os].defaultFormat; refreshUI(); }); });
-backButton.addEventListener('click', () => { if (isTransitioning) return; isTransitioning = true; storeDash.style.transition = 'opacity 0.4s, transform 0.4s'; storeDash.style.opacity = '0'; storeDash.style.transform = 'translateY(20px)'; setTimeout(() => { storeDash.classList.remove('visible'); storeDash.style.opacity = ''; storeDash.style.transform = ''; platformStage.classList.remove('hidden'); platformStage.style.opacity = '0'; platformStage.style.transform = 'translateY(-10px)'; platformStage.style.transition = 'none'; platformStage.offsetHeight; platformStage.style.transition = 'opacity 0.5s ease, transform 0.5s'; platformStage.style.opacity = '1'; platformStage.style.transform = 'none'; currentOS = null; isTransitioning = false; }, 400); });
-formatGroup.addEventListener('click', (e) => { if (currentOS !== 'Windows') return; const btn = e.target.closest('.format-option'); if (btn && btn.dataset.format) { currentFormat = btn.dataset.format; refreshUI(); } });
-installBtn.addEventListener('click', () => { if (!currentOS || !currentFileName) return; showToastMessage(`Начинается загрузка`); const link = document.createElement('a'); link.href = `https://dynamicbrowser.app/dl/${currentFileName}`; link.download = currentFileName; link.style.display = 'none'; document.body.appendChild(link); link.click(); document.body.removeChild(link); });
-privacyBtn.addEventListener('click', (e) => { e.preventDefault(); fetch('POLITICS.txt').then(r => r.ok ? r.text() : Promise.reject()).then(txt => { const blocks = txt.split('\n\n').filter(b => b.trim()); privacyContent.innerHTML = blocks.map(block => `<p style="margin-bottom:16px;">${block.replace(/\n/g, '<br>')}</p>`).join(''); }).catch(() => privacyContent.innerHTML = '<p>Политика временно недоступна.</p>'); privacyModal.classList.add('visible'); });
-closePrivacy.addEventListener('click', () => privacyModal.classList.remove('visible')); privacyModal.addEventListener('click', (e) => { if (e.target === privacyModal) privacyModal.classList.remove('visible'); });
-closeLightbox.addEventListener('click', () => { lightboxModal.classList.remove('visible'); lightboxImg.src = ''; }); lightboxModal.addEventListener('click', (e) => { if (e.target === lightboxModal) { lightboxModal.classList.remove('visible'); lightboxImg.src = ''; } });
+async function refreshUI() {
+    if (!currentOS) {
+        if (!platformStage.classList.contains('hidden')) return;
+        storeDash.classList.remove('visible');
+        platformStage.classList.remove('hidden');
+        platformStage.style.opacity = '1';
+        platformStage.style.transform = 'none';
+        // Выходим из fullscreen, если активен
+        if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+        return;
+    }
+    const osData = appMeta[currentOS];
+    appNameSpan.innerText = osData.title;
+    appSubSpan.innerText = osData.short;
+    currentInstruction = await loadInstruction(currentOS);
+    let desc = osData.fullDesc;
+    if (currentInstruction?.desc) {
+        const fetched = await fetchText(`${currentOS}/${currentInstruction.desc}`);
+        if (fetched) desc = fetched;
+    }
+    descTextSpan.innerText = desc;
+    permListDiv.innerHTML = osData.permissions.map(p => `<div class="permission-row"><i class="fas fa-check-circle"></i> ${p}</div>`).join('');
+    
+    const ver = currentInstruction?.version || '3.2.1';
+    if (currentInstruction?.app) {
+        if (currentOS === 'Windows') currentFileName = currentFormat === 'exe' ? currentInstruction.exe : currentInstruction.zip;
+        else currentFileName = currentInstruction.app;
+    } else {
+        currentFileName = currentOS === 'Windows' ? (currentFormat === 'exe' ? `dynamic-browser-setup-${ver}.exe` : `dynamic-browser-portable-${ver}.zip`) : `dynamic-browser-${ver}.apk`;
+    }
+    
+    if (currentOS === 'Windows') {
+        formatGroup.style.display = 'flex';
+        document.querySelectorAll('.format-option').forEach(opt => opt.classList.remove('active'));
+        const activeOpt = document.querySelector(`.format-option[data-format="${currentFormat}"]`);
+        if (activeOpt) activeOpt.classList.add('active');
+    } else {
+        formatGroup.style.display = 'none';
+        currentFormat = 'apk';
+    }
+    
+    const screens = await loadScreenshots(currentOS, currentInstruction?.Images || null);
+    renderScreenshots(screens);
+    
+    // Настройка сворачивания описания
+    setupDescription();
+    
+    // Переход на детальный экран с fullscreen
+    if (platformStage.classList.contains('hidden') === false) {
+        platformStage.style.transition = 'opacity 0.5s ease, transform 0.5s';
+        platformStage.style.opacity = '0';
+        platformStage.style.transform = 'scale(0.96) translateY(-15px)';
+        setTimeout(() => {
+            platformStage.classList.add('hidden');
+            storeDash.classList.add('visible');
+            storeDash.style.animation = 'none';
+            storeDash.offsetHeight;
+            storeDash.style.animation = 'fadeSlideUp 0.6s ease';
+            // Включаем полноэкранный режим
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
+        }, 480);
+    }
+}
+
+document.querySelectorAll('.platform-pill').forEach(card => {
+    card.addEventListener('click', () => {
+        const os = card.dataset.os;
+        if (currentOS === os) return;
+        currentOS = os;
+        currentFormat = appMeta[os].defaultFormat;
+        refreshUI();
+    });
+});
+
+backButton.addEventListener('click', () => {
+    if (isTransitioning) return;
+    isTransitioning = true;
+    storeDash.style.transition = 'opacity 0.4s, transform 0.4s';
+    storeDash.style.opacity = '0';
+    storeDash.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+        storeDash.classList.remove('visible');
+        storeDash.style.opacity = '';
+        storeDash.style.transform = '';
+        platformStage.classList.remove('hidden');
+        platformStage.style.opacity = '0';
+        platformStage.style.transform = 'translateY(-10px)';
+        platformStage.style.transition = 'none';
+        platformStage.offsetHeight;
+        platformStage.style.transition = 'opacity 0.5s ease, transform 0.5s';
+        platformStage.style.opacity = '1';
+        platformStage.style.transform = 'none';
+        currentOS = null;
+        isTransitioning = false;
+        // Выходим из fullscreen
+        if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    }, 400);
+});
+
+formatGroup.addEventListener('click', (e) => {
+    if (currentOS !== 'Windows') return;
+    const btn = e.target.closest('.format-option');
+    if (btn && btn.dataset.format) {
+        currentFormat = btn.dataset.format;
+        refreshUI();
+    }
+});
+
+installBtn.addEventListener('click', () => {
+    if (!currentOS || !currentFileName) return;
+    showToastMessage(`Начинается загрузка`);
+    const link = document.createElement('a');
+    link.href = `https://dynamicbrowser.app/dl/${currentFileName}`;
+    link.download = currentFileName;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+});
+
+privacyBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    fetch('POLITICS.txt').then(r => r.ok ? r.text() : Promise.reject())
+        .then(txt => {
+            const blocks = txt.split('\n\n').filter(b => b.trim());
+            privacyContent.innerHTML = blocks.map(block => `<p style="margin-bottom:16px;">${block.replace(/\n/g, '<br>')}</p>`).join('');
+        })
+        .catch(() => privacyContent.innerHTML = '<p>Политика временно недоступна.</p>');
+    privacyModal.classList.add('visible');
+});
+closePrivacy.addEventListener('click', () => privacyModal.classList.remove('visible'));
+privacyModal.addEventListener('click', (e) => { if (e.target === privacyModal) privacyModal.classList.remove('visible'); });
+closeLightbox.addEventListener('click', () => { lightboxModal.classList.remove('visible'); lightboxImg.src = ''; });
+lightboxModal.addEventListener('click', (e) => { if (e.target === lightboxModal) { lightboxModal.classList.remove('visible'); lightboxImg.src = ''; } });
+
 refreshUI();
 </script>
 </body>
