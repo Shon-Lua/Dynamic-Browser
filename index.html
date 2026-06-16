@@ -290,7 +290,9 @@
             display: flex;
             overflow-x: auto;
             gap: 18px;
-            padding: 3px 3px 12px 3px;
+            padding: 6px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.25) transparent;
         }
         .screenshot-strip img {
             height: 240px;
@@ -420,6 +422,18 @@
             overflow-y: auto;
             margin-right: -28px;
             padding-right: 28px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.25) transparent;
+        }
+        .privacy-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .privacy-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .privacy-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.25);
+            border-radius: 3px;
         }
         .lightbox-img {
             max-width: 90vw;
@@ -652,8 +666,8 @@ document.addEventListener('visibilitychange', () => {
 initThree();
 
 const appMeta = {
-    Windows: { title: 'Dynamic Browser for Windows', short: 'Молниеносный, безопасный, минималистичный.', fullDesc: 'nil', formats: ['exe','zip'], defaultFormat: 'exe', permissions: ['Интернет', 'Хранилище'] },
-    Android: { title: 'Dynamic Browser for Android', short: 'Лёгкий, быстрый, современный браузер.', fullDesc: 'nil', formats: ['apk'], defaultFormat: 'apk', permissions: ['Интернет', 'Хранилище'] }
+    Windows: { title: 'Dynamic Browser for Windows', short: 'Молниеносный, безопасный, минималистичный.', fullDesc: 'nil', formats: ['exe','zip'], defaultFormat: 'exe', permissions: ['Bнтернет', 'Хранилище', 'Геолокация'] },
+    Android: { title: 'Dynamic Browser for Android', short: 'Лёгкий, быстрый, современный браузер.', fullDesc: 'nil', formats: ['apk'], defaultFormat: 'apk', permissions: ['Интернет', 'Хранилище', 'Геолокация'] }
 };
 let currentOS = null, currentFormat = 'exe', currentFileName = '';
 const platformStage = document.getElementById('platformStage'), storeDash = document.getElementById('storeDashboard');
