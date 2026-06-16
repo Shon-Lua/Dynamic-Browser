@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dynamic Browser | Premium Installer</title>
+    <title>Dynamic Browser — Professional Installer</title>
     <link rel="icon" href="Logo.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -16,21 +16,21 @@
         }
         :root {
             --bg: #000000;
-            --surface: rgba(0, 0, 0, 0.6);
-            --surface-hover: rgba(0, 0, 0, 0.8);
+            --surface-1: rgba(0, 0, 0, 0.6);
+            --surface-2: rgba(0, 0, 0, 0.75);
             --border-light: rgba(255, 255, 255, 0.08);
             --border-glow: rgba(255, 255, 255, 0.25);
-            --accent: #ffffff;
             --text-primary: #ffffff;
             --text-secondary: rgba(255, 255, 255, 0.7);
-            --text-tertiary: rgba(255, 255, 255, 0.4);
-            --radius-card: 28px;
-            --radius-element: 60px;
+            --text-tertiary: rgba(255, 255, 255, 0.5);
+            --radius-xl: 36px;
+            --radius-lg: 28px;
+            --radius-md: 20px;
+            --shadow-premium: 0 20px 40px -12px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.03);
             --transition: 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-            --shadow-premium: 0 20px 35px -12px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.03);
         }
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             background: var(--bg);
             color: var(--text-primary);
             min-height: 100vh;
@@ -41,7 +41,7 @@
             position: relative;
             overflow-x: hidden;
         }
-        canvas#bg-canvas {
+        canvas#webgl-bg {
             position: fixed;
             top: 0;
             left: 0;
@@ -55,148 +55,140 @@
             position: relative;
             z-index: 2;
             width: 100%;
-            max-width: 1100px;
+            max-width: 1280px;
             margin: 0 auto;
         }
-        .screen {
-            transition: opacity 0.6s var(--transition), transform 0.6s var(--transition);
-        }
-        .screen-hidden {
-            display: none;
-        }
-        .platform-selector {
+        .screen-selector {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 70vh;
             gap: 48px;
+            transition: opacity 0.5s var(--transition), transform 0.5s var(--transition);
         }
-        .brand {
-            text-align: center;
+        .screen-selector.hidden {
+            display: none;
         }
-        .brand-icon {
-            font-size: 3.2rem;
-            background: linear-gradient(135deg, #fff, #aaa);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            margin-bottom: 16px;
+        .badge-premium {
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(12px);
+            padding: 10px 28px;
+            border-radius: 60px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            font-size: 0.8rem;
+            border: 1px solid var(--border-light);
+            color: var(--text-secondary);
         }
-        .brand-icon i {
-            font-size: 3rem;
-            background: none;
-            -webkit-background-clip: unset;
-            background-clip: unset;
-            color: white;
-        }
-        .brand h1 {
-            font-size: 2rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-        }
-        .options {
+        .platform-grid {
             display: flex;
-            gap: 32px;
+            gap: 36px;
             flex-wrap: wrap;
             justify-content: center;
         }
         .platform-card {
-            background: var(--surface);
-            backdrop-filter: blur(20px);
+            background: var(--surface-1);
+            backdrop-filter: blur(16px);
             border: 1px solid var(--border-light);
-            border-radius: var(--radius-card);
-            padding: 28px 44px;
+            border-radius: var(--radius-xl);
+            padding: 32px 44px;
             text-align: center;
             cursor: pointer;
-            transition: all var(--transition);
-            min-width: 200px;
+            transition: all 0.3s var(--transition);
+            min-width: 210px;
             box-shadow: var(--shadow-premium);
         }
         .platform-card i {
-            font-size: 3rem;
+            font-size: 3.4rem;
             margin-bottom: 16px;
             display: block;
+            filter: drop-shadow(0 0 6px rgba(255,255,255,0.2));
         }
         .platform-card span {
             font-weight: 700;
-            font-size: 1.3rem;
+            font-size: 1.5rem;
+            letter-spacing: -0.01em;
         }
         .platform-card:hover {
             transform: translateY(-8px) scale(1.02);
             border-color: var(--border-glow);
-            background: var(--surface-hover);
-            box-shadow: 0 30px 40px -20px black, 0 0 0 1px rgba(255,255,255,0.15);
+            background: rgba(0,0,0,0.8);
+            box-shadow: 0 30px 45px -20px black, 0 0 0 1px rgba(255,255,255,0.15);
         }
-        .store-interface {
-            display: flex;
+        .screen-detail {
+            display: none;
             flex-direction: column;
             gap: 28px;
-            animation: fadeUp 0.7s var(--transition);
+            animation: slideUp 0.7s var(--transition);
         }
-        @keyframes fadeUp {
+        .screen-detail.visible {
+            display: flex;
+        }
+        @keyframes slideUp {
             from { opacity: 0; transform: translateY(30px); filter: blur(8px);}
             to { opacity: 1; transform: translateY(0); filter: blur(0);}
         }
-        .back-action {
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(12px);
-            width: fit-content;
-            border-radius: var(--radius-element);
-            padding: 10px 28px;
-            font-weight: 500;
-            border: 1px solid var(--border-light);
-            cursor: pointer;
-            transition: all 0.25s;
+        .nav-row {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 0.9rem;
         }
-        .back-action:hover {
+        .btn-back {
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-light);
+            border-radius: 60px;
+            padding: 8px 24px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: 0.25s;
+        }
+        .btn-back:hover {
             background: rgba(0,0,0,0.8);
             border-color: var(--border-glow);
             transform: translateX(-6px);
         }
         .hero-panel {
-            display: flex;
-            gap: 32px;
-            background: var(--surface);
-            backdrop-filter: blur(24px);
-            border-radius: var(--radius-card);
+            background: var(--surface-1);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-xl);
             padding: 32px;
             border: 1px solid var(--border-light);
-            flex-wrap: wrap;
             box-shadow: var(--shadow-premium);
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
         }
-        .app-icon {
-            width: 110px;
-            height: 110px;
+        .app-icon-lg {
+            width: 120px;
+            height: 120px;
             border-radius: 28px;
             object-fit: cover;
             border: 1px solid rgba(255,255,255,0.2);
-            background: #0a0a0a;
-            box-shadow: 0 12px 24px rgba(0,0,0,0.5);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
         }
         .app-details {
             flex: 1;
         }
-        .app-name {
-            font-size: 2rem;
+        .app-title {
+            font-size: 2.3rem;
             font-weight: 800;
             letter-spacing: -0.02em;
-            background: linear-gradient(135deg, #fff, #c0c0c0);
+            background: linear-gradient(135deg, #fff 20%, #b0b0b0 80%);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
             margin-bottom: 6px;
         }
-        .app-tagline {
+        .app-sub {
+            font-size: 1rem;
             color: var(--text-secondary);
             margin-bottom: 24px;
-            font-size: 0.95rem;
         }
-        .download-row {
+        .action-row {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
@@ -204,16 +196,16 @@
             margin-bottom: 16px;
         }
         .format-switch {
-            display: flex;
-            gap: 12px;
             background: rgba(0,0,0,0.5);
-            padding: 5px;
             border-radius: 100px;
+            padding: 6px;
+            display: flex;
+            gap: 8px;
         }
         .format-btn {
             background: transparent;
             border: none;
-            padding: 8px 22px;
+            padding: 8px 24px;
             border-radius: 60px;
             font-weight: 600;
             font-size: 0.85rem;
@@ -224,12 +216,12 @@
         .format-btn.active {
             background: rgba(255,255,255,0.2);
             color: white;
-            box-shadow: 0 0 8px rgba(255,255,255,0.2);
+            box-shadow: 0 0 12px rgba(255,255,255,0.2);
         }
         .btn-download {
-            background: linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.05));
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
             border: 1px solid rgba(255,255,255,0.5);
-            padding: 14px 36px;
+            padding: 12px 36px;
             border-radius: 60px;
             font-weight: 800;
             display: inline-flex;
@@ -240,26 +232,27 @@
             backdrop-filter: blur(8px);
         }
         .btn-download:hover {
-            transform: translateY(-3px);
-            background: rgba(255,255,255,0.28);
+            transform: translateY(-4px);
+            background: rgba(255,255,255,0.3);
             border-color: white;
-            box-shadow: 0 15px 25px -10px black;
+            box-shadow: 0 18px 30px -12px black;
         }
-        .version-chip {
+        .version-tag {
             background: rgba(0,0,0,0.6);
             padding: 4px 12px;
             border-radius: 40px;
             font-size: 0.7rem;
             font-weight: 500;
+            margin-left: 6px;
         }
-        .file-info {
+        .file-meta-bar {
             display: inline-flex;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
             background: rgba(0,0,0,0.5);
             border-radius: 60px;
-            padding: 6px 20px;
-            margin-top: 10px;
+            padding: 5px 18px;
+            margin-top: 12px;
             font-size: 0.8rem;
         }
         .file-toggle {
@@ -270,48 +263,48 @@
             text-decoration: underline;
             cursor: pointer;
         }
-        .file-detail-panel {
+        .file-expand {
             display: none;
             background: rgba(0,0,0,0.7);
-            border-radius: 24px;
-            padding: 12px 20px;
+            border-radius: 20px;
+            padding: 10px 16px;
+            margin-top: 8px;
             font-size: 0.75rem;
             word-break: break-all;
-            margin-top: 10px;
         }
         .glass-card {
-            background: var(--surface);
+            background: var(--surface-1);
             backdrop-filter: blur(20px);
-            border-radius: var(--radius-card);
+            border-radius: var(--radius-lg);
             padding: 24px 28px;
             border: 1px solid var(--border-light);
         }
-        .section-title {
+        .card-header {
             font-size: 0.7rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.12em;
             color: var(--text-tertiary);
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             display: flex;
-            gap: 8px;
             align-items: center;
+            gap: 10px;
         }
-        .screenshot-scroll {
+        .screenshot-strip {
             display: flex;
             overflow-x: auto;
             gap: 16px;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
         }
-        .screenshot-scroll img {
+        .screenshot-strip img {
             height: 220px;
             border-radius: 20px;
             flex-shrink: 0;
             border: 1px solid rgba(255,255,255,0.2);
             cursor: pointer;
-            transition: 0.2s;
+            transition: transform 0.2s;
         }
-        .screenshot-scroll img:hover {
+        .screenshot-strip img:hover {
             transform: scale(1.02);
             border-color: white;
         }
@@ -321,32 +314,32 @@
         }
         .desc-text {
             color: var(--text-secondary);
-            line-height: 1.65;
+            line-height: 1.6;
             font-size: 0.95rem;
         }
         .expand-btn {
             background: none;
             border: none;
             color: white;
-            font-weight: 600;
-            font-size: 0.8rem;
+            font-weight: 500;
             margin-top: 12px;
             cursor: pointer;
+            font-size: 0.8rem;
             opacity: 0.7;
         }
-        .permissions-list {
+        .perm-list {
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
         }
         .perm-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 0.85rem;
+            gap: 14px;
             color: var(--text-secondary);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9rem;
             padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         .footer {
             text-align: center;
@@ -356,18 +349,18 @@
         }
         .footer a {
             color: white;
-            margin: 0 8px;
+            margin: 0 10px;
             text-decoration: none;
         }
         .toast {
             position: fixed;
             bottom: 30px;
             left: 50%;
-            transform: translateX(-50%) translateY(90px);
+            transform: translateX(-50%) translateY(100px);
             background: rgba(0,0,0,0.9);
-            backdrop-filter: blur(28px);
-            padding: 12px 28px;
+            backdrop-filter: blur(24px);
             border-radius: 60px;
+            padding: 12px 28px;
             display: flex;
             gap: 12px;
             align-items: center;
@@ -379,11 +372,11 @@
         .toast.visible {
             transform: translateX(-50%) translateY(0);
         }
-        .modal-overlay {
+        .modal, .lightbox {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(24px);
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(28px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -392,7 +385,7 @@
             visibility: hidden;
             transition: 0.3s;
         }
-        .modal-overlay.visible {
+        .modal.visible, .lightbox.visible {
             opacity: 1;
             visibility: visible;
         }
@@ -400,277 +393,352 @@
             background: rgba(0,0,0,0.96);
             border: 1px solid rgba(255,255,255,0.2);
             border-radius: 48px;
-            max-width: 540px;
+            max-width: 560px;
             width: 90%;
             padding: 28px;
             position: relative;
-            transform: scale(0.96);
+            transform: scale(0.95);
             transition: transform 0.3s;
         }
-        .modal-overlay.visible .modal-card {
+        .modal.visible .modal-card {
             transform: scale(1);
         }
-        .lightbox {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.95);
-            backdrop-filter: blur(20px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1100;
-            opacity: 0;
-            visibility: hidden;
-            transition: 0.3s;
-        }
-        .lightbox.visible {
-            opacity: 1;
-            visibility: visible;
-        }
-        .lightbox img {
+        .lightbox-img {
             max-width: 90vw;
             max-height: 85vh;
-            border-radius: 24px;
-            box-shadow: 0 30px 50px black;
+            border-radius: 28px;
         }
-        .close-btn {
+        .close-icon {
             position: absolute;
             top: 20px;
-            right: 28px;
+            right: 24px;
             font-size: 32px;
             background: none;
             border: none;
             color: white;
             cursor: pointer;
         }
-        @media (max-width: 680px) {
-            body { padding: 16px; }
+        @media (max-width: 720px) {
+            body { padding: 20px; }
             .hero-panel { flex-direction: column; align-items: center; text-align: center; }
-            .download-row { justify-content: center; }
-            .platform-card { padding: 20px 32px; min-width: 150px; }
-            .app-name { font-size: 1.6rem; }
+            .action-row { justify-content: center; }
+            .app-title { font-size: 1.8rem; }
+            .platform-card { padding: 24px 32px; min-width: 160px; }
         }
     </style>
 </head>
 <body>
-<canvas id="bg-canvas"></canvas>
+<canvas id="webgl-bg"></canvas>
 <div class="container">
-    <div id="platformScreen" class="screen platform-selector">
-        <div class="brand">
-            <div class="brand-icon"><i class="fas fa-bolt"></i></div>
-            <h1>DYNAMIC INSTALLER</h1>
-        </div>
-        <div class="options" id="platformOptions">
+    <div class="screen-selector" id="screenPlatform">
+        <div class="badge-premium"><i class="fas fa-crown"></i> DYNAMIC INSTALLER</div>
+        <div class="platform-grid" id="platformGrid">
             <div class="platform-card" data-os="Windows"><i class="fab fa-windows"></i><span>Windows</span></div>
             <div class="platform-card" data-os="Android"><i class="fab fa-android"></i><span>Android</span></div>
         </div>
     </div>
-    <div id="storeScreen" class="screen store-interface screen-hidden">
-        <div class="back-action" id="backBtn"><i class="fas fa-chevron-left"></i> Назад</div>
+    <div class="screen-detail" id="screenDetail">
+        <div class="nav-row"><div class="btn-back" id="backBtn"><i class="fas fa-chevron-left"></i> Назад</div></div>
         <div class="hero-panel">
-            <img src="Logo.png" alt="Dynamic Browser" class="app-icon" id="appIcon">
+            <img src="Logo.png" alt="Dynamic Browser" class="app-icon-lg" id="appIcon">
             <div class="app-details">
-                <div class="app-name" id="appName">Dynamic Browser</div>
-                <div class="app-tagline" id="appTagline"></div>
-                <div class="download-row">
-                    <div class="format-switch" id="formatSwitch" style="display:none">
-                        <button class="format-btn" data-format="exe">EXE</button>
-                        <button class="format-btn" data-format="zip">ZIP</button>
+                <div class="app-title" id="appTitle">Dynamic Browser</div>
+                <div class="app-sub" id="appSubtitle"></div>
+                <div class="action-row">
+                    <div class="format-switch" id="formatSwitch" style="display: none;">
+                        <button class="format-btn" data-format="exe">.exe</button>
+                        <button class="format-btn" data-format="zip">.zip</button>
                     </div>
-                    <button class="btn-download" id="downloadBtn"><i class="fas fa-download"></i> Скачать <span id="versionBadge"></span></button>
+                    <button class="btn-download" id="downloadBtn"><i class="fas fa-download"></i> Скачать <span id="versionMeta" class="version-tag"></span></button>
                 </div>
-                <div class="file-info" id="fileInfoRow" style="display:none">
+                <div class="file-meta-bar" id="fileMetaBar" style="display: none;">
                     <span id="shortFileName"></span>
                     <button class="file-toggle" id="toggleFileBtn">подробнее</button>
                 </div>
-                <div class="file-detail-panel" id="fileDetailPanel"></div>
+                <div class="file-expand" id="fileExpand"></div>
             </div>
         </div>
         <div class="glass-card">
-            <div class="section-title"><i class="fas fa-images"></i> ГАЛЕРЕЯ</div>
-            <div class="screenshot-scroll" id="screenshotScroll"></div>
+            <div class="card-header"><i class="fas fa-images"></i> СКРИНШОТЫ</div>
+            <div class="screenshot-strip" id="screenshotStrip"></div>
         </div>
         <div class="glass-card">
-            <div class="section-title"><i class="fas fa-info-circle"></i> ОПИСАНИЕ</div>
-            <div class="desc-wrapper" id="descWrapper"><div class="desc-text" id="descText"></div></div>
-            <button class="expand-btn" id="expandDescBtn" style="display:none">Развернуть</button>
+            <div class="card-header"><i class="fas fa-info-circle"></i> ОПИСАНИЕ</div>
+            <div class="desc-wrapper" id="descWrap"><div class="desc-text" id="descText"></div></div>
+            <button class="expand-btn" id="expandDescBtn" style="display: none;">Показать полностью</button>
         </div>
         <div class="glass-card">
-            <div class="section-title"><i class="fas fa-shield-alt"></i> РАЗРЕШЕНИЯ</div>
-            <div class="permissions-list" id="permissionsList"></div>
+            <div class="card-header"><i class="fas fa-shield-alt"></i> ПРАВА ДОСТУПА</div>
+            <div class="perm-list" id="permList"></div>
         </div>
-        <div class="footer">
-            © 2026 Dynamic Browser — 
-            <a href="#" id="privacyLink">Политика конфиденциальности</a>
-            <a href="https://github.com/Shon-Lua/Dynamic-Browser" target="_blank">GitHub</a>
-        </div>
+        <div class="footer">© 2026 Dynamic Browser — <a href="#" id="privacyLink">Политика конфиденциальности</a> <a href="https://github.com/Shon-Lua/Dynamic-Browser" target="_blank">GitHub</a></div>
     </div>
 </div>
 <div class="toast" id="toast"><i class="fas fa-check-circle"></i> <span id="toastMsg"></span></div>
-<div class="modal-overlay" id="privacyModal"><div class="modal-card"><button class="close-btn" id="closePrivacy">&times;</button><div id="privacyContent" style="max-height:60vh; overflow-y:auto;"></div></div></div>
-<div class="lightbox" id="lightbox"><button class="close-btn" id="closeLightbox">&times;</button><img id="lightboxImage" alt=""></div>
+<div class="modal" id="privacyModal"><div class="modal-card"><button class="close-icon" id="closePrivacyBtn">&times;</button><div id="privacyContent" style="max-height: 60vh; overflow-y: auto; padding-right: 8px;"></div></div></div>
+<div class="lightbox" id="lightbox"><button class="close-icon" id="closeLightboxBtn">&times;</button><img class="lightbox-img" id="lightboxImg" alt=""></div>
 
 <script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }</script>
 <script type="module">
 import * as THREE from 'three';
 
-let scene, camera, renderer, waveMesh, stars, timeVal = 0, animFrame = null, webglActive = true;
-let lowPerformance = false;
-if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) lowPerformance = true;
+let scene, camera, renderer, waveMesh, stars, geometry, timeVal = 0, animId = null, glLost = false;
+const canvasEl = document.getElementById('webgl-bg');
+const isMobile = window.innerWidth < 768;
+const segCount = isMobile ? 24 : 42;
+const starCountVal = isMobile ? 280 : 650;
 
-const canvasElem = document.getElementById('bg-canvas');
 function initWebGL() {
-    if (renderer) { if (animFrame) cancelAnimationFrame(animFrame); if (renderer.domElement?.parentNode) renderer.domElement.remove(); }
+    if (renderer) { if (animId) cancelAnimationFrame(animId); if (renderer.domElement?.parentNode) renderer.domElement.remove(); }
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
-    scene.fog = new THREE.FogExp2(0x000000, lowPerformance ? 0.02 : 0.012);
+    scene.fog = new THREE.FogExp2(0x000000, 0.008);
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(10, 6.5, 12);
-    camera.lookAt(0, 0.2, 0);
-    renderer = new THREE.WebGLRenderer({ canvas: canvasElem, alpha: false, antialias: !lowPerformance, powerPreference: "high-performance" });
+    camera.position.set(11, 7, 13);
+    camera.lookAt(0, 0.3, 0);
+    renderer = new THREE.WebGLRenderer({ canvas: canvasEl, alpha: false, antialias: !isMobile, powerPreference: "high-performance" });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(lowPerformance ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2));
-    const seg = lowPerformance ? 28 : 36;
-    const widthSeg = seg, heightSeg = seg, planeW = 18, planeH = 18;
-    const geometry = new THREE.PlaneGeometry(planeW, planeH, widthSeg, heightSeg);
+    const maxPx = isMobile ? 1 : Math.min(window.devicePixelRatio, 2);
+    renderer.setPixelRatio(maxPx);
+    canvasEl.addEventListener('webglcontextlost', (e) => { e.preventDefault(); glLost = true; if (animId) cancelAnimationFrame(animId); animId = null; });
+    canvasEl.addEventListener('webglcontextrestored', () => { glLost = false; initWebGL(); });
+    
+    const widthSeg = segCount, heightSeg = segCount, planeW = 18, planeH = 18;
+    geometry = new THREE.PlaneGeometry(planeW, planeH, widthSeg, heightSeg);
     geometry.rotateX(-Math.PI / 2);
     const material = new THREE.MeshStandardMaterial({ color: 0xffffff, wireframe: true, emissive: 0x111111, roughness: 0.5, metalness: 0.7 });
     waveMesh = new THREE.Mesh(geometry, material);
     scene.add(waveMesh);
-    const ambient = new THREE.AmbientLight(0x222222); scene.add(ambient);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1); dirLight.position.set(4, 8, 6); scene.add(dirLight);
-    const fill = new THREE.PointLight(0x444444, 0.4); fill.position.set(-2, 3, 5); scene.add(fill);
-    const grid = new THREE.GridHelper(24, 20, 0xffffff, 0x333333); grid.position.y = -1.8; grid.material.transparent = true; grid.material.opacity = 0.15; scene.add(grid);
-    const starCount = lowPerformance ? 300 : 600;
+    
+    const ambient = new THREE.AmbientLight(0x222222);
+    scene.add(ambient);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    dirLight.position.set(5, 9, 6);
+    scene.add(dirLight);
+    const backLight = new THREE.PointLight(0x555555, 0.4);
+    backLight.position.set(-2, 3, 5);
+    scene.add(backLight);
+    const gridHelper = new THREE.GridHelper(26, 20, 0xffffff, 0x3a3a3a);
+    gridHelper.position.y = -2.0;
+    gridHelper.material.transparent = true;
+    gridHelper.material.opacity = 0.15;
+    scene.add(gridHelper);
+    
     const starGeo = new THREE.BufferGeometry();
-    const starPos = new Float32Array(starCount * 3);
-    for (let i = 0; i < starCount; i++) {
-        starPos[i*3] = (Math.random() - 0.5) * 200;
-        starPos[i*3+1] = (Math.random() - 0.5) * 55;
-        starPos[i*3+2] = (Math.random() - 0.5) * 85 - 35;
+    const starPositions = new Float32Array(starCountVal * 3);
+    for (let i = 0; i < starCountVal; i++) {
+        starPositions[i*3] = (Math.random() - 0.5) * 200;
+        starPositions[i*3+1] = (Math.random() - 0.5) * 60;
+        starPositions[i*3+2] = (Math.random() - 0.5) * 80 - 40;
     }
-    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-    stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: lowPerformance ? 0.06 : 0.08, transparent: true, opacity: 0.6 }));
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: isMobile ? 0.05 : 0.07, transparent: true, opacity: 0.6 }));
     scene.add(stars);
     animate();
 }
+
 function animateWave() {
-    if (!waveMesh || !waveMesh.geometry || !webglActive) return;
-    timeVal += lowPerformance ? 0.014 : 0.018;
-    const positions = waveMesh.geometry.attributes.position.array;
-    const seg = lowPerformance ? 28 : 36;
-    const planeW = 18, planeH = 18;
-    for (let i = 0; i <= seg; i++) {
-        const x = (i / seg - 0.5) * planeW;
-        for (let j = 0; j <= seg; j++) {
-            const z = (j / seg - 0.5) * planeH;
-            const idx = (j * (seg + 1) + i) * 3;
-            const y1 = Math.sin(x * 0.8 + timeVal) * Math.cos(z * 0.7 + timeVal * 0.6) * 0.5;
-            const y2 = Math.sin(x * 1.5 - timeVal * 1.0) * 0.25;
-            const y3 = Math.cos(z * 1.3 + timeVal * 0.8) * 0.25;
-            const y4 = Math.sin((x * 1.1 + z * 1.1) * 0.7 + timeVal * 1.2) * 0.2;
-            positions[idx + 1] = y1 + y2 + y3 + y4;
+    if (!geometry || glLost) return;
+    timeVal += 0.016;
+    const posAttr = geometry.attributes.position;
+    const array = posAttr.array;
+    const wSeg = segCount, hSeg = segCount, pW = 18, pH = 18;
+    for (let i = 0; i <= wSeg; i++) {
+        const x = (i / wSeg - 0.5) * pW;
+        for (let j = 0; j <= hSeg; j++) {
+            const z = (j / hSeg - 0.5) * pH;
+            const idx = (j * (wSeg + 1) + i) * 3;
+            const y1 = Math.sin(x * 0.9 + timeVal) * Math.cos(z * 0.75 + timeVal * 0.65) * 0.55;
+            const y2 = Math.sin(x * 1.6 - timeVal * 1.1) * 0.25;
+            const y3 = Math.cos(z * 1.4 + timeVal * 0.85) * 0.25;
+            const y4 = Math.sin((x * 1.2 + z * 1.2) * 0.7 + timeVal * 1.3) * 0.2;
+            array[idx + 1] = y1 + y2 + y3 + y4;
         }
     }
-    waveMesh.geometry.attributes.position.needsUpdate = true;
-    waveMesh.geometry.computeVertexNormals();
+    posAttr.needsUpdate = true;
+    geometry.computeVertexNormals();
 }
+
 function animate() {
-    if (!webglActive) { animFrame = requestAnimationFrame(animate); return; }
-    animateWave();
-    if (stars) { stars.rotation.y += 0.0004; stars.rotation.x += 0.0002; }
-    if (camera) camera.lookAt(0, 0.3, 0);
-    if (renderer && scene && camera) renderer.render(scene, camera);
-    animFrame = requestAnimationFrame(animate);
+    if (!glLost) {
+        animateWave();
+        if (stars) { stars.rotation.y += 0.0004; stars.rotation.x += 0.0002; }
+        if (camera) camera.lookAt(0, 0.4, 0);
+        if (renderer && scene && camera) renderer.render(scene, camera);
+    }
+    animId = requestAnimationFrame(animate);
 }
+
 window.addEventListener('resize', () => {
     if (camera) { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); }
     if (renderer) renderer.setSize(window.innerWidth, window.innerHeight);
 });
 document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { if (animFrame) cancelAnimationFrame(animFrame); animFrame = null; }
-    else if (!animFrame && webglActive) animate();
+    if (document.hidden) { if (animId) cancelAnimationFrame(animId); animId = null; }
+    else if (!animId && !glLost) animate();
 });
 initWebGL();
 
-const storeData = {
-    Windows: { title: 'Dynamic Browser for Windows', tagline: 'Молниеносный, безопасный, минималистичный.', fullDesc: 'Полностью переработанный браузер с волновой анимацией, встроенной защитой от трекеров, блокировщиком рекламы и режимом энергосбережения. Поддержка тем, расширений, регулярные обновления.', formats: ['exe','zip'], sizes: { exe: '48.2 MB', zip: '32.5 MB' }, defaultFormat: 'exe', perms: ['Доступ в интернет', 'Чтение/запись файлов (загрузки)', 'Геолокация (опционально)'] },
-    Android: { title: 'Dynamic Browser for Android', tagline: 'Лёгкий, быстрый, современный веб-серфинг.', fullDesc: 'Адаптирован для мобильных устройств: экономия трафика, ночной режим, встроенный менеджер загрузок, защита от фишинга и плавная работа на любых устройствах.', formats: ['apk'], sizes: { apk: '28.3 MB' }, defaultFormat: 'apk', perms: ['Интернет', 'Хранилище', 'Геопозиция', 'Уведомления'] }
+const appDatabase = {
+    Windows: {
+        title: 'Dynamic Browser for Windows',
+        short: 'Революционный веб-серфер с ИИ-защитой.',
+        fullDesc: 'Максимальная производительность, встроенный VPN, блокировщик рекламы и уникальная волновая анимация. Поддержка всех расширений, режим энергосбережения, постоянные обновления.',
+        formats: ['exe', 'zip'],
+        sizes: { exe: '48.2 MB', zip: '32.5 MB' },
+        defaultFormat: 'exe',
+        permissions: ['Доступ к сети', 'Управление файлами (сохранение загрузок)', 'Геолокация (опционально)']
+    },
+    Android: {
+        title: 'Dynamic Browser for Android',
+        short: 'Лёгкий, быстрый, конфиденциальный.',
+        fullDesc: 'Идеален для мобильного сёрфинга: экономный трафик, ночная тема, встроенный загрузчик, режим инкогнито и защита от фишинга. Занимает минимум ресурсов.',
+        formats: ['apk'],
+        sizes: { apk: '28.3 MB' },
+        defaultFormat: 'apk',
+        permissions: ['Интернет', 'Хранилище', 'Геопозиция', 'Уведомления']
+    }
 };
-let currentOS = null, currentFormat = 'exe', installInstruction = null, currentFileName = '', currentFileSize = '';
-let lastDesc = null;
 
-const platformScreen = document.getElementById('platformScreen');
-const storeScreen = document.getElementById('storeScreen');
-const appNameSpan = document.getElementById('appName');
-const appTaglineSpan = document.getElementById('appTagline');
-const descTextSpan = document.getElementById('descText');
-const permissionsDiv = document.getElementById('permissionsList');
-const formatSwitch = document.getElementById('formatSwitch');
-const downloadBtn = document.getElementById('downloadBtn');
-const versionBadgeSpan = document.getElementById('versionBadge');
-const fileInfoRow = document.getElementById('fileInfoRow');
-const shortFileNameSpan = document.getElementById('shortFileName');
-const toggleFileBtn = document.getElementById('toggleFileBtn');
-const fileDetailPanel = document.getElementById('fileDetailPanel');
-const screenshotScroll = document.getElementById('screenshotScroll');
-const descWrapper = document.getElementById('descWrapper');
-const expandDescBtn = document.getElementById('expandDescBtn');
-const backBtn = document.getElementById('backBtn');
-const toastEl = document.getElementById('toast');
-const toastMsgSpan = document.getElementById('toastMsg');
-const privacyLink = document.getElementById('privacyLink');
-const privacyModal = document.getElementById('privacyModal');
-const closePrivacy = document.getElementById('closePrivacy');
-const privacyContent = document.getElementById('privacyContent');
-const lightbox = document.getElementById('lightbox');
-const lightboxImage = document.getElementById('lightboxImage');
-const closeLightboxBtn = document.getElementById('closeLightbox');
+let selectedOS = null, currentFormat = 'exe', instructionCache = null, currentFileName = '', currentFileSize = '', lastDescContent = null;
+const platformScreen = document.getElementById('screenPlatform'), detailScreen = document.getElementById('screenDetail');
+const appTitleSpan = document.getElementById('appTitle'), appSubSpan = document.getElementById('appSubtitle'), descSpan = document.getElementById('descText'), permContainer = document.getElementById('permList');
+const formatSwitch = document.getElementById('formatSwitch'), downloadBtn = document.getElementById('downloadBtn'), versionMetaSpan = document.getElementById('versionMeta');
+const fileMetaBar = document.getElementById('fileMetaBar'), shortFileSpan = document.getElementById('shortFileName'), toggleFileBtn = document.getElementById('toggleFileBtn'), fileExpandDiv = document.getElementById('fileExpand');
+const screenshotStripDiv = document.getElementById('screenshotStrip'), descWrapDiv = document.getElementById('descWrap'), expandDescBtn = document.getElementById('expandDescBtn');
+const backButton = document.getElementById('backBtn'), toastDiv = document.getElementById('toast'), toastMsgSpan = document.getElementById('toastMsg');
+const privacyModal = document.getElementById('privacyModal'), privacyContentDiv = document.getElementById('privacyContent'), privacyLink = document.getElementById('privacyLink'), closePrivacyBtn = document.getElementById('closePrivacyBtn');
+const lightboxDiv = document.getElementById('lightbox'), lightboxImg = document.getElementById('lightboxImg'), closeLightboxBtn = document.getElementById('closeLightboxBtn');
 
-function showToast(msg) { toastMsgSpan.innerText = msg; toastEl.classList.add('visible'); clearTimeout(window.toastTimeout); window.toastTimeout = setTimeout(() => toastEl.classList.remove('visible'), 2800); }
+function showToastMessage(msg) { toastMsgSpan.innerText = msg; toastDiv.classList.add('visible'); clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => toastDiv.classList.remove('visible'), 2700); }
 function truncName(name, len=40) { return name.length <= len ? name : name.slice(0,len)+'…'; }
-function updateFileUI() { if (!currentFileName) { fileInfoRow.style.display = 'none'; fileDetailPanel.classList.remove('visible'); return; } fileInfoRow.style.display = 'flex'; shortFileNameSpan.innerText = truncName(currentFileName); fileDetailPanel.innerText = `${currentFileName} (${currentFileSize})`; if (currentFileName.length <= 40) toggleFileBtn.style.display = 'none'; else { toggleFileBtn.style.display = 'inline-block'; fileDetailPanel.classList.remove('visible'); } }
-toggleFileBtn.addEventListener('click', () => { if (fileDetailPanel.classList.contains('visible')) { fileDetailPanel.classList.remove('visible'); toggleFileBtn.innerText = 'подробнее'; } else { fileDetailPanel.classList.add('visible'); toggleFileBtn.innerText = 'свернуть'; } });
-function resetDesc() { descWrapper.style.maxHeight = 'none'; expandDescBtn.style.display = 'none'; expandDescBtn.innerText = 'Развернуть'; expandDescBtn.dataset.exp = 'false'; }
-function adjustDesc() { if (descTextSpan.innerText === lastDesc) return; lastDesc = descTextSpan.innerText; resetDesc(); requestAnimationFrame(() => { const lh = parseFloat(getComputedStyle(descTextSpan).lineHeight); if (!lh) return; const maxH = lh * 5; if (descTextSpan.scrollHeight > maxH + 3) { descWrapper.style.maxHeight = maxH + 'px'; expandDescBtn.style.display = 'inline-block'; expandDescBtn.dataset.exp = 'false'; expandDescBtn.innerText = 'Развернуть'; } else { descWrapper.style.maxHeight = 'none'; expandDescBtn.style.display = 'none'; } }); }
-expandDescBtn.addEventListener('click', () => { const expanded = expandDescBtn.dataset.exp === 'true'; const lh = parseFloat(getComputedStyle(descTextSpan).lineHeight); if (expanded) { descWrapper.style.maxHeight = (lh * 5) + 'px'; expandDescBtn.innerText = 'Развернуть'; expandDescBtn.dataset.exp = 'false'; } else { descWrapper.style.maxHeight = descTextSpan.scrollHeight + 'px'; expandDescBtn.innerText = 'Свернуть'; expandDescBtn.dataset.exp = 'true'; } });
+function updateFileSection() { if (!currentFileName) { fileMetaBar.style.display = 'none'; fileExpandDiv.classList.remove('visible'); return; } fileMetaBar.style.display = 'inline-flex'; shortFileSpan.innerText = truncName(currentFileName); fileExpandDiv.innerText = `${currentFileName} (${currentFileSize})`; if (currentFileName.length <= 40) toggleFileBtn.style.display = 'none'; else { toggleFileBtn.style.display = 'inline-block'; fileExpandDiv.classList.remove('visible'); } }
+toggleFileBtn.addEventListener('click', () => { if (fileExpandDiv.classList.contains('visible')) { fileExpandDiv.classList.remove('visible'); toggleFileBtn.innerText = 'подробнее'; } else { fileExpandDiv.classList.add('visible'); toggleFileBtn.innerText = 'свернуть'; } });
+function resetDesc() { descWrapDiv.style.maxHeight = 'none'; expandDescBtn.style.display = 'none'; expandDescBtn.innerText = 'Показать полностью'; expandDescBtn.dataset.expanded = 'false'; }
+function setupDescExpand() { if (descSpan.innerText === lastDescContent) return; lastDescContent = descSpan.innerText; resetDesc(); requestAnimationFrame(() => { const lineH = parseFloat(getComputedStyle(descSpan).lineHeight); if (!lineH) return; const maxH = lineH * 5; if (descSpan.scrollHeight > maxH + 3) { descWrapDiv.style.maxHeight = maxH + 'px'; expandDescBtn.style.display = 'inline-block'; expandDescBtn.dataset.expanded = 'false'; expandDescBtn.innerText = 'Показать полностью'; } else { descWrapDiv.style.maxHeight = 'none'; expandDescBtn.style.display = 'none'; } }); }
+expandDescBtn.addEventListener('click', () => { const expanded = expandDescBtn.dataset.expanded === 'true'; const lineH = parseFloat(getComputedStyle(descSpan).lineHeight); if (expanded) { descWrapDiv.style.maxHeight = (lineH * 5) + 'px'; expandDescBtn.innerText = 'Показать полностью'; expandDescBtn.dataset.expanded = 'false'; } else { descWrapDiv.style.maxHeight = descSpan.scrollHeight + 'px'; expandDescBtn.innerText = 'Свернуть'; expandDescBtn.dataset.expanded = 'true'; } });
 async function fetchJSON(url) { try { const r = await fetch(url); return r.ok ? await r.json() : null; } catch { return null; } }
-async function fetchText(url) { try { const r = await fetch(url); return r.ok ? await r.text() : null; } catch { return null; } }
+async function fetchTextFile(url) { try { const r = await fetch(url); return r.ok ? await r.text() : null; } catch { return null; } }
 async function loadInstruction(os) { return await fetchJSON(`${os}/instruction.json`); }
-async function loadScreenshots(base, imgMap) { if (!imgMap) return []; const urls = []; for (const key of Object.keys(imgMap).sort((a,b)=> (parseInt(a.match(/\d+/)?.[0]||0) - parseInt(b.match(/\d+/)?.[0]||0)))) { const src = `${base}/${imgMap[key]}`; const test = new Image(); await new Promise(res => { test.onload = () => res(true); test.onerror = () => res(false); test.src = src; }); if (test.complete && test.naturalWidth) urls.push(src); } return urls; }
-function renderScreenshots(images) { screenshotScroll.innerHTML = images.length ? images.map(src => `<img src="${src}" class="screenshot-thumb" loading="lazy">`).join('') : '<div style="color:rgba(255,255,255,0.4); padding:12px;">Нет скриншотов</div>'; document.querySelectorAll('.screenshot-thumb').forEach(img => img.addEventListener('click', () => { lightboxImage.src = img.src; lightbox.classList.add('visible'); })); }
-async function refreshUI() {
-    if (!currentOS) { storeScreen.classList.add('screen-hidden'); platformScreen.classList.remove('screen-hidden'); platformScreen.style.opacity = '1'; platformScreen.style.transform = 'none'; return; }
-    const data = storeData[currentOS];
-    appNameSpan.innerText = data.title;
-    appTaglineSpan.innerText = data.tagline;
-    installInstruction = await loadInstruction(currentOS);
-    let desc = data.fullDesc;
-    if (installInstruction?.desc) { const fetched = await fetchText(`${currentOS}/${installInstruction.desc}`); if (fetched) desc = fetched; }
-    descTextSpan.innerText = desc;
-    permissionsDiv.innerHTML = data.perms.map(p => `<div class="perm-item"><i class="fas fa-check-circle"></i> ${p}</div>`).join('');
-    const version = installInstruction?.version || '3.2.1';
-    let fname = '';
-    if (installInstruction?.app) { if (currentOS === 'Windows') fname = currentFormat === 'exe' ? installInstruction.exe : installInstruction.zip; else fname = installInstruction.app; }
-    if (!fname) fname = currentOS === 'Windows' ? (currentFormat === 'exe' ? `dynamic-browser-setup-${version}.exe` : `dynamic-browser-portable-${version}.zip`) : `dynamic-browser-${version}.apk`;
-    currentFileName = fname; currentFileSize = data.sizes[currentFormat] || '';
-    if (currentOS === 'Windows') { formatSwitch.style.display = 'flex'; document.querySelectorAll('.format-btn').forEach(btn => btn.classList.remove('active')); const active = document.querySelector(`.format-btn[data-format="${currentFormat}"]`); if (active) active.classList.add('active'); versionBadgeSpan.innerText = `v${version} · ${data.sizes[currentFormat]}`; } else { formatSwitch.style.display = 'none'; currentFormat = 'apk'; versionBadgeSpan.innerText = `v${version} · ${data.sizes.apk}`; }
-    updateFileUI();
-    const screens = await loadScreenshots(currentOS, installInstruction?.Images || null);
-    renderScreenshots(screens);
-    adjustDesc();
-    if (platformScreen.classList.contains('screen-hidden') === false) { platformScreen.style.transition = 'opacity 0.5s ease, transform 0.5s'; platformScreen.style.opacity = '0'; platformScreen.style.transform = 'scale(0.96) translateY(-15px)'; setTimeout(() => { platformScreen.classList.add('screen-hidden'); storeScreen.classList.remove('screen-hidden'); storeScreen.style.animation = 'none'; storeScreen.offsetHeight; storeScreen.style.animation = 'fadeUp 0.6s ease'; }, 480); }
+async function loadScreenshots(base, imgMap) { if (!imgMap) return []; const urls = []; for (const key of Object.keys(imgMap).sort((a,b)=> (parseInt(a.match(/\d+/)?.[0]||0) - parseInt(b.match(/\d+/)?.[0]||0)))) { const src = `${base}/${imgMap[key]}`; const testImg = new Image(); await new Promise(res => { testImg.onload = () => res(true); testImg.onerror = () => res(false); testImg.src = src; }); if (testImg.complete && testImg.naturalWidth) urls.push(src); } return urls; }
+function renderScreenshotList(imgs) { screenshotStripDiv.innerHTML = imgs.length ? imgs.map(src => `<img src="${src}" class="screenshot-preview" loading="lazy">`).join('') : '<div style="color:rgba(255,255,255,0.4);">Нет скриншотов</div>'; document.querySelectorAll('.screenshot-preview').forEach(img => img.addEventListener('click', () => { lightboxImg.src = img.src; lightboxDiv.classList.add('visible'); })); }
+
+async function refreshDetailUI() {
+    if (!selectedOS) {
+        if (!platformScreen.classList.contains('hidden')) return;
+        detailScreen.classList.remove('visible');
+        platformScreen.classList.remove('hidden');
+        platformScreen.style.opacity = '1';
+        platformScreen.style.transform = 'none';
+        return;
+    }
+    const osData = appDatabase[selectedOS];
+    appTitleSpan.innerText = osData.title;
+    appSubSpan.innerText = osData.short;
+    instructionCache = await loadInstruction(selectedOS);
+    let description = osData.fullDesc;
+    if (instructionCache?.desc) { const fetchedDesc = await fetchTextFile(`${selectedOS}/${instructionCache.desc}`); if (fetchedDesc) description = fetchedDesc; }
+    descSpan.innerText = description;
+    permContainer.innerHTML = osData.permissions.map(p => `<div class="perm-item"><i class="fas fa-shield-alt"></i> ${p}</div>`).join('');
+    const appVersion = instructionCache?.version || '3.2.1';
+    let fileName = '';
+    if (instructionCache?.app) {
+        if (selectedOS === 'Windows') fileName = currentFormat === 'exe' ? instructionCache.exe : instructionCache.zip;
+        else fileName = instructionCache.app;
+    }
+    if (!fileName) fileName = selectedOS === 'Windows' ? (currentFormat === 'exe' ? `dynamic-browser-setup-${appVersion}.exe` : `dynamic-browser-portable-${appVersion}.zip`) : `dynamic-browser-${appVersion}.apk`;
+    const fileSize = osData.sizes[currentFormat] || '';
+    currentFileName = fileName; currentFileSize = fileSize;
+    if (selectedOS === 'Windows') {
+        formatSwitch.style.display = 'flex';
+        document.querySelectorAll('.format-btn').forEach(btn => btn.classList.remove('active'));
+        const activeFormatBtn = document.querySelector(`.format-btn[data-format="${currentFormat}"]`);
+        if (activeFormatBtn) activeFormatBtn.classList.add('active');
+        versionMetaSpan.innerText = `v${appVersion} · ${osData.sizes[currentFormat]}`;
+    } else {
+        formatSwitch.style.display = 'none';
+        currentFormat = 'apk';
+        versionMetaSpan.innerText = `v${appVersion} · ${osData.sizes.apk}`;
+    }
+    updateFileSection();
+    const screens = await loadScreenshots(selectedOS, instructionCache?.Images || null);
+    renderScreenshotList(screens);
+    setupDescExpand();
+    if (!platformScreen.classList.contains('hidden')) {
+        platformScreen.style.transition = 'opacity 0.5s ease, transform 0.5s';
+        platformScreen.style.opacity = '0';
+        platformScreen.style.transform = 'scale(0.96) translateY(-12px)';
+        setTimeout(() => {
+            platformScreen.classList.add('hidden');
+            detailScreen.classList.add('visible');
+            detailScreen.style.animation = 'none';
+            detailScreen.offsetHeight;
+            detailScreen.style.animation = 'slideUp 0.6s ease';
+        }, 450);
+    }
 }
-document.querySelectorAll('.platform-card').forEach(card => { card.addEventListener('click', () => { const os = card.dataset.os; if (currentOS === os) return; currentOS = os; currentFormat = storeData[os].defaultFormat; refreshUI(); }); });
-backBtn.addEventListener('click', () => { storeScreen.style.transition = 'opacity 0.4s, transform 0.4s'; storeScreen.style.opacity = '0'; storeScreen.style.transform = 'translateY(20px)'; setTimeout(() => { storeScreen.classList.add('screen-hidden'); storeScreen.style.opacity = ''; storeScreen.style.transform = ''; platformScreen.classList.remove('screen-hidden'); platformScreen.style.opacity = '0'; platformScreen.style.transform = 'translateY(-10px)'; platformScreen.style.transition = 'none'; platformScreen.offsetHeight; platformScreen.style.transition = 'opacity 0.5s ease, transform 0.5s'; platformScreen.style.opacity = '1'; platformScreen.style.transform = 'none'; currentOS = null; }, 400); });
-formatSwitch.addEventListener('click', (e) => { if (currentOS !== 'Windows') return; const btn = e.target.closest('.format-btn'); if (btn && btn.dataset.format) { currentFormat = btn.dataset.format; refreshUI(); } });
-downloadBtn.addEventListener('click', () => { if (!currentOS || !currentFileName) return; showToast(`Скачивание ${currentFileName} (${currentFileSize})`); const a = document.createElement('a'); a.href = `https://dynamicbrowser.app/dl/${currentFileName}`; a.download = currentFileName; a.style.display = 'none'; document.body.appendChild(a); a.click(); document.body.removeChild(a); });
-privacyLink.addEventListener('click', (e) => { e.preventDefault(); fetch('POLITICS.txt').then(r => r.ok ? r.text() : Promise.reject()).then(txt => { const blocks = txt.split('\n\n').filter(b=>b.trim()); privacyContent.innerHTML = blocks.map(block => `<p style="margin-bottom:16px;">${block.replace(/\n/g, '<br>')}</p>`).join(''); }).catch(() => privacyContent.innerHTML = '<p>Не удалось загрузить политику.</p>'); privacyModal.classList.add('visible'); });
-closePrivacy.addEventListener('click', () => privacyModal.classList.remove('visible'));
+
+document.querySelectorAll('.platform-card').forEach(card => {
+    card.addEventListener('click', () => {
+        const os = card.dataset.os;
+        if (selectedOS === os) return;
+        selectedOS = os;
+        currentFormat = appDatabase[os].defaultFormat;
+        refreshDetailUI();
+    });
+});
+backButton.addEventListener('click', () => {
+    if (!selectedOS) return;
+    detailScreen.style.transition = 'opacity 0.4s, transform 0.4s';
+    detailScreen.style.opacity = '0';
+    detailScreen.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+        detailScreen.classList.remove('visible');
+        detailScreen.style.opacity = '';
+        detailScreen.style.transform = '';
+        platformScreen.classList.remove('hidden');
+        platformScreen.style.opacity = '0';
+        platformScreen.style.transform = 'translateY(-12px)';
+        platformScreen.style.transition = 'none';
+        platformScreen.offsetHeight;
+        platformScreen.style.transition = 'opacity 0.5s ease, transform 0.5s';
+        platformScreen.style.opacity = '1';
+        platformScreen.style.transform = 'none';
+        selectedOS = null;
+    }, 350);
+});
+formatSwitch.addEventListener('click', (e) => {
+    if (selectedOS !== 'Windows') return;
+    const btn = e.target.closest('.format-btn');
+    if (btn && btn.dataset.format) {
+        currentFormat = btn.dataset.format;
+        refreshDetailUI();
+    }
+});
+downloadBtn.addEventListener('click', () => {
+    if (!selectedOS || !currentFileName) return;
+    showToastMessage(`Начинаем загрузку ${currentFileName} (${currentFileSize})`);
+    const a = document.createElement('a');
+    a.href = `https://dynamicbrowser.app/dl/${currentFileName}`;
+    a.download = currentFileName;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+});
+privacyLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    fetch('POLITICS.txt')
+        .then(r => r.ok ? r.text() : Promise.reject())
+        .then(txt => { const paragraphs = txt.split('\n\n').filter(p => p.trim()); privacyContentDiv.innerHTML = paragraphs.map(p => `<p style="margin-bottom:14px;">${p.replace(/\n/g, '<br>')}</p>`).join(''); })
+        .catch(() => privacyContentDiv.innerHTML = '<p>Политика конфиденциальности временно недоступна.</p>');
+    privacyModal.classList.add('visible');
+});
+closePrivacyBtn.addEventListener('click', () => privacyModal.classList.remove('visible'));
 privacyModal.addEventListener('click', (e) => { if (e.target === privacyModal) privacyModal.classList.remove('visible'); });
-closeLightboxBtn.addEventListener('click', () => { lightbox.classList.remove('visible'); lightboxImage.src = ''; });
-lightbox.addEventListener('click', (e) => { if (e.target === lightbox) { lightbox.classList.remove('visible'); lightboxImage.src = ''; } });
-refreshUI();
+closeLightboxBtn.addEventListener('click', () => { lightboxDiv.classList.remove('visible'); lightboxImg.src = ''; });
+lightboxDiv.addEventListener('click', (e) => { if (e.target === lightboxDiv) { lightboxDiv.classList.remove('visible'); lightboxImg.src = ''; } });
+refreshDetailUI();
 </script>
 </body>
 </html>
