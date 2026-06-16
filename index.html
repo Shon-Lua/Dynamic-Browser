@@ -30,6 +30,8 @@
             height: 100%;
             font-size: 16px;
             color-scheme: dark;
+            scrollbar-color: rgba(255,255,255,0.25) transparent;
+            scrollbar-width: thin;
         }
         body {
             font-family: 'Inter', system-ui, sans-serif;
@@ -42,6 +44,20 @@
             padding: 28px 24px;
             position: relative;
             overflow-x: hidden;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.25);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.45);
         }
         canvas#wave-canvas {
             position: fixed;
@@ -275,7 +291,6 @@
             overflow-x: auto;
             gap: 18px;
             padding-bottom: 12px;
-            scrollbar-width: thin;
         }
         .screenshot-strip img {
             height: 240px;
@@ -283,7 +298,12 @@
             flex-shrink: 0;
             border: 1px solid rgba(255,255,255,0.2);
             cursor: pointer;
-            transition: none;
+            transition: outline-color 0.2s ease, outline-offset 0.2s ease;
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+        }
+        .screenshot-strip img:hover {
+            outline-color: #00BFFF;
         }
         @media (max-width: 720px) {
             .screenshot-strip {
