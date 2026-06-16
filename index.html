@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dynamic Browser — премиальный установщик</title>
+    <title>Dynamic Browser</title>
     <link rel="icon" href="Logo.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -618,8 +618,8 @@ document.addEventListener('visibilitychange', () => {
 initThree();
 
 const appMeta = {
-    Windows: { title: 'Dynamic Browser for Windows', short: 'Молниеносный, безопасный, минималистичный.', fullDesc: 'Полностью переработанный веб-серфер с волновой анимацией, встроенным VPN-сервисом, блокировкой трекеров и режимом максимальной производительности. Поддержка расширений, тёмная тема, энергоэффективность.', formats: ['exe','zip'], defaultFormat: 'exe', permissions: ['Доступ в интернет', 'Чтение/запись файлов (сохранение загрузок)', 'Геолокация (опционально)'] },
-    Android: { title: 'Dynamic Browser for Android', short: 'Лёгкий, быстрый, современный браузер.', fullDesc: 'Адаптирован для мобильных устройств: экономия трафика, ночной режим, встроенный менеджер загрузок, защита от фишинга. Работает плавно на любых устройствах.', formats: ['apk'], defaultFormat: 'apk', permissions: ['Интернет', 'Хранилище', 'Геопозиция', 'Уведомления'] }
+    Windows: { title: 'Dynamic Browser for Windows', short: 'Молниеносный, безопасный, минималистичный.', fullDesc: 'nil', formats: ['exe','zip'], defaultFormat: 'exe', permissions: ['Bнтернет', 'Хранилище', 'Геолокация'] },
+    Android: { title: 'Dynamic Browser for Android', short: 'Лёгкий, быстрый, современный браузер.', fullDesc: 'nil', formats: ['apk'], defaultFormat: 'apk', permissions: ['Интернет', 'Хранилище', 'Геолокация'] }
 };
 let currentOS = null, currentFormat = 'exe', currentFileName = '';
 const platformStage = document.getElementById('platformStage'), storeDash = document.getElementById('storeDashboard');
@@ -676,7 +676,26 @@ const osData = appMeta[currentOS]; appNameSpan.innerText = osData.title; appSubS
 const ver = currentInstruction?.version || '3.2.1'; if (currentInstruction?.app) { if (currentOS === 'Windows') currentFileName = currentFormat === 'exe' ? currentInstruction.exe : currentInstruction.zip; else currentFileName = currentInstruction.app; } else { currentFileName = currentOS === 'Windows' ? (currentFormat === 'exe' ? `dynamic-browser-setup-${ver}.exe` : `dynamic-browser-portable-${ver}.zip`) : `dynamic-browser-${ver}.apk`; }
 if (currentOS === 'Windows') { formatGroup.style.display = 'flex'; document.querySelectorAll('.format-option').forEach(opt => opt.classList.remove('active')); const activeOpt = document.querySelector(`.format-option[data-format="${currentFormat}"]`); if (activeOpt) activeOpt.classList.add('active'); } else { formatGroup.style.display = 'none'; currentFormat = 'apk'; }
 const screens = await loadScreenshots(currentOS, currentInstruction?.Images || null); renderScreenshots(screens);
-setupDescription(); if (platformStage.classList.contains('hidden') === false) { platformStage.style.transition = 'opacity 0.5s ease, transform 0.5s'; platformStage.style.opacity = '0'; platformStage.style.transform = 'scale(0.96) translateY(-15px)'; setTimeout(() => { platformStage.classList.add('hidden'); storeDash.classList.add('visible'); storeDash.style.animation = 'none'; storeDash.offsetHeight; storeDash.style.animation = 'fadeSlideUp 0.6s ease'; }, 480); } }
+if (platformStage.classList.contains('hidden') === false) {
+    platformStage.style.transition = 'opacity 0.5s ease, transform 0.5s';
+    platformStage.style.opacity = '0';
+    platformStage.style.transform = 'scale(0.96) translateY(-15px)';
+    setTimeout(() => {
+        platformStage.classList.add('hidden');
+        storeDash.classList.add('visible');
+        storeDash.style.animation = 'none';
+        storeDash.offsetHeight;
+        storeDash.style.animation = 'fadeSlideUp 0.6s ease';
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                setupDescription();
+            });
+        });
+    }, 480);
+} else {
+    setupDescription();
+}
+}
 
 document.querySelectorAll('.platform-pill').forEach(card => { card.addEventListener('click', () => { const os = card.dataset.os; if (currentOS === os) return; currentOS = os; currentFormat = appMeta[os].defaultFormat; refreshUI(); }); });
 backButton.addEventListener('click', () => { if (isTransitioning) return; isTransitioning = true; storeDash.style.transition = 'opacity 0.4s, transform 0.4s'; storeDash.style.opacity = '0'; storeDash.style.transform = 'translateY(20px)'; setTimeout(() => { storeDash.classList.remove('visible'); storeDash.style.opacity = ''; storeDash.style.transform = ''; platformStage.classList.remove('hidden'); platformStage.style.opacity = '0'; platformStage.style.transform = 'translateY(-10px)'; platformStage.style.transition = 'none'; platformStage.offsetHeight; platformStage.style.transition = 'opacity 0.5s ease, transform 0.5s'; platformStage.style.opacity = '1'; platformStage.style.transform = 'none'; currentOS = null; isTransitioning = false; }, 400); });
