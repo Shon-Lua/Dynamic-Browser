@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dynamic Browser</title>
+    <title>Dynamic Browser — премиальный установщик</title>
     <link rel="icon" href="Logo.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -255,12 +255,8 @@
             border-color: white;
             box-shadow: 0 20px 30px -12px black;
         }
-        .version-badge {
-            background: rgba(0,0,0,0.6);
-            padding: 4px 12px;
-            border-radius: 40px;
-            font-size: 0.7rem;
-            font-weight: 500;
+        .download-prime .version-meta {
+            display: none; /* скрываем версию и размер в кнопке */
         }
         .file-meta {
             display: inline-flex;
@@ -288,11 +284,6 @@
             font-size: 0.75rem;
             word-break: break-all;
             margin-top: 8px;
-        }
-        .grid-modules {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
         }
         .glass-panel {
             background: var(--card-bg);
@@ -326,11 +317,23 @@
             flex-shrink: 0;
             border: 1px solid rgba(255,255,255,0.2);
             cursor: pointer;
-            transition: transform 0.2s, border-color 0.2s;
+            /* убираем анимации при наведении */
+            transition: none;
         }
-        .screenshot-strip img:hover {
-            transform: scale(1.02);
-            border-color: white;
+        /* на мобильных скриншоты адаптируются */
+        @media (max-width: 720px) {
+            .screenshot-strip {
+                flex-direction: column;
+                overflow-x: visible;
+                align-items: center;
+            }
+            .screenshot-strip img {
+                height: auto;
+                width: 100%;
+                max-width: 100%;
+                object-fit: contain;
+                border-radius: 20px;
+            }
         }
         .desc-wrapper {
             overflow: hidden;
@@ -473,7 +476,7 @@
                         <button class="format-option" data-format="exe">EXE</button>
                         <button class="format-option" data-format="zip">ZIP</button>
                     </div>
-                    <button class="download-prime" id="installBtn"><i class="fas fa-download"></i> Скачать <span id="versionMeta"></span></button>
+                    <button class="download-prime" id="installBtn"><i class="fas fa-download"></i> Скачать <span class="version-meta" id="versionMeta"></span></button>
                 </div>
                 <div class="file-meta" id="fileMetaRow" style="display:none">
                     <span id="shortFileName"></span>
@@ -543,7 +546,6 @@ function initThree() {
         initThree();
     });
     
-    // оптимизированная геометрия: для мобильных сильно уменьшаем сетку
     const widthSeg = isMobile ? 20 : 45;
     const heightSeg = isMobile ? 20 : 45;
     const planeSize = isMobile ? 16 : 19;
@@ -596,13 +598,10 @@ function initThree() {
     animate();
 }
 
-let lastTimestamp = 0;
-let frameSkip = 1;
 let frameCounter = 0;
 
 function animateWavefield() {
     if (!geometry || contextLostFlag) return;
-    // на мобильных пропускаем каждый второй кадр для экономии
     if (isMobile) {
         frameCounter++;
         if (frameCounter % 2 !== 0) return;
