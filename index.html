@@ -666,8 +666,8 @@ document.addEventListener('visibilitychange', () => {
 initThree();
 
 const appMeta = {
-    Windows: { title: 'Dynamic Browser for Windows', short: 'Молниеносный, безопасный, минималистичный.', fullDesc: 'nil', formats: ['exe','zip'], defaultFormat: 'exe', permissions: ['Bнтернет', 'Хранилище', 'Геолокация'] },
-    Android: { title: 'Dynamic Browser for Android', short: 'Лёгкий, быстрый, современный браузер.', fullDesc: 'nil', formats: ['apk'], defaultFormat: 'apk', permissions: ['Интернет', 'Хранилище', 'Геолокация'] }
+    Windows: { title: 'Dynamic Browser for Windows', short: 'Молниеносный, безопасный, минималистичный.', fullDesc: 'nil', formats: ['exe','zip'], defaultFormat: 'exe', permissions: ['Интернет', 'Хранилище'] },
+    Android: { title: 'Dynamic Browser for Android', short: 'Лёгкий, быстрый, современный браузер.', fullDesc: 'nil', formats: ['apk'], defaultFormat: 'apk', permissions: ['Интернет', 'Хранилище'] }
 };
 let currentOS = null, currentFormat = 'exe', currentFileName = '';
 const platformStage = document.getElementById('platformStage'), storeDash = document.getElementById('storeDashboard');
