@@ -523,19 +523,18 @@ import * as THREE from 'three';
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
 let scene, camera, renderer, geometry, timeVal = 0, animFrame = null, contextLostFlag = false;
 const canvas = document.getElementById('wave-canvas');
-let starsFar, starsNear, fallingStarsPoints;
-const MAX_FALLING_STARS = 50;
-const fallingStars = [];
+let starsFar, starsNear, fallingStarPoint;
+let currentStar = null;
 const splashes = [];
 
 let vertexX, vertexZ;
 
 function createStarTexture() {
     const size = 64;
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
+    const canvasEl = document.createElement('canvas');
+    canvasEl.width = size;
+    canvasEl.height = size;
+    const ctx = canvasEl.getContext('2d');
     ctx.clearRect(0, 0, size, size);
     const cx = size/2, cy = size/2;
     const outerR = size*0.4;
@@ -554,7 +553,7 @@ function createStarTexture() {
     }
     ctx.closePath();
     ctx.fill();
-    return new THREE.CanvasTexture(canvas);
+    return new THREE.CanvasTexture(canvasEl);
 }
 
 function initThree() {
@@ -649,13 +648,10 @@ function initThree() {
     
     const starTex = createStarTexture();
     const fallingGeo = new THREE.BufferGeometry();
-    const fallingPositions = new Float32Array(MAX_FALLING_STARS * 3);
-    fallingGeo.setAttribute('position', new THREE.BufferAttribute(fallingPositions, 3));
-    fallingStarsPoints = new THREE.Points(fallingGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, map: starTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-    scene.add(fallingStarsPoints);
-    for (let i = 0; i < MAX_FALLING_STARS; i++) {
-        resetFallingStar(i, true);
-    }
+    fallingGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3), 3));
+    fallingStarPoint = new THREE.Points(fallingGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, map: starTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    scene.add(fallingStarPoint);
+    resetFallingStar(true);
     
     const totalVertices = geometry.attributes.position.count;
     vertexX = new Float32Array(totalVertices);
@@ -669,53 +665,44 @@ function initThree() {
     animate();
 }
 
-function resetFallingStar(index, initial = false) {
+function resetFallingStar(initial = false) {
     const planeSize = isMobile ? 16 : 19;
     const x = (Math.random() - 0.5) * planeSize * 0.9;
     const z = (Math.random() - 0.5) * planeSize * 0.9;
     const y = initial ? Math.random() * 8 + 3 : (Math.random() * 6 + 4);
     const speed = 0.02 + Math.random() * 0.04;
-    fallingStars[index] = { x, z, y, speed, phase: 'falling', waitTimer: 0, waitDuration: 1 + Math.random() * 2 };
-    updateFallingStarGeometry(index);
+    currentStar = { x, z, y, speed, phase: 'falling', waitTimer: 0, waitDuration: 1 + Math.random() * 2 };
+    const pos = fallingStarPoint.geometry.attributes.position.array;
+    pos[0] = x;
+    pos[1] = y;
+    pos[2] = z;
+    fallingStarPoint.geometry.attributes.position.needsUpdate = true;
 }
 
-function updateFallingStarGeometry(index) {
-    const positions = fallingStarsPoints.geometry.attributes.position.array;
-    const star = fallingStars[index];
-    positions[index*3] = star.x;
-    positions[index*3+1] = star.y;
-    positions[index*3+2] = star.z;
-}
-
-function animateFallingStars(dt) {
-    const positions = fallingStarsPoints.geometry.attributes.position.array;
-    for (let i = 0; i < fallingStars.length; i++) {
-        const star = fallingStars[i];
-        if (star.phase === 'falling') {
-            star.y -= star.speed;
-            if (star.y <= 0.0) {
-                star.y = 0.0;
-                star.phase = 'waiting';
-                star.waitTimer = 0;
-            }
-        } else if (star.phase === 'waiting') {
-            star.waitTimer += dt;
-            if (star.waitTimer >= star.waitDuration) {
-                triggerSplash(star.x, star.z);
-                resetFallingStar(i);
-                continue;
-            }
+function animateFallingStar(dt) {
+    if (!currentStar) return;
+    const pos = fallingStarPoint.geometry.attributes.position.array;
+    if (currentStar.phase === 'falling') {
+        currentStar.y -= currentStar.speed;
+        if (currentStar.y <= 0.0) {
+            currentStar.y = 0.0;
+            currentStar.phase = 'waiting';
+            currentStar.waitTimer = 0;
         }
-        positions[i*3] = star.x;
-        positions[i*3+1] = star.y;
-        positions[i*3+2] = star.z;
+        pos[1] = currentStar.y;
+        fallingStarPoint.geometry.attributes.position.needsUpdate = true;
+    } else if (currentStar.phase === 'waiting') {
+        currentStar.waitTimer += dt;
+        if (currentStar.waitTimer >= currentStar.waitDuration) {
+            triggerSplash(currentStar.x, currentStar.z);
+            resetFallingStar();
+        }
     }
-    fallingStarsPoints.geometry.attributes.position.needsUpdate = true;
 }
 
 function triggerSplash(x, z) {
-    splashes.push({ x, z, startTime: timeVal, duration: 2.5, radius: 3.0, strength: 0.5 });
-    if (splashes.length > 30) splashes.shift();
+    splashes.push({ x, z, startTime: timeVal, duration: 4.0, radius: 4.0, strength: 0.4 });
+    if (splashes.length > 10) splashes.shift();
 }
 
 let frameCounter = 0;
@@ -781,7 +768,7 @@ function animate(timestamp) {
     if (!contextLostFlag) {
         const dt = Math.min(0.1, (timestamp - lastTime) / 1000);
         lastTime = timestamp;
-        animateFallingStars(dt);
+        animateFallingStar(dt);
         animateWavefield();
         if (starsFar) {
             starsFar.rotation.y += 0.0003;
