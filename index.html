@@ -524,6 +524,8 @@ const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/
 let scene, camera, renderer, geometry, timeVal = 0, animFrame = null, contextLostFlag = false;
 const canvas = document.getElementById('wave-canvas');
 let starsFar, starsNear;
+let shootingStars = [];
+let flashSprites = [];
 
 function initThree() {
     if (renderer) {
@@ -588,10 +590,10 @@ function initThree() {
     dirLight.position.set(4, 9, 6);
     scene.add(dirLight);
     
-    const grid = new THREE.GridHelper(isMobile ? 20 : 28, isMobile ? 16 : 24, 0xffffff, 0xdddddd);
+    const grid = new THREE.GridHelper(isMobile ? 20 : 28, isMobile ? 16 : 24, 0xffffff, 0x3a3a3a);
     grid.position.y = -2.0;
     grid.material.transparent = true;
-    grid.material.opacity = 0.15;
+    grid.material.opacity = isMobile ? 0.1 : 0.18;
     scene.add(grid);
     
     if (!isMobile) {
@@ -619,11 +621,116 @@ function initThree() {
         starsNear = new THREE.Points(starGeoNear, new THREE.PointsMaterial({ color: 0xffffff, size: 0.22, transparent: true, opacity: 0.8 }));
         scene.add(starsNear);
     }
+
+    const shootingStarGeo = new THREE.SphereGeometry(0.03, 2, 2);
+    const shootingStarMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    for (let i = 0; i < 40; i++) {
+        const star = new THREE.Mesh(shootingStarGeo, shootingStarMat);
+        star.visible = false;
+        star.userData = {
+            velocity: new THREE.Vector3(0, -0.08 - Math.random() * 0.12, 0),
+            life: 0,
+            maxLife: 60 + Math.floor(Math.random() * 60)
+        };
+        scene.add(star);
+        shootingStars.push(star);
+    }
+
+    const flashTexture = createFlashTexture();
+    for (let i = 0; i < 20; i++) {
+        const material = new THREE.SpriteMaterial({
+            map: flashTexture,
+            color: 0xffffff,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            depthTest: true
+        });
+        const sprite = new THREE.Sprite(material);
+        sprite.visible = false;
+        sprite.scale.set(0.5, 0.5, 1);
+        sprite.userData = { life: 0, maxLife: 30 };
+        scene.add(sprite);
+        flashSprites.push(sprite);
+    }
     
     animate();
 }
 
+function createFlashTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 32;
+    canvas.height = 32;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, 32, 32);
+    ctx.beginPath();
+    ctx.arc(16, 16, 14, 0, 2*Math.PI);
+    const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 14);
+    gradient.addColorStop(0, 'rgba(255,255,255,1)');
+    gradient.addColorStop(0.4, 'rgba(255,255,255,0.8)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    return new THREE.CanvasTexture(canvas);
+}
+
+function spawnShootingStar() {
+    for (let star of shootingStars) {
+        if (!star.visible) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 10 + Math.random() * 8;
+            star.position.set(
+                Math.cos(angle) * radius,
+                5 + Math.random() * 4,
+                Math.sin(angle) * radius
+            );
+            star.visible = true;
+            star.userData.life = star.userData.maxLife;
+            break;
+        }
+    }
+}
+
+function updateShootingStars() {
+    for (let star of shootingStars) {
+        if (!star.visible) continue;
+        star.position.add(star.userData.velocity);
+        star.userData.life--;
+        if (star.position.y < -2.1 || star.userData.life <= 0) {
+            if (star.position.y < -2.1 && star.position.y > -3.0) {
+                triggerFlash(star.position.clone());
+            }
+            star.visible = false;
+        }
+    }
+}
+
+function triggerFlash(position) {
+    for (let sprite of flashSprites) {
+        if (!sprite.visible) {
+            sprite.position.copy(position);
+            sprite.position.y = -2.0;
+            sprite.visible = true;
+            sprite.userData.life = sprite.userData.maxLife;
+            break;
+        }
+    }
+}
+
+function updateFlashes() {
+    for (let sprite of flashSprites) {
+        if (!sprite.visible) continue;
+        sprite.userData.life--;
+        const progress = 1 - (sprite.userData.life / sprite.userData.maxLife);
+        sprite.material.opacity = 1 - progress;
+        sprite.scale.set(0.5 + progress * 1.5, 0.5 + progress * 1.5, 1);
+        if (sprite.userData.life <= 0) {
+            sprite.visible = false;
+        }
+    }
+}
+
 let frameCounter = 0;
+let spawnTimer = 0;
 
 function animateWavefield() {
     if (!geometry || contextLostFlag) return;
@@ -667,6 +774,10 @@ function animate() {
             starsNear.rotation.y -= 0.0004;
             starsNear.rotation.x += 0.00025;
         }
+        spawnTimer++;
+        if (spawnTimer % 20 === 0) spawnShootingStar();
+        updateShootingStars();
+        updateFlashes();
         if (camera) camera.lookAt(0, 0.4, 0);
         if (renderer && scene && camera) renderer.render(scene, camera);
     }
