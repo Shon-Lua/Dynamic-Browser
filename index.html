@@ -67,7 +67,7 @@
             height: 100%;
             z-index: 0;
             pointer-events: none;
-            filter: brightness(1.1) contrast(1.3);
+            filter: brightness(0.9) contrast(1.2);
         }
         .app-wrapper {
             position: relative;
@@ -393,7 +393,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1100;
+            z-index: 1000;
             opacity: 0;
             visibility: hidden;
             transition: 0.3s;
@@ -528,7 +528,34 @@ const MAX_FALLING_STARS = 50;
 const fallingStars = [];
 const splashes = [];
 
-let vertexX = null, vertexZ = null;
+let vertexX, vertexZ;
+
+function createStarTexture() {
+    const size = 64;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, size, size);
+    const cx = size/2, cy = size/2;
+    const outerR = size*0.4;
+    const innerR = size*0.15;
+    const spikes = 4;
+    const step = Math.PI / spikes;
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    for (let i = 0; i < spikes*2; i++) {
+        const angle = i * step - Math.PI/2;
+        const radius = i % 2 === 0 ? outerR : innerR;
+        const x = cx + Math.cos(angle) * radius;
+        const y = cy + Math.sin(angle) * radius;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    return new THREE.CanvasTexture(canvas);
+}
 
 function initThree() {
     if (renderer) {
@@ -537,7 +564,7 @@ function initThree() {
     }
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
-    if (!isMobile) scene.fog = new THREE.FogExp2(0x000000, 0.005);
+    if (!isMobile) scene.fog = new THREE.FogExp2(0x000000, 0.008);
     
     camera = new THREE.PerspectiveCamera(isMobile ? 50 : 42, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(isMobile ? 10 : 11, isMobile ? 6.5 : 7.5, isMobile ? 12 : 13);
@@ -559,39 +586,34 @@ function initThree() {
         initThree();
     });
     
-    const widthSeg = isMobile ? 20 : 50;
-    const heightSeg = isMobile ? 20 : 50;
-    const planeSize = isMobile ? 16 : 20;
+    const widthSeg = isMobile ? 20 : 45;
+    const heightSeg = isMobile ? 20 : 45;
+    const planeSize = isMobile ? 16 : 19;
     geometry = new THREE.PlaneGeometry(planeSize, planeSize, widthSeg, heightSeg);
     geometry.rotateX(-Math.PI / 2);
     const positions = geometry.attributes.position.array;
     for (let i = 0; i < positions.length / 3; i++) positions[i*3+1] = 0;
     
-    const solidMat = new THREE.MeshStandardMaterial({
-        color: 0xcccccc,
-        metalness: 0.9,
-        roughness: 0.7,
-        emissive: 0x000000,
-        side: THREE.DoubleSide
-    });
-    const solidMesh = new THREE.Mesh(geometry, solidMat);
-    scene.add(solidMesh);
-    
     const wireframeMat = new THREE.MeshStandardMaterial({
         color: 0xffffff,
         wireframe: true,
-        emissive: 0x222222,
+        emissive: 0x111111,
         roughness: 0.5,
-        metalness: 0.8
+        metalness: 0.7
     });
-    const wireframeMesh = new THREE.Mesh(geometry, wireframeMat);
-    scene.add(wireframeMesh);
+    const waveMesh = new THREE.Mesh(geometry, wireframeMat);
+    scene.add(waveMesh);
     
-    const ambient = new THREE.AmbientLight(0x444444);
+    const ambient = new THREE.AmbientLight(0x222222);
     scene.add(ambient);
-    const dirLight = new THREE.DirectionalLight(0xffffff, isMobile ? 1.2 : 1.0);
+    const dirLight = new THREE.DirectionalLight(0xffffff, isMobile ? 0.9 : 1.2);
     dirLight.position.set(4, 9, 6);
     scene.add(dirLight);
+    if (!isMobile) {
+        const fillLight = new THREE.PointLight(0x555555, 0.4);
+        fillLight.position.set(-2, 3, 4);
+        scene.add(fillLight);
+    }
     
     const grid = new THREE.GridHelper(isMobile ? 20 : 28, isMobile ? 16 : 24, 0xffffff, 0x3a3a3a);
     grid.position.y = -2.0;
@@ -609,7 +631,7 @@ function initThree() {
             posFar[i*3+2] = (Math.random() - 0.5) * 90 - 40;
         }
         starGeoFar.setAttribute('position', new THREE.BufferAttribute(posFar, 3));
-        starsFar = new THREE.Points(starGeoFar, new THREE.PointsMaterial({ color: 0xffffff, size: 0.12, transparent: true, opacity: 0.65 }));
+        starsFar = new THREE.Points(starGeoFar, new THREE.PointsMaterial({ color: 0xffffff, size: 0.07, transparent: true, opacity: 0.55 }));
         scene.add(starsFar);
         
         const starGeoNear = new THREE.BufferGeometry();
@@ -621,24 +643,24 @@ function initThree() {
             posNear[i*3+2] = (Math.random() - 0.5) * 60 - 20;
         }
         starGeoNear.setAttribute('position', new THREE.BufferAttribute(posNear, 3));
-        starsNear = new THREE.Points(starGeoNear, new THREE.PointsMaterial({ color: 0xffffff, size: 0.22, transparent: true, opacity: 0.8 }));
+        starsNear = new THREE.Points(starGeoNear, new THREE.PointsMaterial({ color: 0xffffff, size: 0.12, transparent: true, opacity: 0.65 }));
         scene.add(starsNear);
     }
     
+    const starTex = createStarTexture();
     const fallingGeo = new THREE.BufferGeometry();
     const fallingPositions = new Float32Array(MAX_FALLING_STARS * 3);
     fallingGeo.setAttribute('position', new THREE.BufferAttribute(fallingPositions, 3));
-    fallingStarsPoints = new THREE.Points(fallingGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.3, transparent: true, opacity: 0.9 }));
+    fallingStarsPoints = new THREE.Points(fallingGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, map: starTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     scene.add(fallingStarsPoints);
     for (let i = 0; i < MAX_FALLING_STARS; i++) {
         resetFallingStar(i, true);
     }
     
-    const posAttr = geometry.attributes.position;
-    const totalVertices = posAttr.count;
+    const totalVertices = geometry.attributes.position.count;
     vertexX = new Float32Array(totalVertices);
     vertexZ = new Float32Array(totalVertices);
-    const arr = posAttr.array;
+    const arr = geometry.attributes.position.array;
     for (let i = 0; i < totalVertices; i++) {
         vertexX[i] = arr[i*3];
         vertexZ[i] = arr[i*3+2];
@@ -648,12 +670,12 @@ function initThree() {
 }
 
 function resetFallingStar(index, initial = false) {
-    const planeSize = isMobile ? 16 : 20;
+    const planeSize = isMobile ? 16 : 19;
     const x = (Math.random() - 0.5) * planeSize * 0.9;
     const z = (Math.random() - 0.5) * planeSize * 0.9;
     const y = initial ? Math.random() * 8 + 3 : (Math.random() * 6 + 4);
-    const speed = 0.02 + Math.random() * 0.05;
-    fallingStars[index] = { x, z, y, speed };
+    const speed = 0.02 + Math.random() * 0.04;
+    fallingStars[index] = { x, z, y, speed, phase: 'falling', waitTimer: 0, waitDuration: 1 + Math.random() * 2 };
     updateFallingStarGeometry(index);
 }
 
@@ -665,55 +687,63 @@ function updateFallingStarGeometry(index) {
     positions[index*3+2] = star.z;
 }
 
-function animateFallingStars() {
+function animateFallingStars(dt) {
     const positions = fallingStarsPoints.geometry.attributes.position.array;
     for (let i = 0; i < fallingStars.length; i++) {
         const star = fallingStars[i];
-        star.y -= star.speed;
-        if (star.y < 0.0) {
-            triggerSplash(star.x, star.z);
-            resetFallingStar(i);
-        } else {
-            positions[i*3] = star.x;
-            positions[i*3+1] = star.y;
-            positions[i*3+2] = star.z;
+        if (star.phase === 'falling') {
+            star.y -= star.speed;
+            if (star.y <= 0.0) {
+                star.y = 0.0;
+                star.phase = 'waiting';
+                star.waitTimer = 0;
+            }
+        } else if (star.phase === 'waiting') {
+            star.waitTimer += dt;
+            if (star.waitTimer >= star.waitDuration) {
+                triggerSplash(star.x, star.z);
+                resetFallingStar(i);
+                continue;
+            }
         }
+        positions[i*3] = star.x;
+        positions[i*3+1] = star.y;
+        positions[i*3+2] = star.z;
     }
     fallingStarsPoints.geometry.attributes.position.needsUpdate = true;
 }
 
 function triggerSplash(x, z) {
-    splashes.push({ x, z, startTime: timeVal, duration: 2.0, radius: 2.5, strength: 0.8 });
+    splashes.push({ x, z, startTime: timeVal, duration: 2.5, radius: 3.0, strength: 0.5 });
     if (splashes.length > 30) splashes.shift();
 }
 
 let frameCounter = 0;
+
 function animateWavefield() {
     if (!geometry || contextLostFlag) return;
     if (isMobile) {
         frameCounter++;
         if (frameCounter % 2 !== 0) return;
     }
-    timeVal += 0.008;
+    timeVal += isMobile ? 0.014 : 0.019;
     const posAttr = geometry.attributes.position;
     const arr = posAttr.array;
-    const segW = isMobile ? 20 : 50;
-    const segH = isMobile ? 20 : 50;
-    const planeW = isMobile ? 16 : 20;
-    const planeH = isMobile ? 16 : 20;
+    const segW = isMobile ? 20 : 45;
+    const segH = isMobile ? 20 : 45;
+    const planeW = isMobile ? 16 : 19;
+    const planeH = isMobile ? 16 : 19;
     
     for (let i = 0; i <= segW; i++) {
         const x = (i / segW - 0.5) * planeW;
         for (let j = 0; j <= segH; j++) {
             const z = (j / segH - 0.5) * planeH;
             const idx = (j * (segW + 1) + i) * 3;
-            let y = Math.sin(x * 1.2 + timeVal * 0.7) * Math.cos(z * 1.1 + timeVal * 0.5) * 0.2;
-            y += Math.sin(x * 2.3 - timeVal * 1.3) * 0.1;
-            y += Math.cos(z * 2.1 + timeVal * 0.9) * 0.1;
-            y += Math.sin((x * 1.8 + z * 1.6) * 0.8 + timeVal * 1.1) * 0.08;
-            y += Math.sin(x * 0.6 + z * 0.7 + timeVal * 0.4) * 0.12;
-            y += Math.cos(x * 0.9 - z * 0.8 + timeVal * 0.6) * 0.06;
-            arr[idx + 1] = y;
+            const y1 = Math.sin(x * 0.85 + timeVal) * Math.cos(z * 0.75 + timeVal * 0.65) * (isMobile ? 0.45 : 0.55);
+            const y2 = Math.sin(x * 1.7 - timeVal * 1.1) * (isMobile ? 0.2 : 0.28);
+            const y3 = Math.cos(z * 1.45 + timeVal * 0.85) * (isMobile ? 0.2 : 0.28);
+            const y4 = Math.sin((x * 1.25 + z * 1.2) * 0.7 + timeVal * 1.4) * (isMobile ? 0.15 : 0.22);
+            arr[idx + 1] = y1 + y2 + y3 + y4;
         }
     }
     
@@ -737,7 +767,7 @@ function animateWavefield() {
             const distSq = dx*dx + dz*dz;
             if (distSq < radiusSq) {
                 const influence = Math.exp(-distSq / (2 * radiusSq * 0.25));
-                arr[v*3+1] += strength * influence;
+                arr[v*3+1] -= strength * influence;
             }
         }
     }
@@ -746,13 +776,16 @@ function animateWavefield() {
     geometry.computeVertexNormals();
 }
 
-function animate() {
+let lastTime = performance.now();
+function animate(timestamp) {
     if (!contextLostFlag) {
-        animateFallingStars();
+        const dt = Math.min(0.1, (timestamp - lastTime) / 1000);
+        lastTime = timestamp;
+        animateFallingStars(dt);
         animateWavefield();
         if (starsFar) {
-            starsFar.rotation.y += 0.0002;
-            starsFar.rotation.x += 0.0001;
+            starsFar.rotation.y += 0.0003;
+            starsFar.rotation.x += 0.00015;
         }
         if (starsNear) {
             starsNear.rotation.y -= 0.0004;
@@ -775,7 +808,10 @@ document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
         if (animFrame) cancelAnimationFrame(animFrame);
         animFrame = null;
-    } else if (!animFrame && !contextLostFlag) animate();
+    } else if (!animFrame && !contextLostFlag) {
+        lastTime = performance.now();
+        animFrame = requestAnimationFrame(animate);
+    }
 });
 
 initThree();
