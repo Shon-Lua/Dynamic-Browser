@@ -588,10 +588,10 @@ function initThree() {
     dirLight.position.set(4, 9, 6);
     scene.add(dirLight);
     
-    const grid = new THREE.GridHelper(isMobile ? 20 : 28, isMobile ? 16 : 24, 0x888888, 0x444444);
+    const grid = new THREE.GridHelper(isMobile ? 20 : 28, isMobile ? 16 : 24, 0xffffff, 0xdddddd);
     grid.position.y = -2.0;
     grid.material.transparent = true;
-    grid.material.opacity = 0.25;
+    grid.material.opacity = 0.15;
     scene.add(grid);
     
     if (!isMobile) {
@@ -631,7 +631,7 @@ function animateWavefield() {
         frameCounter++;
         if (frameCounter % 2 !== 0) return;
     }
-    timeVal += isMobile ? 0.012 : 0.008;
+    timeVal += 0.008;
     const posAttr = geometry.attributes.position;
     const arr = posAttr.array;
     const segW = isMobile ? 20 : 50;
@@ -643,12 +643,12 @@ function animateWavefield() {
         for (let j = 0; j <= segH; j++) {
             const z = (j / segH - 0.5) * planeH;
             const idx = (j * (segW + 1) + i) * 3;
-            const y1 = Math.sin(x * 1.2 + timeVal * 0.7) * Math.cos(z * 1.1 + timeVal * 0.5) * (isMobile ? 0.5 : 0.2);
-            const y2 = Math.sin(x * 2.3 - timeVal * 1.3) * (isMobile ? 0.25 : 0.1);
-            const y3 = Math.cos(z * 2.1 + timeVal * 0.9) * (isMobile ? 0.25 : 0.1);
-            const y4 = Math.sin((x * 1.8 + z * 1.6) * 0.8 + timeVal * 1.1) * (isMobile ? 0.2 : 0.08);
-            const y5 = Math.sin(x * 0.6 + z * 0.7 + timeVal * 0.4) * (isMobile ? 0.3 : 0.12);
-            const y6 = Math.cos(x * 0.9 - z * 0.8 + timeVal * 0.6) * (isMobile ? 0.15 : 0.06);
+            const y1 = Math.sin(x * 1.2 + timeVal * 0.7) * Math.cos(z * 1.1 + timeVal * 0.5) * 0.2;
+            const y2 = Math.sin(x * 2.3 - timeVal * 1.3) * 0.1;
+            const y3 = Math.cos(z * 2.1 + timeVal * 0.9) * 0.1;
+            const y4 = Math.sin((x * 1.8 + z * 1.6) * 0.8 + timeVal * 1.1) * 0.08;
+            const y5 = Math.sin(x * 0.6 + z * 0.7 + timeVal * 0.4) * 0.12;
+            const y6 = Math.cos(x * 0.9 - z * 0.8 + timeVal * 0.6) * 0.06;
             arr[idx + 1] = y1 + y2 + y3 + y4 + y5 + y6;
         }
     }
