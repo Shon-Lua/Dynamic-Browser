@@ -475,18 +475,52 @@
             font-size: 1rem;
         }
         .consent-check {
-            display: flex;
-            align-items: center;
-            gap: 12px;
             margin-bottom: 20px;
         }
-        .consent-check input {
+        .custom-checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+        .custom-checkbox-label input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+        .checkmark {
             width: 20px;
             height: 20px;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 6px;
+            display: inline-block;
+            position: relative;
+            background: rgba(0,0,0,0.4);
+            transition: all 0.2s;
         }
-        .consent-check label {
-            font-size: 0.9rem;
-            color: var(--text-dim);
+        .custom-checkbox-label input:checked ~ .checkmark {
+            background: rgba(255,255,255,0.15);
+            border-color: rgba(255,255,255,0.9);
+        }
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+            left: 6px;
+            top: 2px;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+        .custom-checkbox-label input:checked ~ .checkmark:after {
+            display: block;
         }
         .policy-link-btn {
             background: none;
@@ -599,8 +633,11 @@
         <div class="consent-content">Используя этот сайт, вы соглашаетесь с Политикой конфиденциальности.</div>
         <button class="policy-link-btn" id="consentPolicyBtn">Я прочитал(а) <u>Политику конфиденциальности</u></button>
         <div class="consent-check">
-            <input type="checkbox" id="consentCheckbox">
-            <label for="consentCheckbox">Я принимаю условия</label>
+            <label class="custom-checkbox-label">
+                <input type="checkbox" id="consentCheckbox">
+                <span class="checkmark"></span>
+                Я принимаю условия
+            </label>
         </div>
         <div class="consent-actions">
             <button class="btn-primary" id="consentNextBtn" disabled>Далее</button>
@@ -808,6 +845,11 @@ const consentModal = document.getElementById('consentModal'), consentCheckbox = 
 
 let currentInstruction = null, isTransitioning = false, lastDesc = null;
 
+if (localStorage.getItem('soundAllowed') === '1') {
+    consentModal.classList.remove('visible');
+    consentAudio.play().catch(() => {});
+}
+
 consentCheckbox.addEventListener('change', () => {
     consentNextBtn.disabled = !consentCheckbox.checked;
     if (consentCheckbox.checked) {
@@ -818,6 +860,7 @@ consentCheckbox.addEventListener('change', () => {
 });
 consentNextBtn.addEventListener('click', () => {
     if (!consentCheckbox.checked) return;
+    localStorage.setItem('soundAllowed', '1');
     consentAudio.play().catch(() => {});
     consentModal.classList.remove('visible');
 });
