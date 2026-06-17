@@ -655,10 +655,10 @@ function initThree() {
         scene.add(starsNear);
     }
     if (!isMobile) {
-        const browserGeom = new THREE.PlaneGeometry(3.2, 1.6);
+        const browserGeom = new THREE.PlaneGeometry(4.8, 2.4);
         const browserMat = new THREE.MeshBasicMaterial({ map: createBrowserTexture(), transparent: true, side: THREE.DoubleSide });
         browserPlane = new THREE.Mesh(browserGeom, browserMat);
-        browserPlane.position.set(6, 2.5, 0);
+        browserPlane.position.set(6, 3.5, -1);
         scene.add(browserPlane);
     }
     animate();
@@ -678,7 +678,7 @@ function animateWavefield() {
     const segH = isMobile ? 20 : 50;
     const planeW = isMobile ? 16 : 20;
     const planeH = isMobile ? 16 : 20;
-    const amp = isMobile ? 1.0 : 0.25;
+    const amp = isMobile ? 1.0 : 0.22;
     for (let i = 0; i <= segW; i++) {
         const x = (i / segW - 0.5) * planeW;
         for (let j = 0; j <= segH; j++) {
@@ -701,16 +701,16 @@ let browserAnimTime = 0;
 function animateBrowser(deltaTime) {
     if (!browserPlane) return;
     browserAnimTime += deltaTime;
-    const cycleDuration = 8.0;
+    const cycleDuration = 10.0;
     const t = (browserAnimTime % cycleDuration) / cycleDuration;
     const x = 6 - t * 12;
     browserPlane.position.x = x;
-    if (browserPlane.position.y !== undefined) browserPlane.position.y = 2.5;
-    browserPlane.position.z = 0;
+    browserPlane.position.y = 3.5;
+    browserPlane.position.z = -1;
     browserPlane.lookAt(camera.position);
-    if (t < 0.3) {
+    if (t < 0.25) {
         drawBrowserFrame('Поиск: Dynamic Browser...', true);
-    } else if (t < 0.6) {
+    } else if (t < 0.5) {
         drawBrowserFrame('Результаты: Dynamic Installer', false);
     } else {
         drawBrowserFrame('Dynamic Browser - стартовая', false);
