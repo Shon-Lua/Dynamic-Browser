@@ -67,7 +67,7 @@
             height: 100%;
             z-index: 0;
             pointer-events: none;
-            filter: brightness(1.1) contrast(1.3);
+            filter: brightness(1.15) contrast(1.25);
         }
         .app-wrapper {
             position: relative;
@@ -385,23 +385,6 @@
         .toast-message.visible {
             transform: translateX(-50%) translateY(0);
         }
-        .consent-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(24px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: 0.3s;
-        }
-        .consent-modal.visible {
-            opacity: 1;
-            visibility: visible;
-        }
         .modal-privacy, .lightbox-modal {
             position: fixed;
             inset: 0;
@@ -419,7 +402,7 @@
             opacity: 1;
             visibility: visible;
         }
-        .privacy-card, .consent-card {
+        .privacy-card {
             background: rgba(0,0,0,0.96);
             border: 1px solid rgba(255,255,255,0.2);
             border-radius: 48px;
@@ -431,8 +414,7 @@
             transition: transform 0.3s;
             overflow: hidden;
         }
-        .modal-privacy.visible .privacy-card,
-        .consent-modal.visible .consent-card {
+        .modal-privacy.visible .privacy-card {
             transform: scale(1);
         }
         .privacy-scroll {
@@ -468,101 +450,6 @@
             border: none;
             color: white;
             cursor: pointer;
-        }
-        .consent-content {
-            color: var(--text-dim);
-            margin-bottom: 24px;
-            font-size: 1rem;
-        }
-        .consent-check {
-            margin-bottom: 20px;
-        }
-        .custom-checkbox-label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            user-select: none;
-            color: var(--text-dim);
-            font-size: 0.9rem;
-        }
-        .custom-checkbox-label input {
-            position: absolute;
-            opacity: 0;
-            cursor: pointer;
-            height: 0;
-            width: 0;
-        }
-        .checkmark {
-            width: 20px;
-            height: 20px;
-            border: 1px solid rgba(255,255,255,0.4);
-            border-radius: 6px;
-            display: inline-block;
-            position: relative;
-            background: rgba(0,0,0,0.4);
-            transition: all 0.2s;
-        }
-        .custom-checkbox-label input:checked ~ .checkmark {
-            background: rgba(255,255,255,0.15);
-            border-color: rgba(255,255,255,0.9);
-        }
-        .checkmark:after {
-            content: "";
-            position: absolute;
-            display: none;
-            left: 6px;
-            top: 2px;
-            width: 5px;
-            height: 10px;
-            border: solid white;
-            border-width: 0 2px 2px 0;
-            transform: rotate(45deg);
-        }
-        .custom-checkbox-label input:checked ~ .checkmark:after {
-            display: block;
-        }
-        .policy-link-btn {
-            background: none;
-            border: none;
-            color: #fff;
-            font-weight: 600;
-            text-decoration: none;
-            cursor: pointer;
-            font-size: 0.95rem;
-            padding: 0;
-            margin-bottom: 20px;
-            display: inline-block;
-        }
-        .policy-link-btn u {
-            text-decoration: underline;
-        }
-        .consent-actions {
-            display: flex;
-            justify-content: flex-end;
-        }
-        .btn-primary {
-            background: linear-gradient(145deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
-            border: 1px solid rgba(255,255,255,0.5);
-            padding: 12px 36px;
-            border-radius: 60px;
-            font-weight: 700;
-            font-size: 1rem;
-            color: white;
-            cursor: pointer;
-            transition: 0.3s;
-            backdrop-filter: blur(10px);
-            opacity: 0.5;
-            pointer-events: none;
-        }
-        .btn-primary.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        .btn-primary.active:hover {
-            background: rgba(255,255,255,0.3);
-            border-color: white;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
         @media (max-width: 720px) {
             .hero-product { flex-direction: column; align-items: center; text-align: center; }
@@ -628,23 +515,6 @@
     </div>
 </div>
 <div class="lightbox-modal" id="lightboxModal"><button class="lightbox-close" id="closeLightbox">&times;</button><img class="lightbox-img" id="lightboxImg" alt=""></div>
-<div class="consent-modal visible" id="consentModal">
-    <div class="consent-card">
-        <div class="consent-content">Используя этот сайт, вы соглашаетесь с Политикой конфиденциальности.</div>
-        <button class="policy-link-btn" id="consentPolicyBtn">Я прочитал(а) <u>Политику конфиденциальности</u></button>
-        <div class="consent-check">
-            <label class="custom-checkbox-label">
-                <input type="checkbox" id="consentCheckbox">
-                <span class="checkmark"></span>
-                Я принимаю условия
-            </label>
-        </div>
-        <div class="consent-actions">
-            <button class="btn-primary" id="consentNextBtn" disabled>Далее</button>
-        </div>
-    </div>
-</div>
-<audio id="consentAudio" src="Melody.wav" preload="auto"></audio>
 
 <script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }</script>
 <script type="module">
@@ -662,7 +532,7 @@ function initThree() {
     }
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
-    if (!isMobile) scene.fog = new THREE.FogExp2(0x000000, 0.005);
+    if (!isMobile) scene.fog = new THREE.FogExp2(0x000000, 0.004);
     
     camera = new THREE.PerspectiveCamera(isMobile ? 50 : 42, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(isMobile ? 10 : 11, isMobile ? 6.5 : 7.5, isMobile ? 12 : 13);
@@ -684,18 +554,18 @@ function initThree() {
         initThree();
     });
     
-    const widthSeg = isMobile ? 20 : 45;
-    const heightSeg = isMobile ? 20 : 45;
-    const planeSize = isMobile ? 16 : 19;
+    const widthSeg = isMobile ? 20 : 55;
+    const heightSeg = isMobile ? 20 : 55;
+    const planeSize = isMobile ? 16 : 22;
     geometry = new THREE.PlaneGeometry(planeSize, planeSize, widthSeg, heightSeg);
     geometry.rotateX(-Math.PI / 2);
     const positions = geometry.attributes.position.array;
     for (let i = 0; i < positions.length / 3; i++) positions[i*3+1] = 0;
     
     const solidMat = new THREE.MeshStandardMaterial({
-        color: 0xcccccc,
+        color: 0xbbbbbb,
         metalness: 1.0,
-        roughness: 0.35,
+        roughness: 0.28,
         emissive: 0x000000,
         side: THREE.DoubleSide
     });
@@ -705,32 +575,25 @@ function initThree() {
     const wireframeMat = new THREE.MeshStandardMaterial({
         color: 0xffffff,
         wireframe: true,
-        emissive: 0x888888,
-        roughness: 0.3,
-        metalness: 0.9
+        emissive: 0x222222,
+        roughness: 0.25,
+        metalness: 1.0
     });
     const wireframeMesh = new THREE.Mesh(geometry, wireframeMat);
     scene.add(wireframeMesh);
     
-    const ambient = new THREE.AmbientLight(0x333333);
+    const ambient = new THREE.AmbientLight(0x444444);
     scene.add(ambient);
-    const dirLight = new THREE.DirectionalLight(0xffffff, isMobile ? 1.5 : 2.0);
+    const dirLight = new THREE.DirectionalLight(0xffffff, isMobile ? 1.6 : 2.2);
     dirLight.position.set(4, 9, 6);
     scene.add(dirLight);
-    
-    const warmLight = new THREE.PointLight(0xffaa88, 0.9);
-    warmLight.position.set(-3, 2, 5);
-    scene.add(warmLight);
-    const coolLight = new THREE.PointLight(0x88aaff, 0.9);
-    coolLight.position.set(4, 1, -3);
-    scene.add(coolLight);
     if (!isMobile) {
-        const fillLight = new THREE.PointLight(0x555555, 0.6);
-        fillLight.position.set(-2, 3, 4);
-        scene.add(fillLight);
+        const backLight = new THREE.DirectionalLight(0xffffff, 0.4);
+        backLight.position.set(-3, 1, -4);
+        scene.add(backLight);
     }
     
-    const grid = new THREE.GridHelper(isMobile ? 20 : 28, isMobile ? 16 : 24, 0x888888, 0x444444);
+    const grid = new THREE.GridHelper(isMobile ? 20 : 30, isMobile ? 16 : 28, 0x888888, 0x444444);
     grid.position.y = -2.0;
     grid.material.transparent = true;
     grid.material.opacity = 0.25;
@@ -741,24 +604,24 @@ function initThree() {
         const starCountFar = 800;
         const posFar = new Float32Array(starCountFar * 3);
         for (let i = 0; i < starCountFar; i++) {
-            posFar[i*3] = (Math.random() - 0.5) * 220;
-            posFar[i*3+1] = (Math.random() - 0.5) * 65;
-            posFar[i*3+2] = (Math.random() - 0.5) * 90 - 40;
+            posFar[i*3] = (Math.random() - 0.5) * 240;
+            posFar[i*3+1] = (Math.random() - 0.5) * 70;
+            posFar[i*3+2] = (Math.random() - 0.5) * 100 - 45;
         }
         starGeoFar.setAttribute('position', new THREE.BufferAttribute(posFar, 3));
-        starsFar = new THREE.Points(starGeoFar, new THREE.PointsMaterial({ color: 0xffffff, size: 0.12, transparent: true, opacity: 0.65 }));
+        starsFar = new THREE.Points(starGeoFar, new THREE.PointsMaterial({ color: 0xffffff, size: 0.13, transparent: true, opacity: 0.7 }));
         scene.add(starsFar);
         
         const starGeoNear = new THREE.BufferGeometry();
         const starCountNear = 400;
         const posNear = new Float32Array(starCountNear * 3);
         for (let i = 0; i < starCountNear; i++) {
-            posNear[i*3] = (Math.random() - 0.5) * 160;
-            posNear[i*3+1] = (Math.random() - 0.5) * 45;
-            posNear[i*3+2] = (Math.random() - 0.5) * 60 - 20;
+            posNear[i*3] = (Math.random() - 0.5) * 170;
+            posNear[i*3+1] = (Math.random() - 0.5) * 50;
+            posNear[i*3+2] = (Math.random() - 0.5) * 70 - 25;
         }
         starGeoNear.setAttribute('position', new THREE.BufferAttribute(posNear, 3));
-        starsNear = new THREE.Points(starGeoNear, new THREE.PointsMaterial({ color: 0xaaccff, size: 0.22, transparent: true, opacity: 0.8 }));
+        starsNear = new THREE.Points(starGeoNear, new THREE.PointsMaterial({ color: 0xffffff, size: 0.24, transparent: true, opacity: 0.85 }));
         scene.add(starsNear);
     }
     
@@ -773,23 +636,24 @@ function animateWavefield() {
         frameCounter++;
         if (frameCounter % 2 !== 0) return;
     }
-    timeVal += isMobile ? 0.014 : 0.019;
+    timeVal += isMobile ? 0.016 : 0.021;
     const posAttr = geometry.attributes.position;
     const arr = posAttr.array;
-    const segW = isMobile ? 20 : 45;
-    const segH = isMobile ? 20 : 45;
-    const planeW = isMobile ? 16 : 19;
-    const planeH = isMobile ? 16 : 19;
+    const segW = isMobile ? 20 : 55;
+    const segH = isMobile ? 20 : 55;
+    const planeW = isMobile ? 16 : 22;
+    const planeH = isMobile ? 16 : 22;
     for (let i = 0; i <= segW; i++) {
         const x = (i / segW - 0.5) * planeW;
         for (let j = 0; j <= segH; j++) {
             const z = (j / segH - 0.5) * planeH;
             const idx = (j * (segW + 1) + i) * 3;
-            const y1 = Math.sin(x * 0.85 + timeVal) * Math.cos(z * 0.75 + timeVal * 0.65) * (isMobile ? 0.45 : 0.55);
-            const y2 = Math.sin(x * 1.7 - timeVal * 1.1) * (isMobile ? 0.2 : 0.28);
-            const y3 = Math.cos(z * 1.45 + timeVal * 0.85) * (isMobile ? 0.2 : 0.28);
-            const y4 = Math.sin((x * 1.25 + z * 1.2) * 0.7 + timeVal * 1.4) * (isMobile ? 0.15 : 0.22);
-            arr[idx + 1] = y1 + y2 + y3 + y4;
+            const y1 = Math.sin(x * 1.1 + timeVal * 0.9) * Math.cos(z * 1.0 + timeVal * 0.7) * (isMobile ? 0.55 : 0.7);
+            const y2 = Math.sin(x * 2.1 - timeVal * 1.3) * (isMobile ? 0.25 : 0.35);
+            const y3 = Math.cos(z * 1.9 + timeVal * 0.95) * (isMobile ? 0.25 : 0.35);
+            const y4 = Math.sin((x * 1.4 + z * 1.3) * 0.85 + timeVal * 1.8) * (isMobile ? 0.18 : 0.28);
+            const y5 = Math.cos(x * 2.5 + timeVal * 0.5) * Math.sin(z * 2.2 - timeVal * 0.7) * (isMobile ? 0.15 : 0.22);
+            arr[idx + 1] = y1 + y2 + y3 + y4 + y5;
         }
     }
     posAttr.needsUpdate = true;
@@ -800,12 +664,12 @@ function animate() {
     if (!contextLostFlag) {
         animateWavefield();
         if (starsFar) {
-            starsFar.rotation.y += 0.0002;
-            starsFar.rotation.x += 0.0001;
+            starsFar.rotation.y += 0.00025;
+            starsFar.rotation.x += 0.00012;
         }
         if (starsNear) {
-            starsNear.rotation.y -= 0.0004;
-            starsNear.rotation.x += 0.00025;
+            starsNear.rotation.y -= 0.00045;
+            starsNear.rotation.x += 0.00028;
         }
         if (camera) camera.lookAt(0, 0.4, 0);
         if (renderer && scene && camera) renderer.render(scene, camera);
@@ -841,36 +705,8 @@ const screenshotStrip = document.getElementById('screenshotStrip'), descWrap = d
 const backButton = document.getElementById('backBtn'), toastDiv = document.getElementById('toastMsg'), toastTextSpan = document.getElementById('toastText');
 const privacyModal = document.getElementById('privacyModal'), privacyContent = document.getElementById('privacyContent'), privacyBtn = document.getElementById('privacyBtn'), closePrivacy = document.getElementById('closePrivacy');
 const lightboxModal = document.getElementById('lightboxModal'), lightboxImg = document.getElementById('lightboxImg'), closeLightbox = document.getElementById('closeLightbox');
-const consentModal = document.getElementById('consentModal'), consentCheckbox = document.getElementById('consentCheckbox'), consentNextBtn = document.getElementById('consentNextBtn'), consentPolicyBtn = document.getElementById('consentPolicyBtn'), consentAudio = document.getElementById('consentAudio');
 
 let currentInstruction = null, isTransitioning = false, lastDesc = null;
-
-if (localStorage.getItem('soundAllowed') === '1') {
-    consentModal.classList.remove('visible');
-    consentAudio.play().catch(() => {});
-}
-
-consentCheckbox.addEventListener('change', () => {
-    consentNextBtn.disabled = !consentCheckbox.checked;
-    if (consentCheckbox.checked) {
-        consentNextBtn.classList.add('active');
-    } else {
-        consentNextBtn.classList.remove('active');
-    }
-});
-consentNextBtn.addEventListener('click', () => {
-    if (!consentCheckbox.checked) return;
-    localStorage.setItem('soundAllowed', '1');
-    consentAudio.play().catch(() => {});
-    consentModal.classList.remove('visible');
-});
-consentPolicyBtn.addEventListener('click', () => {
-    fetch('POLITICS.txt').then(r => r.ok ? r.text() : Promise.reject()).then(txt => {
-        const blocks = txt.split('\n\n').filter(b => b.trim());
-        privacyContent.innerHTML = blocks.map(block => `<p style="margin-bottom:16px;">${block.replace(/\n/g, '<br>')}</p>`).join('');
-    }).catch(() => privacyContent.innerHTML = '<p>Политика временно недоступна.</p>');
-    privacyModal.classList.add('visible');
-});
 
 function showToastMessage(msg) { toastTextSpan.innerText = msg; toastDiv.classList.add('visible'); clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => toastDiv.classList.remove('visible'), 2800); }
 function resetDescription() { descWrap.style.maxHeight = 'none'; expandDescBtn.style.display = 'none'; expandDescBtn.innerText = 'Показать полностью'; expandDescBtn.dataset.exp = 'false'; }
