@@ -523,7 +523,52 @@ import * as THREE from 'three';
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
 let scene, camera, renderer, geometry, timeVal = 0, animFrame = null, contextLostFlag = false;
 const canvas = document.getElementById('wave-canvas');
-let starsFar, starsNear;
+let starsFar, starsNear, browserPlane, browserTexture, browserCanvas, browserCtx;
+
+function createBrowserTexture() {
+    browserCanvas = document.createElement('canvas');
+    browserCanvas.width = 512;
+    browserCanvas.height = 256;
+    browserCtx = browserCanvas.getContext('2d');
+    browserTexture = new THREE.CanvasTexture(browserCanvas);
+    return browserTexture;
+}
+
+function drawBrowserFrame(text, showProgress) {
+    if (!browserCtx) return;
+    const w = browserCanvas.width;
+    const h = browserCanvas.height;
+    browserCtx.clearRect(0, 0, w, h);
+    browserCtx.fillStyle = '#1c1c1e';
+    browserCtx.beginPath();
+    browserCtx.roundRect(0, 0, w, h, 16);
+    browserCtx.fill();
+    browserCtx.strokeStyle = 'rgba(255,255,255,0.1)';
+    browserCtx.lineWidth = 1;
+    browserCtx.beginPath();
+    browserCtx.roundRect(0, 0, w, h, 16);
+    browserCtx.stroke();
+    browserCtx.fillStyle = 'rgba(255,255,255,0.06)';
+    browserCtx.beginPath();
+    browserCtx.roundRect(20, 20, w - 40, 36, 18);
+    browserCtx.fill();
+    browserCtx.strokeStyle = 'rgba(255,255,255,0.15)';
+    browserCtx.beginPath();
+    browserCtx.roundRect(20, 20, w - 40, 36, 18);
+    browserCtx.stroke();
+    browserCtx.font = '600 14px Inter, sans-serif';
+    browserCtx.fillStyle = '#ffffff';
+    browserCtx.textAlign = 'left';
+    browserCtx.fillText(text, 30, 44);
+    if (showProgress) {
+        browserCtx.fillStyle = '#0a84ff';
+        browserCtx.fillRect(20, 64, (w - 40) * 0.7, 4);
+    }
+    browserCtx.fillStyle = '#ffffff';
+    browserCtx.font = '600 12px Inter, sans-serif';
+    browserCtx.fillText('Dynamic Browser', w - 180, h - 30);
+    browserTexture.needsUpdate = true;
+}
 
 function initThree() {
     if (renderer) {
@@ -533,16 +578,13 @@ function initThree() {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
     if (!isMobile) scene.fog = new THREE.FogExp2(0x000000, 0.005);
-    
     camera = new THREE.PerspectiveCamera(isMobile ? 50 : 42, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(isMobile ? 10 : 11, isMobile ? 6.5 : 7.5, isMobile ? 12 : 13);
     camera.lookAt(0, 0.2, 0);
-    
     const pixelRatio = isMobile ? Math.min(window.devicePixelRatio, 1.2) : Math.min(window.devicePixelRatio, 2);
     renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: !isMobile, powerPreference: isMobile ? "low-power" : "high-performance" });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(pixelRatio);
-    
     canvas.addEventListener('webglcontextlost', (e) => {
         e.preventDefault();
         contextLostFlag = true;
@@ -553,7 +595,6 @@ function initThree() {
         contextLostFlag = false;
         initThree();
     });
-    
     const widthSeg = isMobile ? 20 : 50;
     const heightSeg = isMobile ? 20 : 50;
     const planeSize = isMobile ? 16 : 20;
@@ -561,7 +602,6 @@ function initThree() {
     geometry.rotateX(-Math.PI / 2);
     const positions = geometry.attributes.position.array;
     for (let i = 0; i < positions.length / 3; i++) positions[i*3+1] = 0;
-    
     const solidMat = new THREE.MeshStandardMaterial({
         color: 0xcccccc,
         metalness: 1.0,
@@ -571,29 +611,25 @@ function initThree() {
     });
     const solidMesh = new THREE.Mesh(geometry, solidMat);
     scene.add(solidMesh);
-    
     const wireframeMat = new THREE.MeshStandardMaterial({
         color: 0xffffff,
         wireframe: true,
-        emissive: 0x555555,
+        emissive: 0x111111,
         roughness: 0.3,
         metalness: 0.9
     });
     const wireframeMesh = new THREE.Mesh(geometry, wireframeMat);
     scene.add(wireframeMesh);
-    
-    const ambient = new THREE.AmbientLight(0x444444);
+    const ambient = new THREE.AmbientLight(0x222222);
     scene.add(ambient);
-    const dirLight = new THREE.DirectionalLight(0xffffff, isMobile ? 1.5 : 2.0);
+    const dirLight = new THREE.DirectionalLight(0xffffff, isMobile ? 1.2 : 1.5);
     dirLight.position.set(4, 9, 6);
     scene.add(dirLight);
-    
     const grid = new THREE.GridHelper(isMobile ? 20 : 28, isMobile ? 16 : 24, 0x888888, 0x444444);
     grid.position.y = -2.0;
     grid.material.transparent = true;
-    grid.material.opacity = 0.25;
+    grid.material.opacity = 0.2;
     scene.add(grid);
-    
     if (!isMobile) {
         const starGeoFar = new THREE.BufferGeometry();
         const starCountFar = 800;
@@ -606,7 +642,6 @@ function initThree() {
         starGeoFar.setAttribute('position', new THREE.BufferAttribute(posFar, 3));
         starsFar = new THREE.Points(starGeoFar, new THREE.PointsMaterial({ color: 0xffffff, size: 0.12, transparent: true, opacity: 0.65 }));
         scene.add(starsFar);
-        
         const starGeoNear = new THREE.BufferGeometry();
         const starCountNear = 400;
         const posNear = new Float32Array(starCountNear * 3);
@@ -619,12 +654,17 @@ function initThree() {
         starsNear = new THREE.Points(starGeoNear, new THREE.PointsMaterial({ color: 0xffffff, size: 0.22, transparent: true, opacity: 0.8 }));
         scene.add(starsNear);
     }
-    
+    if (!isMobile) {
+        const browserGeom = new THREE.PlaneGeometry(3.2, 1.6);
+        const browserMat = new THREE.MeshBasicMaterial({ map: createBrowserTexture(), transparent: true, side: THREE.DoubleSide });
+        browserPlane = new THREE.Mesh(browserGeom, browserMat);
+        browserPlane.position.set(6, 2.5, 0);
+        scene.add(browserPlane);
+    }
     animate();
 }
 
 let frameCounter = 0;
-
 function animateWavefield() {
     if (!geometry || contextLostFlag) return;
     if (isMobile) {
@@ -638,25 +678,50 @@ function animateWavefield() {
     const segH = isMobile ? 20 : 50;
     const planeW = isMobile ? 16 : 20;
     const planeH = isMobile ? 16 : 20;
+    const amp = isMobile ? 1.0 : 0.25;
     for (let i = 0; i <= segW; i++) {
         const x = (i / segW - 0.5) * planeW;
         for (let j = 0; j <= segH; j++) {
             const z = (j / segH - 0.5) * planeH;
             const idx = (j * (segW + 1) + i) * 3;
-            const y1 = Math.sin(x * 1.2 + timeVal * 0.7) * Math.cos(z * 1.1 + timeVal * 0.5) * (isMobile ? 0.5 : 0.7);
-            const y2 = Math.sin(x * 2.3 - timeVal * 1.3) * (isMobile ? 0.25 : 0.35);
-            const y3 = Math.cos(z * 2.1 + timeVal * 0.9) * (isMobile ? 0.25 : 0.35);
-            const y4 = Math.sin((x * 1.8 + z * 1.6) * 0.8 + timeVal * 1.1) * (isMobile ? 0.2 : 0.3);
-            const y5 = Math.sin(x * 0.6 + z * 0.7 + timeVal * 0.4) * (isMobile ? 0.3 : 0.4);
-            const y6 = Math.cos(x * 0.9 - z * 0.8 + timeVal * 0.6) * (isMobile ? 0.15 : 0.25);
-            arr[idx + 1] = y1 + y2 + y3 + y4 + y5 + y6;
+            const y1 = Math.sin(x * 1.2 + timeVal * 0.7) * Math.cos(z * 1.1 + timeVal * 0.5) * 0.7;
+            const y2 = Math.sin(x * 2.3 - timeVal * 1.3) * 0.35;
+            const y3 = Math.cos(z * 2.1 + timeVal * 0.9) * 0.35;
+            const y4 = Math.sin((x * 1.8 + z * 1.6) * 0.8 + timeVal * 1.1) * 0.3;
+            const y5 = Math.sin(x * 0.6 + z * 0.7 + timeVal * 0.4) * 0.4;
+            const y6 = Math.cos(x * 0.9 - z * 0.8 + timeVal * 0.6) * 0.25;
+            arr[idx + 1] = (y1 + y2 + y3 + y4 + y5 + y6) * amp;
         }
     }
     posAttr.needsUpdate = true;
     geometry.computeVertexNormals();
 }
 
+let browserAnimTime = 0;
+function animateBrowser(deltaTime) {
+    if (!browserPlane) return;
+    browserAnimTime += deltaTime;
+    const cycleDuration = 8.0;
+    const t = (browserAnimTime % cycleDuration) / cycleDuration;
+    const x = 6 - t * 12;
+    browserPlane.position.x = x;
+    if (browserPlane.position.y !== undefined) browserPlane.position.y = 2.5;
+    browserPlane.position.z = 0;
+    browserPlane.lookAt(camera.position);
+    if (t < 0.3) {
+        drawBrowserFrame('Поиск: Dynamic Browser...', true);
+    } else if (t < 0.6) {
+        drawBrowserFrame('Результаты: Dynamic Installer', false);
+    } else {
+        drawBrowserFrame('Dynamic Browser - стартовая', false);
+    }
+}
+
+let lastTime = performance.now();
 function animate() {
+    const now = performance.now();
+    const delta = (now - lastTime) / 1000;
+    lastTime = now;
     if (!contextLostFlag) {
         animateWavefield();
         if (starsFar) {
@@ -668,6 +733,7 @@ function animate() {
             starsNear.rotation.x += 0.00025;
         }
         if (camera) camera.lookAt(0, 0.4, 0);
+        animateBrowser(delta);
         if (renderer && scene && camera) renderer.render(scene, camera);
     }
     animFrame = requestAnimationFrame(animate);
