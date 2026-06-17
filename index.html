@@ -385,7 +385,7 @@
         .toast-message.visible {
             transform: translateX(-50%) translateY(0);
         }
-        .modal-privacy, .lightbox-modal, .privacy-agreement-overlay {
+        .modal-privacy, .lightbox-modal, .consent-modal {
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.85);
@@ -398,11 +398,11 @@
             visibility: hidden;
             transition: 0.3s;
         }
-        .modal-privacy.visible, .lightbox-modal.visible, .privacy-agreement-overlay.visible {
+        .modal-privacy.visible, .lightbox-modal.visible, .consent-modal.visible {
             opacity: 1;
             visibility: visible;
         }
-        .privacy-card, .agreement-card {
+        .privacy-card, .consent-card {
             background: rgba(0,0,0,0.96);
             border: 1px solid rgba(255,255,255,0.2);
             border-radius: 48px;
@@ -415,7 +415,7 @@
             overflow: hidden;
         }
         .modal-privacy.visible .privacy-card,
-        .privacy-agreement-overlay.visible .agreement-card {
+        .consent-modal.visible .consent-card {
             transform: scale(1);
         }
         .privacy-scroll {
@@ -442,7 +442,7 @@
             border-radius: 28px;
             box-shadow: 0 30px 50px black;
         }
-        .lightbox-close, .modal-close, .agreement-close {
+        .lightbox-close, .modal-close {
             position: absolute;
             top: 20px;
             right: 28px;
@@ -452,51 +452,63 @@
             color: white;
             cursor: pointer;
         }
-        .agreement-content {
-            text-align: center;
-            padding: 10px 0;
-        }
-        .agreement-content p {
-            margin-bottom: 24px;
-            font-size: 1.1rem;
-            line-height: 1.5;
+        .consent-content {
             color: var(--text-dim);
+            margin-bottom: 24px;
+            font-size: 1rem;
         }
-        .agreement-check {
+        .consent-check {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 24px;
-            font-size: 0.95rem;
-            cursor: pointer;
+            gap: 12px;
+            margin-bottom: 20px;
         }
-        .agreement-check input {
-            width: 18px;
-            height: 18px;
-            accent-color: white;
+        .consent-check input {
+            width: 20px;
+            height: 20px;
         }
-        .btn-agree {
-            background: white;
-            color: black;
+        .consent-check label {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+        .policy-link-btn {
+            background: none;
             border: none;
-            padding: 12px 40px;
-            border-radius: 40px;
+            color: #fff;
+            font-weight: 600;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 0.95rem;
+            padding: 0;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+        .consent-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+        .btn-primary {
+            background: linear-gradient(145deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+            border: 1px solid rgba(255,255,255,0.5);
+            padding: 12px 36px;
+            border-radius: 60px;
             font-weight: 700;
             font-size: 1rem;
+            color: white;
             cursor: pointer;
-            transition: 0.25s;
+            transition: 0.3s;
+            backdrop-filter: blur(10px);
             opacity: 0.5;
             pointer-events: none;
         }
-        .btn-agree.enabled {
+        .btn-primary.active {
             opacity: 1;
             pointer-events: auto;
-            background: linear-gradient(135deg, #fff, #ccc);
         }
-        .btn-agree.enabled:hover {
-            transform: scale(1.03);
-            box-shadow: 0 10px 25px rgba(255,255,255,0.3);
+        .btn-primary.active:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
         @media (max-width: 720px) {
             .hero-product { flex-direction: column; align-items: center; text-align: center; }
@@ -508,17 +520,6 @@
 </head>
 <body>
 <canvas id="wave-canvas"></canvas>
-<div class="privacy-agreement-overlay visible" id="privacyAgreementOverlay">
-    <div class="agreement-card">
-        <div class="agreement-content">
-            <p>Используя этот сайт, вы соглашаетесь с нашей Политикой конфиденциальности. Пожалуйста, ознакомьтесь с ней перед продолжением.</p>
-            <label class="agreement-check">
-                <input type="checkbox" id="agreeCheckbox"> Я прочитал(а) и согласен(на)
-            </label>
-            <button class="btn-agree" id="btnAgree">Далее</button>
-        </div>
-    </div>
-</div>
 <div class="app-wrapper">
     <div class="platform-stage" id="platformStage">
         <div class="hero-icon"><i class="fas fa-bolt"></i><span>DYNAMIC INSTALLER</span></div>
@@ -573,41 +574,28 @@
     </div>
 </div>
 <div class="lightbox-modal" id="lightboxModal"><button class="lightbox-close" id="closeLightbox">&times;</button><img class="lightbox-img" id="lightboxImg" alt=""></div>
+<div class="consent-modal visible" id="consentModal">
+    <div class="consent-card">
+        <div class="consent-content">Используя этот сайт, вы соглашаетесь с Политикой конфиденциальности.</div>
+        <button class="policy-link-btn" id="consentPolicyBtn">Я прочитал(а) ПОЛИТИКУ КОНФИДЕНЦИАЛЬНОСТИ</button>
+        <div class="consent-check">
+            <input type="checkbox" id="consentCheckbox">
+            <label for="consentCheckbox">Я принимаю условия</label>
+        </div>
+        <div class="consent-actions">
+            <button class="btn-primary" id="consentNextBtn" disabled>Далее</button>
+        </div>
+    </div>
+</div>
+<audio id="consentAudio" src="Melody.wav" preload="auto"></audio>
 
 <script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }</script>
 <script type="module">
 import * as THREE from 'three';
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
-let scene, camera, renderer, waveMesh, stars, geometry, timeVal = 0, animFrame = null, contextLostFlag = false;
+let scene, camera, renderer, geometry, timeVal = 0, animFrame = null, contextLostFlag = false;
 const canvas = document.getElementById('wave-canvas');
-
-function generateMetalTexture() {
-    const size = 512;
-    const c = document.createElement('canvas');
-    c.width = size;
-    c.height = size;
-    const ctx = c.getContext('2d');
-    ctx.fillStyle = '#888888';
-    ctx.fillRect(0, 0, size, size);
-    for (let i = 0; i < 2000; i++) {
-        const x = Math.random() * size;
-        const y = Math.random() * size;
-        const len = Math.random() * 30 + 5;
-        const angle = Math.random() * Math.PI * 2;
-        const grad = ctx.createLinearGradient(x, y, x + Math.cos(angle) * len, y + Math.sin(angle) * len);
-        grad.addColorStop(0, 'rgba(255,255,255,0.15)');
-        grad.addColorStop(0.5, 'rgba(0,0,0,0.1)');
-        grad.addColorStop(1, 'rgba(255,255,255,0.05)');
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = Math.random() * 2 + 0.5;
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + Math.cos(angle) * len, y + Math.sin(angle) * len);
-        ctx.stroke();
-    }
-    return new THREE.CanvasTexture(c);
-}
 
 function initThree() {
     if (renderer) {
@@ -646,37 +634,41 @@ function initThree() {
     const positions = geometry.attributes.position.array;
     for (let i = 0; i < positions.length / 3; i++) positions[i*3+1] = 0;
     
-    const metalTexture = generateMetalTexture();
-    metalTexture.wrapS = THREE.RepeatWrapping;
-    metalTexture.wrapT = THREE.RepeatWrapping;
-    metalTexture.repeat.set(3, 3);
-    
-    const waveMaterial = new THREE.MeshStandardMaterial({
-        map: metalTexture,
+    const solidMat = new THREE.MeshStandardMaterial({
         color: 0xcccccc,
         metalness: 1.0,
         roughness: 0.35,
-        emissive: 0x111111,
-        emissiveIntensity: 0.2
+        emissive: 0x000000,
+        side: THREE.DoubleSide
     });
-    waveMesh = new THREE.Mesh(geometry, waveMaterial);
-    scene.add(waveMesh);
+    const solidMesh = new THREE.Mesh(geometry, solidMat);
+    scene.add(solidMesh);
     
-    const ambient = new THREE.AmbientLight(0x666666);
+    const wireframeMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        wireframe: true,
+        emissive: 0x888888,
+        roughness: 0.3,
+        metalness: 0.9
+    });
+    const wireframeMesh = new THREE.Mesh(geometry, wireframeMat);
+    scene.add(wireframeMesh);
+    
+    const ambient = new THREE.AmbientLight(0x444444);
     scene.add(ambient);
-    const dirLight = new THREE.DirectionalLight(0xffffff, isMobile ? 1.8 : 2.5);
+    const dirLight = new THREE.DirectionalLight(0xffffff, isMobile ? 1.5 : 2.0);
     dirLight.position.set(4, 9, 6);
     scene.add(dirLight);
     if (!isMobile) {
-        const fillLight = new THREE.PointLight(0x888888, 0.8);
+        const fillLight = new THREE.PointLight(0x555555, 0.6);
         fillLight.position.set(-2, 3, 4);
         scene.add(fillLight);
     }
     
-    const grid = new THREE.GridHelper(isMobile ? 20 : 28, isMobile ? 16 : 24, 0xffffff, 0x444444);
+    const grid = new THREE.GridHelper(isMobile ? 20 : 28, isMobile ? 16 : 24, 0x888888, 0x444444);
     grid.position.y = -2.0;
     grid.material.transparent = true;
-    grid.material.opacity = 0.55;
+    grid.material.opacity = 0.25;
     scene.add(grid);
     
     if (!isMobile) {
@@ -689,7 +681,7 @@ function initThree() {
             starPos[i*3+2] = (Math.random() - 0.5) * 90 - 40;
         }
         starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-        stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.15, transparent: true, opacity: 0.85 }));
+        const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.15, transparent: true, opacity: 0.85 }));
         scene.add(stars);
     }
     
@@ -730,10 +722,6 @@ function animateWavefield() {
 function animate() {
     if (!contextLostFlag) {
         animateWavefield();
-        if (stars) {
-            stars.rotation.y += 0.0003;
-            stars.rotation.x += 0.00015;
-        }
         if (camera) camera.lookAt(0, 0.4, 0);
         if (renderer && scene && camera) renderer.render(scene, camera);
     }
@@ -768,32 +756,30 @@ const screenshotStrip = document.getElementById('screenshotStrip'), descWrap = d
 const backButton = document.getElementById('backBtn'), toastDiv = document.getElementById('toastMsg'), toastTextSpan = document.getElementById('toastText');
 const privacyModal = document.getElementById('privacyModal'), privacyContent = document.getElementById('privacyContent'), privacyBtn = document.getElementById('privacyBtn'), closePrivacy = document.getElementById('closePrivacy');
 const lightboxModal = document.getElementById('lightboxModal'), lightboxImg = document.getElementById('lightboxImg'), closeLightbox = document.getElementById('closeLightbox');
-
-const privacyAgreementOverlay = document.getElementById('privacyAgreementOverlay');
-const agreeCheckbox = document.getElementById('agreeCheckbox');
-const btnAgree = document.getElementById('btnAgree');
+const consentModal = document.getElementById('consentModal'), consentCheckbox = document.getElementById('consentCheckbox'), consentNextBtn = document.getElementById('consentNextBtn'), consentPolicyBtn = document.getElementById('consentPolicyBtn'), consentAudio = document.getElementById('consentAudio');
 
 let currentInstruction = null, isTransitioning = false, lastDesc = null;
 
-if (localStorage.getItem('privacyAgreed') === 'true') {
-    privacyAgreementOverlay.classList.remove('visible');
-} else {
-    privacyAgreementOverlay.classList.add('visible');
-    agreeCheckbox.addEventListener('change', () => {
-        if (agreeCheckbox.checked) {
-            btnAgree.classList.add('enabled');
-        } else {
-            btnAgree.classList.remove('enabled');
-        }
-    });
-    btnAgree.addEventListener('click', () => {
-        if (!agreeCheckbox.checked) return;
-        const audio = new Audio('Melody.wav');
-        audio.play().catch(() => {});
-        privacyAgreementOverlay.classList.remove('visible');
-        localStorage.setItem('privacyAgreed', 'true');
-    });
-}
+consentCheckbox.addEventListener('change', () => {
+    consentNextBtn.disabled = !consentCheckbox.checked;
+    if (consentCheckbox.checked) {
+        consentNextBtn.classList.add('active');
+    } else {
+        consentNextBtn.classList.remove('active');
+    }
+});
+consentNextBtn.addEventListener('click', () => {
+    if (!consentCheckbox.checked) return;
+    consentAudio.play().catch(() => {});
+    consentModal.classList.remove('visible');
+});
+consentPolicyBtn.addEventListener('click', () => {
+    fetch('POLITICS.txt').then(r => r.ok ? r.text() : Promise.reject()).then(txt => {
+        const blocks = txt.split('\n\n').filter(b => b.trim());
+        privacyContent.innerHTML = blocks.map(block => `<p style="margin-bottom:16px;">${block.replace(/\n/g, '<br>')}</p>`).join('');
+    }).catch(() => privacyContent.innerHTML = '<p>Политика временно недоступна.</p>');
+    privacyModal.classList.add('visible');
+});
 
 function showToastMessage(msg) { toastTextSpan.innerText = msg; toastDiv.classList.add('visible'); clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => toastDiv.classList.remove('visible'), 2800); }
 function resetDescription() { descWrap.style.maxHeight = 'none'; expandDescBtn.style.display = 'none'; expandDescBtn.innerText = 'Показать полностью'; expandDescBtn.dataset.exp = 'false'; }
