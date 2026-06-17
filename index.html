@@ -385,7 +385,7 @@
         .toast-message.visible {
             transform: translateX(-50%) translateY(0);
         }
-        .modal-privacy, .lightbox-modal, .consent-modal {
+        .consent-modal {
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.85);
@@ -398,7 +398,24 @@
             visibility: hidden;
             transition: 0.3s;
         }
-        .modal-privacy.visible, .lightbox-modal.visible, .consent-modal.visible {
+        .consent-modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-privacy, .lightbox-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(24px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.3s;
+        }
+        .modal-privacy.visible, .lightbox-modal.visible {
             opacity: 1;
             visibility: visible;
         }
@@ -476,12 +493,15 @@
             border: none;
             color: #fff;
             font-weight: 600;
-            text-decoration: underline;
+            text-decoration: none;
             cursor: pointer;
             font-size: 0.95rem;
             padding: 0;
             margin-bottom: 20px;
             display: inline-block;
+        }
+        .policy-link-btn u {
+            text-decoration: underline;
         }
         .consent-actions {
             display: flex;
@@ -577,7 +597,7 @@
 <div class="consent-modal visible" id="consentModal">
     <div class="consent-card">
         <div class="consent-content">Используя этот сайт, вы соглашаетесь с Политикой конфиденциальности.</div>
-        <button class="policy-link-btn" id="consentPolicyBtn">Я прочитал(а) ПОЛИТИКУ КОНФИДЕНЦИАЛЬНОСТИ</button>
+        <button class="policy-link-btn" id="consentPolicyBtn">Я прочитал(а) <u>Политику конфиденциальности</u></button>
         <div class="consent-check">
             <input type="checkbox" id="consentCheckbox">
             <label for="consentCheckbox">Я принимаю условия</label>
@@ -596,6 +616,7 @@ import * as THREE from 'three';
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
 let scene, camera, renderer, geometry, timeVal = 0, animFrame = null, contextLostFlag = false;
 const canvas = document.getElementById('wave-canvas');
+let starsFar, starsNear;
 
 function initThree() {
     if (renderer) {
@@ -604,7 +625,7 @@ function initThree() {
     }
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
-    if (!isMobile) scene.fog = new THREE.FogExp2(0x000000, 0.008);
+    if (!isMobile) scene.fog = new THREE.FogExp2(0x000000, 0.005);
     
     camera = new THREE.PerspectiveCamera(isMobile ? 50 : 42, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(isMobile ? 10 : 11, isMobile ? 6.5 : 7.5, isMobile ? 12 : 13);
@@ -654,11 +675,18 @@ function initThree() {
     const wireframeMesh = new THREE.Mesh(geometry, wireframeMat);
     scene.add(wireframeMesh);
     
-    const ambient = new THREE.AmbientLight(0x444444);
+    const ambient = new THREE.AmbientLight(0x333333);
     scene.add(ambient);
     const dirLight = new THREE.DirectionalLight(0xffffff, isMobile ? 1.5 : 2.0);
     dirLight.position.set(4, 9, 6);
     scene.add(dirLight);
+    
+    const warmLight = new THREE.PointLight(0xffaa88, 0.9);
+    warmLight.position.set(-3, 2, 5);
+    scene.add(warmLight);
+    const coolLight = new THREE.PointLight(0x88aaff, 0.9);
+    coolLight.position.set(4, 1, -3);
+    scene.add(coolLight);
     if (!isMobile) {
         const fillLight = new THREE.PointLight(0x555555, 0.6);
         fillLight.position.set(-2, 3, 4);
@@ -672,17 +700,29 @@ function initThree() {
     scene.add(grid);
     
     if (!isMobile) {
-        const starCount = 800;
-        const starGeo = new THREE.BufferGeometry();
-        const starPos = new Float32Array(starCount * 3);
-        for (let i = 0; i < starCount; i++) {
-            starPos[i*3] = (Math.random() - 0.5) * 220;
-            starPos[i*3+1] = (Math.random() - 0.5) * 65;
-            starPos[i*3+2] = (Math.random() - 0.5) * 90 - 40;
+        const starGeoFar = new THREE.BufferGeometry();
+        const starCountFar = 800;
+        const posFar = new Float32Array(starCountFar * 3);
+        for (let i = 0; i < starCountFar; i++) {
+            posFar[i*3] = (Math.random() - 0.5) * 220;
+            posFar[i*3+1] = (Math.random() - 0.5) * 65;
+            posFar[i*3+2] = (Math.random() - 0.5) * 90 - 40;
         }
-        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-        const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.15, transparent: true, opacity: 0.85 }));
-        scene.add(stars);
+        starGeoFar.setAttribute('position', new THREE.BufferAttribute(posFar, 3));
+        starsFar = new THREE.Points(starGeoFar, new THREE.PointsMaterial({ color: 0xffffff, size: 0.12, transparent: true, opacity: 0.65 }));
+        scene.add(starsFar);
+        
+        const starGeoNear = new THREE.BufferGeometry();
+        const starCountNear = 400;
+        const posNear = new Float32Array(starCountNear * 3);
+        for (let i = 0; i < starCountNear; i++) {
+            posNear[i*3] = (Math.random() - 0.5) * 160;
+            posNear[i*3+1] = (Math.random() - 0.5) * 45;
+            posNear[i*3+2] = (Math.random() - 0.5) * 60 - 20;
+        }
+        starGeoNear.setAttribute('position', new THREE.BufferAttribute(posNear, 3));
+        starsNear = new THREE.Points(starGeoNear, new THREE.PointsMaterial({ color: 0xaaccff, size: 0.22, transparent: true, opacity: 0.8 }));
+        scene.add(starsNear);
     }
     
     animate();
@@ -722,6 +762,14 @@ function animateWavefield() {
 function animate() {
     if (!contextLostFlag) {
         animateWavefield();
+        if (starsFar) {
+            starsFar.rotation.y += 0.0002;
+            starsFar.rotation.x += 0.0001;
+        }
+        if (starsNear) {
+            starsNear.rotation.y -= 0.0004;
+            starsNear.rotation.x += 0.00025;
+        }
         if (camera) camera.lookAt(0, 0.4, 0);
         if (renderer && scene && camera) renderer.render(scene, camera);
     }
