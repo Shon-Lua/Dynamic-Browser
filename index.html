@@ -67,7 +67,7 @@
             height: 100%;
             z-index: 0;
             pointer-events: none;
-            filter: brightness(1.15) contrast(1.25);
+            filter: brightness(1.1) contrast(1.3);
         }
         .app-wrapper {
             position: relative;
@@ -532,7 +532,7 @@ function initThree() {
     }
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
-    if (!isMobile) scene.fog = new THREE.FogExp2(0x000000, 0.004);
+    if (!isMobile) scene.fog = new THREE.FogExp2(0x000000, 0.005);
     
     camera = new THREE.PerspectiveCamera(isMobile ? 50 : 42, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(isMobile ? 10 : 11, isMobile ? 6.5 : 7.5, isMobile ? 12 : 13);
@@ -554,18 +554,18 @@ function initThree() {
         initThree();
     });
     
-    const widthSeg = isMobile ? 20 : 55;
-    const heightSeg = isMobile ? 20 : 55;
-    const planeSize = isMobile ? 16 : 22;
+    const widthSeg = isMobile ? 20 : 50;
+    const heightSeg = isMobile ? 20 : 50;
+    const planeSize = isMobile ? 16 : 20;
     geometry = new THREE.PlaneGeometry(planeSize, planeSize, widthSeg, heightSeg);
     geometry.rotateX(-Math.PI / 2);
     const positions = geometry.attributes.position.array;
     for (let i = 0; i < positions.length / 3; i++) positions[i*3+1] = 0;
     
     const solidMat = new THREE.MeshStandardMaterial({
-        color: 0xbbbbbb,
+        color: 0xcccccc,
         metalness: 1.0,
-        roughness: 0.28,
+        roughness: 0.35,
         emissive: 0x000000,
         side: THREE.DoubleSide
     });
@@ -575,25 +575,20 @@ function initThree() {
     const wireframeMat = new THREE.MeshStandardMaterial({
         color: 0xffffff,
         wireframe: true,
-        emissive: 0x222222,
-        roughness: 0.25,
-        metalness: 1.0
+        emissive: 0x555555,
+        roughness: 0.3,
+        metalness: 0.9
     });
     const wireframeMesh = new THREE.Mesh(geometry, wireframeMat);
     scene.add(wireframeMesh);
     
     const ambient = new THREE.AmbientLight(0x444444);
     scene.add(ambient);
-    const dirLight = new THREE.DirectionalLight(0xffffff, isMobile ? 1.6 : 2.2);
+    const dirLight = new THREE.DirectionalLight(0xffffff, isMobile ? 1.5 : 2.0);
     dirLight.position.set(4, 9, 6);
     scene.add(dirLight);
-    if (!isMobile) {
-        const backLight = new THREE.DirectionalLight(0xffffff, 0.4);
-        backLight.position.set(-3, 1, -4);
-        scene.add(backLight);
-    }
     
-    const grid = new THREE.GridHelper(isMobile ? 20 : 30, isMobile ? 16 : 28, 0x888888, 0x444444);
+    const grid = new THREE.GridHelper(isMobile ? 20 : 28, isMobile ? 16 : 24, 0x888888, 0x444444);
     grid.position.y = -2.0;
     grid.material.transparent = true;
     grid.material.opacity = 0.25;
@@ -604,24 +599,24 @@ function initThree() {
         const starCountFar = 800;
         const posFar = new Float32Array(starCountFar * 3);
         for (let i = 0; i < starCountFar; i++) {
-            posFar[i*3] = (Math.random() - 0.5) * 240;
-            posFar[i*3+1] = (Math.random() - 0.5) * 70;
-            posFar[i*3+2] = (Math.random() - 0.5) * 100 - 45;
+            posFar[i*3] = (Math.random() - 0.5) * 220;
+            posFar[i*3+1] = (Math.random() - 0.5) * 65;
+            posFar[i*3+2] = (Math.random() - 0.5) * 90 - 40;
         }
         starGeoFar.setAttribute('position', new THREE.BufferAttribute(posFar, 3));
-        starsFar = new THREE.Points(starGeoFar, new THREE.PointsMaterial({ color: 0xffffff, size: 0.13, transparent: true, opacity: 0.7 }));
+        starsFar = new THREE.Points(starGeoFar, new THREE.PointsMaterial({ color: 0xffffff, size: 0.12, transparent: true, opacity: 0.65 }));
         scene.add(starsFar);
         
         const starGeoNear = new THREE.BufferGeometry();
         const starCountNear = 400;
         const posNear = new Float32Array(starCountNear * 3);
         for (let i = 0; i < starCountNear; i++) {
-            posNear[i*3] = (Math.random() - 0.5) * 170;
-            posNear[i*3+1] = (Math.random() - 0.5) * 50;
-            posNear[i*3+2] = (Math.random() - 0.5) * 70 - 25;
+            posNear[i*3] = (Math.random() - 0.5) * 160;
+            posNear[i*3+1] = (Math.random() - 0.5) * 45;
+            posNear[i*3+2] = (Math.random() - 0.5) * 60 - 20;
         }
         starGeoNear.setAttribute('position', new THREE.BufferAttribute(posNear, 3));
-        starsNear = new THREE.Points(starGeoNear, new THREE.PointsMaterial({ color: 0xffffff, size: 0.24, transparent: true, opacity: 0.85 }));
+        starsNear = new THREE.Points(starGeoNear, new THREE.PointsMaterial({ color: 0xffffff, size: 0.22, transparent: true, opacity: 0.8 }));
         scene.add(starsNear);
     }
     
@@ -636,24 +631,25 @@ function animateWavefield() {
         frameCounter++;
         if (frameCounter % 2 !== 0) return;
     }
-    timeVal += isMobile ? 0.016 : 0.021;
+    timeVal += isMobile ? 0.012 : 0.016;
     const posAttr = geometry.attributes.position;
     const arr = posAttr.array;
-    const segW = isMobile ? 20 : 55;
-    const segH = isMobile ? 20 : 55;
-    const planeW = isMobile ? 16 : 22;
-    const planeH = isMobile ? 16 : 22;
+    const segW = isMobile ? 20 : 50;
+    const segH = isMobile ? 20 : 50;
+    const planeW = isMobile ? 16 : 20;
+    const planeH = isMobile ? 16 : 20;
     for (let i = 0; i <= segW; i++) {
         const x = (i / segW - 0.5) * planeW;
         for (let j = 0; j <= segH; j++) {
             const z = (j / segH - 0.5) * planeH;
             const idx = (j * (segW + 1) + i) * 3;
-            const y1 = Math.sin(x * 1.1 + timeVal * 0.9) * Math.cos(z * 1.0 + timeVal * 0.7) * (isMobile ? 0.55 : 0.7);
-            const y2 = Math.sin(x * 2.1 - timeVal * 1.3) * (isMobile ? 0.25 : 0.35);
-            const y3 = Math.cos(z * 1.9 + timeVal * 0.95) * (isMobile ? 0.25 : 0.35);
-            const y4 = Math.sin((x * 1.4 + z * 1.3) * 0.85 + timeVal * 1.8) * (isMobile ? 0.18 : 0.28);
-            const y5 = Math.cos(x * 2.5 + timeVal * 0.5) * Math.sin(z * 2.2 - timeVal * 0.7) * (isMobile ? 0.15 : 0.22);
-            arr[idx + 1] = y1 + y2 + y3 + y4 + y5;
+            const y1 = Math.sin(x * 1.2 + timeVal * 0.7) * Math.cos(z * 1.1 + timeVal * 0.5) * (isMobile ? 0.5 : 0.7);
+            const y2 = Math.sin(x * 2.3 - timeVal * 1.3) * (isMobile ? 0.25 : 0.35);
+            const y3 = Math.cos(z * 2.1 + timeVal * 0.9) * (isMobile ? 0.25 : 0.35);
+            const y4 = Math.sin((x * 1.8 + z * 1.6) * 0.8 + timeVal * 1.1) * (isMobile ? 0.2 : 0.3);
+            const y5 = Math.sin(x * 0.6 + z * 0.7 + timeVal * 0.4) * (isMobile ? 0.3 : 0.4);
+            const y6 = Math.cos(x * 0.9 - z * 0.8 + timeVal * 0.6) * (isMobile ? 0.15 : 0.25);
+            arr[idx + 1] = y1 + y2 + y3 + y4 + y5 + y6;
         }
     }
     posAttr.needsUpdate = true;
@@ -664,12 +660,12 @@ function animate() {
     if (!contextLostFlag) {
         animateWavefield();
         if (starsFar) {
-            starsFar.rotation.y += 0.00025;
-            starsFar.rotation.x += 0.00012;
+            starsFar.rotation.y += 0.0002;
+            starsFar.rotation.x += 0.0001;
         }
         if (starsNear) {
-            starsNear.rotation.y -= 0.00045;
-            starsNear.rotation.x += 0.00028;
+            starsNear.rotation.y -= 0.0004;
+            starsNear.rotation.x += 0.00025;
         }
         if (camera) camera.lookAt(0, 0.4, 0);
         if (renderer && scene && camera) renderer.render(scene, camera);
