@@ -523,7 +523,7 @@ import * as THREE from 'three';
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
 let scene, camera, renderer, geometry, timeVal = 0, animFrame = null, contextLostFlag = false;
 const canvas = document.getElementById('wave-canvas');
-let starsFar, starsNear, rings = [];
+let starsFar, starsNear, rings = [], particlesSystem;
 
 function initThree() {
     if (renderer) {
@@ -615,49 +615,45 @@ function initThree() {
         scene.add(starsNear);
     }
     
-    if (!isMobile) {
-        const ringGeo = new THREE.TorusGeometry(8, 0.02, 16, 100);
-        const ringMat = new THREE.MeshStandardMaterial({
-            color: 0xffffff,
-            emissive: 0x333333,
-            roughness: 0.2,
-            metalness: 0.5,
-            transparent: true,
-            opacity: 0.15
-        });
-        const ring1 = new THREE.Mesh(ringGeo, ringMat);
-        ring1.position.y = 0.2;
-        ring1.rotation.x = Math.PI / 2;
-        scene.add(ring1);
-        rings.push({ mesh: ring1, axis: 'y', speed: 0.1 });
-        
-        const ring2 = new THREE.Mesh(new THREE.TorusGeometry(10, 0.02, 16, 100), ringMat.clone());
-        ring2.position.y = 0.2;
-        ring2.rotation.z = Math.PI / 3;
-        ring2.rotation.x = Math.PI / 2;
-        scene.add(ring2);
-        rings.push({ mesh: ring2, axis: 'y', speed: -0.15 });
-        
-        const ring3 = new THREE.Mesh(new THREE.TorusGeometry(9, 0.02, 16, 100), ringMat.clone());
-        ring3.position.y = 0.2;
-        ring3.rotation.x = Math.PI / 2;
-        ring3.rotation.z = Math.PI / 5;
-        scene.add(ring3);
-        rings.push({ mesh: ring3, axis: 'x', speed: 0.2 });
-        
-        for (let i = 0; i < 60; i++) {
-            const orbGeo = new THREE.SphereGeometry(0.1, 8, 8);
-            const orbMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x222222, roughness: 0.3 });
-            const orb = new THREE.Mesh(orbGeo, orbMat);
-            const angle = (i / 60) * Math.PI * 2;
-            const radius = 7.5 + Math.sin(i * 0.5) * 2;
-            orb.position.x = Math.cos(angle) * radius;
-            orb.position.z = Math.sin(angle) * radius;
-            orb.position.y = 0.2 + Math.cos(i * 2) * 0.5;
-            scene.add(orb);
-            rings.push({ mesh: orb, orbitRadius: radius, orbitAngle: angle, orbitSpeed: 0.2 + Math.random() * 0.3, orbitY: orb.position.y });
-        }
+    const ringGeo = new THREE.TorusGeometry(6.5, 0.03, 32, 150);
+    const ringMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x333333, wireframe: true, transparent: true, opacity: 0.12 });
+    const ring1 = new THREE.Mesh(ringGeo, ringMat);
+    ring1.position.y = 1.5;
+    ring1.rotation.x = Math.PI / 3;
+    ring1.rotation.z = Math.PI / 6;
+    scene.add(ring1);
+    rings.push({ mesh: ring1, axis: 'y', speed: 0.0004 });
+    
+    const ring2Geo = new THREE.TorusGeometry(7.2, 0.03, 32, 150);
+    const ring2Mat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x222222, wireframe: true, transparent: true, opacity: 0.1 });
+    const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
+    ring2.position.y = -0.5;
+    ring2.rotation.x = Math.PI / 2.5;
+    ring2.rotation.z = -Math.PI / 5;
+    scene.add(ring2);
+    rings.push({ mesh: ring2, axis: 'x', speed: 0.00025 });
+    
+    const ring3Geo = new THREE.TorusGeometry(5.0, 0.02, 32, 120);
+    const ring3Mat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x444444, wireframe: true, transparent: true, opacity: 0.15 });
+    const ring3 = new THREE.Mesh(ring3Geo, ring3Mat);
+    ring3.position.y = -0.2;
+    ring3.rotation.x = Math.PI / 1.8;
+    ring3.rotation.z = Math.PI / 4;
+    scene.add(ring3);
+    rings.push({ mesh: ring3, axis: 'z', speed: 0.00035 });
+    
+    const particleCount = isMobile ? 100 : 250;
+    const particlesGeo = new THREE.BufferGeometry();
+    const particlesPos = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount; i++) {
+        particlesPos[i*3] = (Math.random() - 0.5) * 18;
+        particlesPos[i*3+1] = (Math.random() - 0.5) * 4 + 0.5;
+        particlesPos[i*3+2] = (Math.random() - 0.5) * 18;
     }
+    particlesGeo.setAttribute('position', new THREE.BufferAttribute(particlesPos, 3));
+    const particlesMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.04, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending });
+    particlesSystem = new THREE.Points(particlesGeo, particlesMat);
+    scene.add(particlesSystem);
     
     animate();
 }
@@ -693,12 +689,26 @@ function animateWavefield() {
     geometry.computeVertexNormals();
 }
 
-let lastTime = performance.now();
-function animate(timestamp) {
+function animate() {
     if (!contextLostFlag) {
-        const dt = Math.min(0.1, (timestamp - lastTime) / 1000);
-        lastTime = timestamp;
         animateWavefield();
+        
+        for (const ring of rings) {
+            if (ring.axis === 'y') ring.mesh.rotation.y += ring.speed;
+            else if (ring.axis === 'x') ring.mesh.rotation.x += ring.speed;
+            else if (ring.axis === 'z') ring.mesh.rotation.z += ring.speed;
+        }
+        
+        if (particlesSystem) {
+            particlesSystem.rotation.y += 0.0001;
+            const positions = particlesSystem.geometry.attributes.position.array;
+            for (let i = 0; i < positions.length; i += 3) {
+                positions[i+1] += 0.002;
+                if (positions[i+1] > 2.5) positions[i+1] = -2.0;
+            }
+            particlesSystem.geometry.attributes.position.needsUpdate = true;
+        }
+        
         if (starsFar) {
             starsFar.rotation.y += 0.0003;
             starsFar.rotation.x += 0.00015;
@@ -707,16 +717,6 @@ function animate(timestamp) {
             starsNear.rotation.y -= 0.0004;
             starsNear.rotation.x += 0.00025;
         }
-        rings.forEach(item => {
-            if (item.mesh.isMesh && item.mesh.geometry.type === 'TorusGeometry') {
-                item.mesh.rotation.z += item.speed * dt;
-            } else if (item.orbitAngle !== undefined) {
-                item.orbitAngle += item.orbitSpeed * dt;
-                item.mesh.position.x = Math.cos(item.orbitAngle) * item.orbitRadius;
-                item.mesh.position.z = Math.sin(item.orbitAngle) * item.orbitRadius;
-                item.mesh.position.y = item.orbitY + Math.sin(item.orbitAngle * 2) * 0.3;
-            }
-        });
         if (camera) camera.lookAt(0, 0.4, 0);
         if (renderer && scene && camera) renderer.render(scene, camera);
     }
@@ -734,10 +734,7 @@ document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
         if (animFrame) cancelAnimationFrame(animFrame);
         animFrame = null;
-    } else if (!animFrame && !contextLostFlag) {
-        lastTime = performance.now();
-        animFrame = requestAnimationFrame(animate);
-    }
+    } else if (!animFrame && !contextLostFlag) animate();
 });
 
 initThree();
