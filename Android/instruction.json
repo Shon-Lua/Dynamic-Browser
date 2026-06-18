@@ -3,6 +3,10 @@
     "desc": "desc.txt",
     "version": "1.0.1",
     "Images": {
-    "Image_1": "Screenshots/1.png"
+    "Image_1": "Screenshots/1.png",
+    "Image_2": "Screenshots/2.png",
+    "Image_3": "Screenshots/3.png",
+    "Image_4": "Screenshots/4.png",
+    "Image_5": "Screenshots/5.png"
    }
   }
