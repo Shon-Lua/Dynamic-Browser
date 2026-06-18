@@ -502,7 +502,7 @@
             <button class="expand-trigger" id="expandDescBtn" style="display:none">Показать полностью</button>
         </div>
         <div class="glass-panel">
-            <div class="panel-header"><i class="fas fa-shield-alt"></i> РАЗРЕШЕНИЯ</div>
+            <div class="panel-header"><i class="fas fa-shield-alt"></i> РАЗРЕШЕНИЯ И ОСОБЕННОСТИ</div>
             <div class="permission-list" id="permissionList"></div>
         </div>
         <div class="footer-links">
@@ -673,8 +673,8 @@ document.addEventListener('visibilitychange', () => {
 initThree();
 
 const appMeta = {
-    Windows: { title: 'Dynamic Browser for Windows', short: 'Молниеносный, безопасный, минималистичный.', fullDesc: 'nil', formats: ['exe','zip'], defaultFormat: 'exe', permissions: ['Интернет', 'Хранилище'] },
-    Android: { title: 'Dynamic Browser for Android', short: 'Лёгкий, быстрый, современный браузер.', fullDesc: 'nil', formats: ['apk'], defaultFormat: 'apk', permissions: ['Интернет', 'Хранилище'] }
+    Windows: { title: 'Dynamic Browser for Windows', short: 'Молниеносный, безопасный, минималистичный.', fullDesc: 'nil', formats: ['exe','zip'], defaultFormat: 'exe', permissions: ['Интернет', 'Хранилище', 'Поверх всех приложений'] },
+    Android: { title: 'Dynamic Browser for Android', short: 'Лёгкий, быстрый, современный браузер.', fullDesc: 'nil', formats: ['apk'], defaultFormat: 'apk', permissions: ['Интернет', 'Хранилище', 'Поверх всех приложений'] }
 };
 let currentOS = null, currentFormat = 'exe', currentFileName = '';
 const platformStage = document.getElementById('platformStage'), storeDash = document.getElementById('storeDashboard');
