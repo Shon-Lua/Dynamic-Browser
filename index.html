@@ -80,76 +80,6 @@
             max-width: 1200px;
             margin: 0 auto;
         }
-        .platform-stage {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 70vh;
-            gap: 56px;
-            transition: opacity 0.6s var(--transition-smooth), transform 0.6s var(--transition-smooth);
-        }
-        .platform-stage.hidden {
-            display: none;
-        }
-        .hero-icon {
-            font-size: 3rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            background: linear-gradient(135deg, #fff 20%, #aaa 80%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-align: center;
-        }
-        .hero-icon i {
-            background: none;
-            -webkit-background-clip: unset;
-            background-clip: unset;
-            color: white;
-            font-size: 2.8rem;
-            margin-bottom: 16px;
-            display: block;
-        }
-        .platform-selector {
-            display: flex;
-            gap: 40px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .platform-pill {
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            border-radius: 80px;
-            padding: 20px 48px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: all 0.4s var(--transition-smooth);
-            min-width: 220px;
-            box-shadow: var(--shadow-premium);
-        }
-        .platform-pill i {
-            font-size: 3rem;
-            transition: transform 0.2s;
-        }
-        .platform-pill span {
-            font-weight: 700;
-            font-size: 1.4rem;
-            letter-spacing: -0.01em;
-        }
-        .platform-pill:hover {
-            transform: translateY(-8px) scale(1.02);
-            border-color: var(--glass-border-glow);
-            background: rgba(0, 0, 0, 0.8);
-            box-shadow: 0 30px 40px -20px black, 0 0 0 1px rgba(255,255,255,0.2);
-        }
-        .platform-pill:active {
-            transform: scale(0.98);
-        }
         .store-dashboard {
             display: none;
             flex-direction: column;
@@ -162,26 +92,6 @@
         @keyframes fadeSlideUp {
             from { opacity: 0; transform: translateY(30px); filter: blur(6px);}
             to { opacity: 1; transform: translateY(0); filter: blur(0);}
-        }
-        .nav-back {
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(12px);
-            width: fit-content;
-            border-radius: 60px;
-            padding: 8px 24px;
-            font-weight: 500;
-            border: 1px solid var(--glass-border);
-            cursor: pointer;
-            transition: all 0.25s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-        }
-        .nav-back:hover {
-            background: rgba(0,0,0,0.8);
-            border-color: var(--glass-border-glow);
-            transform: translateX(-6px);
         }
         .hero-product {
             display: flex;
@@ -389,7 +299,7 @@
         .toast-message.visible {
             transform: translateX(-50%) translateY(0);
         }
-        .modal-privacy, .lightbox-modal {
+        .modal-privacy, .lightbox-modal, .modal-notification {
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.85);
@@ -402,27 +312,61 @@
             visibility: hidden;
             transition: 0.3s;
         }
-        .modal-privacy.visible, .lightbox-modal.visible {
+        .modal-privacy.visible, .lightbox-modal.visible, .modal-notification.visible {
             opacity: 1;
             visibility: visible;
         }
-        .privacy-card {
+        .privacy-card, .notification-card {
             background: rgba(0,0,0,0.96);
             border: 1px solid rgba(255,255,255,0.2);
             border-radius: 48px;
             max-width: 560px;
             width: 90%;
-            height: 90vh;
-            padding: 20px;
+            padding: 32px;
             position: relative;
             transform: scale(0.95);
             transition: transform 0.3s;
-            overflow: hidden;
             display: flex;
             flex-direction: column;
+            gap: 20px;
+            text-align: center;
         }
-        .modal-privacy.visible .privacy-card {
+        .modal-privacy.visible .privacy-card,
+        .modal-notification.visible .notification-card {
             transform: scale(1);
+        }
+        .notification-card h2 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #c0c0c0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 8px;
+        }
+        .notification-card p {
+            color: var(--text-dim);
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+        .notif-ok-btn {
+            background: linear-gradient(145deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+            border: 1px solid rgba(255,255,255,0.5);
+            padding: 14px 48px;
+            border-radius: 60px;
+            font-weight: 800;
+            font-size: 1rem;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+            backdrop-filter: blur(10px);
+            align-self: center;
+        }
+        .notif-ok-btn:hover {
+            transform: translateY(-4px);
+            background: rgba(255,255,255,0.3);
+            border-color: white;
+            box-shadow: 0 20px 30px -12px black;
         }
         .privacy-scroll {
             flex: 1;
@@ -462,30 +406,21 @@
             .hero-product { flex-direction: column; align-items: center; text-align: center; }
             .action-bar { justify-content: center; }
             .product-title { font-size: 1.8rem; }
-            .platform-pill { padding: 16px 32px; min-width: 160px; }
         }
     </style>
 </head>
 <body>
 <canvas id="wave-canvas"></canvas>
 <div class="app-wrapper">
-    <div class="platform-stage" id="platformStage">
-        <div class="hero-icon"><i class="fas fa-bolt"></i><span>DYNAMIC INSTALLER</span></div>
-        <div class="platform-selector" id="platformSelector">
-            <div class="platform-pill" data-os="Windows"><i class="fab fa-windows"></i><span>Windows</span></div>
-            <div class="platform-pill" data-os="Android"><i class="fab fa-android"></i><span>Android</span></div>
-        </div>
-    </div>
     <div class="store-dashboard" id="storeDashboard">
-        <div class="nav-back" id="backBtn"><i class="fas fa-arrow-left"></i> Назад</div>
         <div class="hero-product">
             <img src="Logo.png" alt="Dynamic Browser" class="product-icon" id="appIcon">
             <div class="product-info">
-                <div class="product-title" id="appName">Dynamic Browser</div>
+                <div class="product-title" id="appName">Dynamic Browser for Windows</div>
                 <div class="product-sub" id="appSub"></div>
                 <div class="action-bar">
-                    <div class="format-group" id="formatGroup" style="display:none">
-                        <button class="format-option" data-format="exe">EXE</button>
+                    <div class="format-group" id="formatGroup">
+                        <button class="format-option active" data-format="exe">EXE</button>
                         <button class="format-option" data-format="zip">ZIP</button>
                     </div>
                     <button class="download-prime" id="installBtn"><i class="fas fa-download"></i> Скачать</button>
@@ -522,6 +457,13 @@
     </div>
 </div>
 <div class="lightbox-modal" id="lightboxModal"><button class="lightbox-close" id="closeLightbox">&times;</button><img class="lightbox-img" id="lightboxImg" alt=""></div>
+<div class="modal-notification" id="notificationModal">
+    <div class="notification-card">
+        <h2 id="notifTitle"></h2>
+        <p id="notifText"></p>
+        <button class="notif-ok-btn" id="notifOkBtn">Ок</button>
+    </div>
+</div>
 
 <script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }</script>
 <script type="module">
@@ -673,26 +615,64 @@ document.addEventListener('visibilitychange', () => {
 initThree();
 
 const appMeta = {
-    Windows: { title: 'Dynamic Browser for Windows', short: 'Молниеносный, безопасный, минималистичный.', fullDesc: 'nil', formats: ['exe','zip'], defaultFormat: 'exe', permissions: ['Интернет', 'Хранилище', 'Поверх всех приложений'] },
-    Android: { title: 'Dynamic Browser for Android', short: 'Лёгкий, быстрый, современный браузер.', fullDesc: 'nil', formats: ['apk'], defaultFormat: 'apk', permissions: ['Интернет', 'Хранилище', 'Поверх всех приложений'] }
+    Windows: {
+        title: 'Dynamic Browser for Windows',
+        short: 'Молниеносный, безопасный, минималистичный.',
+        fullDesc: 'nil',
+        formats: ['exe', 'zip'],
+        defaultFormat: 'exe',
+        permissions: ['Интернет', 'Хранилище', 'Поверх всех приложений']
+    }
 };
-let currentOS = null, currentFormat = 'exe', currentFileName = '';
-const platformStage = document.getElementById('platformStage'), storeDash = document.getElementById('storeDashboard');
-const appNameSpan = document.getElementById('appName'), appSubSpan = document.getElementById('appSub'), descTextSpan = document.getElementById('descText'), permListDiv = document.getElementById('permissionList');
-const formatGroup = document.getElementById('formatGroup'), installBtn = document.getElementById('installBtn');
-const screenshotStrip = document.getElementById('screenshotStrip'), descWrap = document.getElementById('descWrap'), expandDescBtn = document.getElementById('expandDescBtn');
-const backButton = document.getElementById('backBtn'), toastDiv = document.getElementById('toastMsg'), toastTextSpan = document.getElementById('toastText');
-const privacyModal = document.getElementById('privacyModal'), privacyContent = document.getElementById('privacyContent'), privacyBtn = document.getElementById('privacyBtn'), closePrivacy = document.getElementById('closePrivacy');
-const lightboxModal = document.getElementById('lightboxModal'), lightboxImg = document.getElementById('lightboxImg'), closeLightbox = document.getElementById('closeLightbox');
+let currentOS = 'Windows';
+let currentFormat = 'exe';
+let currentFileName = '';
+const storeDash = document.getElementById('storeDashboard');
+const appNameSpan = document.getElementById('appName');
+const appSubSpan = document.getElementById('appSub');
+const descTextSpan = document.getElementById('descText');
+const permListDiv = document.getElementById('permissionList');
+const formatGroup = document.getElementById('formatGroup');
+const installBtn = document.getElementById('installBtn');
+const screenshotStrip = document.getElementById('screenshotStrip');
+const descWrap = document.getElementById('descWrap');
+const expandDescBtn = document.getElementById('expandDescBtn');
+const toastDiv = document.getElementById('toastMsg');
+const toastTextSpan = document.getElementById('toastText');
+const privacyModal = document.getElementById('privacyModal');
+const privacyContent = document.getElementById('privacyContent');
+const privacyBtn = document.getElementById('privacyBtn');
+const closePrivacy = document.getElementById('closePrivacy');
+const lightboxModal = document.getElementById('lightboxModal');
+const lightboxImg = document.getElementById('lightboxImg');
+const closeLightbox = document.getElementById('closeLightbox');
+const notificationModal = document.getElementById('notificationModal');
+const notifTitle = document.getElementById('notifTitle');
+const notifText = document.getElementById('notifText');
+const notifOkBtn = document.getElementById('notifOkBtn');
 
-let currentInstruction = null, isTransitioning = false, lastDesc = null;
+let currentInstruction = null;
+let lastDesc = null;
+const versionURL = 'https://raw.githubusercontent.com/Shon-Lua/Dynamic-Browser/refs/heads/main/ITVC%3F';
 
 function toggleBodyScroll(modalVisible) {
     document.body.classList.toggle('modal-open', modalVisible);
 }
 
-function showToastMessage(msg) { toastTextSpan.innerText = msg; toastDiv.classList.add('visible'); clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => toastDiv.classList.remove('visible'), 2800); }
-function resetDescription() { descWrap.style.maxHeight = 'none'; expandDescBtn.style.display = 'none'; expandDescBtn.innerText = 'Показать полностью'; expandDescBtn.dataset.exp = 'false'; }
+function showToastMessage(msg) {
+    toastTextSpan.innerText = msg;
+    toastDiv.classList.add('visible');
+    clearTimeout(window.toastTimer);
+    window.toastTimer = setTimeout(() => toastDiv.classList.remove('visible'), 2800);
+}
+
+function resetDescription() {
+    descWrap.style.maxHeight = 'none';
+    expandDescBtn.style.display = 'none';
+    expandDescBtn.innerText = 'Показать полностью';
+    expandDescBtn.dataset.exp = 'false';
+}
+
 function setupDescription() {
     if (descTextSpan.innerText === lastDesc) return;
     lastDesc = descTextSpan.innerText;
@@ -712,6 +692,7 @@ function setupDescription() {
         }
     });
 }
+
 expandDescBtn.addEventListener('click', () => {
     const expanded = expandDescBtn.dataset.exp === 'true';
     const lineH = parseFloat(getComputedStyle(descTextSpan).lineHeight);
@@ -725,47 +706,195 @@ expandDescBtn.addEventListener('click', () => {
         expandDescBtn.dataset.exp = 'true';
     }
 });
-async function fetchJSON(url) { try { const r = await fetch(url); return r.ok ? await r.json() : null; } catch { return null; } }
-async function fetchText(url) { try { const r = await fetch(url); return r.ok ? await r.text() : null; } catch { return null; } }
-async function loadInstruction(os) { return await fetchJSON(`${os}/instruction.json`); }
-async function loadScreenshots(base, imagesMap) { if (!imagesMap) return []; const urls = []; for (const key of Object.keys(imagesMap).sort((a,b)=> (parseInt(a.match(/\d+/)?.[0]||0) - parseInt(b.match(/\d+/)?.[0]||0)))) { const src = `${base}/${imagesMap[key]}`; const imgTest = new Image(); await new Promise(res => { imgTest.onload = () => res(true); imgTest.onerror = () => res(false); imgTest.src = src; }); if (imgTest.complete && imgTest.naturalWidth) urls.push(src); } return urls; }
-function renderScreenshots(images) { screenshotStrip.innerHTML = images.length ? images.map(src => `<img src="${src}" class="screenshot-item" loading="lazy">`).join('') : '<div style="color:rgba(255,255,255,0.4); padding:20px;">Нет скриншотов</div>'; document.querySelectorAll('.screenshot-item').forEach(img => img.addEventListener('click', (e) => { lightboxImg.src = img.src; lightboxModal.classList.add('visible'); toggleBodyScroll(true); })); }
-async function refreshUI() { if (!currentOS) { if (!platformStage.classList.contains('hidden')) return; storeDash.classList.remove('visible'); platformStage.classList.remove('hidden'); platformStage.style.opacity = '1'; platformStage.style.transform = 'none'; return; }
-const osData = appMeta[currentOS]; appNameSpan.innerText = osData.title; appSubSpan.innerText = osData.short; currentInstruction = await loadInstruction(currentOS); let desc = osData.fullDesc; if (currentInstruction?.desc) { const fetched = await fetchText(`${currentOS}/${currentInstruction.desc}`); if (fetched) desc = fetched; } descTextSpan.innerText = desc; permListDiv.innerHTML = osData.permissions.map(p => `<div class="permission-row"><i class="fas fa-check-circle"></i> ${p}</div>`).join('');
-const ver = currentInstruction?.version || '3.2.1'; if (currentInstruction?.app) { if (currentOS === 'Windows') currentFileName = currentFormat === 'exe' ? currentInstruction.exe : currentInstruction.zip; else currentFileName = currentInstruction.app; } else { currentFileName = currentOS === 'Windows' ? (currentFormat === 'exe' ? `dynamic-browser-setup-${ver}.exe` : `dynamic-browser-portable-${ver}.zip`) : `dynamic-browser-${ver}.apk`; }
-if (currentOS === 'Windows') { formatGroup.style.display = 'flex'; document.querySelectorAll('.format-option').forEach(opt => opt.classList.remove('active')); const activeOpt = document.querySelector(`.format-option[data-format="${currentFormat}"]`); if (activeOpt) activeOpt.classList.add('active'); } else { formatGroup.style.display = 'none'; currentFormat = 'apk'; }
-const screens = await loadScreenshots(currentOS, currentInstruction?.Images || null); renderScreenshots(screens);
-if (platformStage.classList.contains('hidden') === false) {
-    platformStage.style.transition = 'opacity 0.5s ease, transform 0.5s';
-    platformStage.style.opacity = '0';
-    platformStage.style.transform = 'scale(0.96) translateY(-15px)';
-    setTimeout(() => {
-        platformStage.classList.add('hidden');
-        storeDash.classList.add('visible');
-        storeDash.style.animation = 'none';
-        storeDash.offsetHeight;
-        storeDash.style.animation = 'fadeSlideUp 0.6s ease';
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                setupDescription();
-            });
-        });
-    }, 480);
-} else {
-    setupDescription();
-}
+
+async function fetchJSON(url) {
+    try {
+        const r = await fetch(url);
+        return r.ok ? await r.json() : null;
+    } catch {
+        return null;
+    }
 }
 
-document.querySelectorAll('.platform-pill').forEach(card => { card.addEventListener('click', () => { const os = card.dataset.os; if (currentOS === os) return; currentOS = os; currentFormat = appMeta[os].defaultFormat; refreshUI(); }); });
-backButton.addEventListener('click', () => { if (isTransitioning) return; isTransitioning = true; storeDash.style.transition = 'opacity 0.4s, transform 0.4s'; storeDash.style.opacity = '0'; storeDash.style.transform = 'translateY(20px)'; setTimeout(() => { storeDash.classList.remove('visible'); storeDash.style.opacity = ''; storeDash.style.transform = ''; platformStage.classList.remove('hidden'); platformStage.style.opacity = '0'; platformStage.style.transform = 'translateY(-10px)'; platformStage.style.transition = 'none'; platformStage.offsetHeight; platformStage.style.transition = 'opacity 0.5s ease, transform 0.5s'; platformStage.style.opacity = '1'; platformStage.style.transform = 'none'; currentOS = null; isTransitioning = false; }, 400); });
-formatGroup.addEventListener('click', (e) => { if (currentOS !== 'Windows') return; const btn = e.target.closest('.format-option'); if (btn && btn.dataset.format) { currentFormat = btn.dataset.format; refreshUI(); } });
-installBtn.addEventListener('click', () => { if (!currentOS || !currentFileName) return; showToastMessage(`Начинается загрузка`); const link = document.createElement('a'); link.href = `https://dynamicbrowser.app/dl/${currentFileName}`; link.download = currentFileName; link.style.display = 'none'; document.body.appendChild(link); link.click(); document.body.removeChild(link); });
-privacyBtn.addEventListener('click', (e) => { e.preventDefault(); fetch('POLITICS.txt').then(r => r.ok ? r.text() : Promise.reject()).then(txt => { const blocks = txt.split('\n\n').filter(b => b.trim()); privacyContent.innerHTML = blocks.map(block => `<p style="margin-bottom:16px;">${block.replace(/\n/g, '<br>')}</p>`).join(''); }).catch(() => privacyContent.innerHTML = '<p>Политика временно недоступна.</p>'); privacyModal.classList.add('visible'); toggleBodyScroll(true); });
-closePrivacy.addEventListener('click', () => { privacyModal.classList.remove('visible'); toggleBodyScroll(false); });
-privacyModal.addEventListener('click', (e) => { if (e.target === privacyModal) { privacyModal.classList.remove('visible'); toggleBodyScroll(false); } });
-closeLightbox.addEventListener('click', () => { lightboxModal.classList.remove('visible'); lightboxImg.src = ''; toggleBodyScroll(false); });
-lightboxModal.addEventListener('click', (e) => { if (e.target === lightboxModal) { lightboxModal.classList.remove('visible'); lightboxImg.src = ''; toggleBodyScroll(false); } });
-refreshUI();
+async function fetchText(url) {
+    try {
+        const r = await fetch(url);
+        return r.ok ? await r.text() : null;
+    } catch {
+        return null;
+    }
+}
+
+async function loadInstruction(os) {
+    return await fetchJSON(`${os}/instruction.json`);
+}
+
+async function loadScreenshots(base, imagesMap) {
+    if (!imagesMap) return [];
+    const urls = [];
+    const keys = Object.keys(imagesMap).sort((a, b) => (parseInt(a.match(/\d+/)?.[0] || 0) - parseInt(b.match(/\d+/)?.[0] || 0)));
+    for (const key of keys) {
+        const src = `${base}/${imagesMap[key]}`;
+        const imgTest = new Image();
+        await new Promise(res => {
+            imgTest.onload = () => res(true);
+            imgTest.onerror = () => res(false);
+            imgTest.src = src;
+        });
+        if (imgTest.complete && imgTest.naturalWidth) urls.push(src);
+    }
+    return urls;
+}
+
+function renderScreenshots(images) {
+    screenshotStrip.innerHTML = images.length
+        ? images.map(src => `<img src="${src}" class="screenshot-item" loading="lazy">`).join('')
+        : '<div style="color:rgba(255,255,255,0.4); padding:20px;">Нет скриншотов</div>';
+    document.querySelectorAll('.screenshot-item').forEach(img =>
+        img.addEventListener('click', (e) => {
+            lightboxImg.src = img.src;
+            lightboxModal.classList.add('visible');
+            toggleBodyScroll(true);
+        })
+    );
+}
+
+async function refreshUI() {
+    const osData = appMeta[currentOS];
+    appNameSpan.innerText = osData.title;
+    appSubSpan.innerText = osData.short;
+    currentInstruction = await loadInstruction(currentOS);
+    let desc = osData.fullDesc;
+    if (currentInstruction?.desc) {
+        const fetched = await fetchText(`${currentOS}/${currentInstruction.desc}`);
+        if (fetched) desc = fetched;
+    }
+    descTextSpan.innerText = desc;
+    permListDiv.innerHTML = osData.permissions.map(p => `<div class="permission-row"><i class="fas fa-check-circle"></i> ${p}</div>`).join('');
+    const ver = currentInstruction?.version || '3.2.1';
+    if (currentInstruction?.app) {
+        currentFileName = currentFormat === 'exe' ? currentInstruction.exe : currentInstruction.zip;
+    } else {
+        currentFileName = currentFormat === 'exe' ? `dynamic-browser-setup-${ver}.exe` : `dynamic-browser-portable-${ver}.zip`;
+    }
+    const activeOpt = document.querySelector(`.format-option[data-format="${currentFormat}"]`);
+    if (activeOpt) activeOpt.classList.add('active');
+    const screens = await loadScreenshots(currentOS, currentInstruction?.Images || null);
+    renderScreenshots(screens);
+    setupDescription();
+}
+
+formatGroup.addEventListener('click', (e) => {
+    const btn = e.target.closest('.format-option');
+    if (btn && btn.dataset.format) {
+        currentFormat = btn.dataset.format;
+        document.querySelectorAll('.format-option').forEach(opt => opt.classList.remove('active'));
+        btn.classList.add('active');
+        refreshUI();
+    }
+});
+
+installBtn.addEventListener('click', () => {
+    if (!currentFileName) return;
+    showToastMessage(`Начинается загрузка`);
+    const link = document.createElement('a');
+    link.href = `https://dynamicbrowser.app/dl/${currentFileName}`;
+    link.download = currentFileName;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+});
+
+privacyBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    fetch('POLITICS.txt').then(r => r.ok ? r.text() : Promise.reject())
+        .then(txt => {
+            const blocks = txt.split('\n\n').filter(b => b.trim());
+            privacyContent.innerHTML = blocks.map(block => `<p style="margin-bottom:16px;">${block.replace(/\n/g, '<br>')}</p>`).join('');
+        })
+        .catch(() => privacyContent.innerHTML = '<p>Политика временно недоступна.</p>');
+    privacyModal.classList.add('visible');
+    toggleBodyScroll(true);
+});
+
+closePrivacy.addEventListener('click', () => {
+    privacyModal.classList.remove('visible');
+    toggleBodyScroll(false);
+});
+privacyModal.addEventListener('click', (e) => {
+    if (e.target === privacyModal) {
+        privacyModal.classList.remove('visible');
+        toggleBodyScroll(false);
+    }
+});
+
+closeLightbox.addEventListener('click', () => {
+    lightboxModal.classList.remove('visible');
+    lightboxImg.src = '';
+    toggleBodyScroll(false);
+});
+lightboxModal.addEventListener('click', (e) => {
+    if (e.target === lightboxModal) {
+        lightboxModal.classList.remove('visible');
+        lightboxImg.src = '';
+        toggleBodyScroll(false);
+    }
+});
+
+function showNotification(title, message, callback) {
+    notifTitle.innerText = title;
+    notifText.innerText = message;
+    notificationModal.classList.add('visible');
+    toggleBodyScroll(true);
+    notifOkBtn.onclick = () => {
+        notificationModal.classList.remove('visible');
+        toggleBodyScroll(false);
+        if (callback) callback();
+    };
+}
+
+async function initApp() {
+    let remoteVersion = null;
+    try {
+        const resp = await fetch(versionURL);
+        const text = await resp.text();
+        remoteVersion = parseInt(text.trim(), 10);
+        if (isNaN(remoteVersion)) remoteVersion = null;
+    } catch {}
+    
+    const storedVersion = localStorage.getItem('app_version');
+    const storedNum = storedVersion ? parseInt(storedVersion, 10) : null;
+    
+    if (remoteVersion !== null) {
+        if (storedNum === null) {
+            showNotification('Добро пожаловать в Dynamic Installer',
+                'Dynamic Browser - это лёгкий и полностью автономный браузер, который работает без трекинга, телеметрии и скрытых процессов. Он использует компактный интерфейс с динамичной верхней панелью, которая помогает управлять вкладками и действиями без перегруженных меню. Браузер быстро запускается, стабильно работает на любых устройствах и не собирает никаких данных - всё выполняется локально и прозрачно.',
+                () => {
+                    localStorage.setItem('app_version', remoteVersion);
+                    showDashboard();
+                });
+            return;
+        }
+        if (storedNum !== remoteVersion) {
+            showNotification('Доступна новая версия!',
+                'В это версии были исправлены некоторые ошибки и добавлены новые функции.',
+                () => {
+                    localStorage.setItem('app_version', remoteVersion);
+                    showDashboard();
+                });
+            return;
+        }
+    }
+    showDashboard();
+}
+
+function showDashboard() {
+    storeDash.classList.add('visible');
+    refreshUI();
+}
+
+initApp();
 </script>
 </body>
 </html>
