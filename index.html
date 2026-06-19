@@ -330,7 +330,6 @@
             flex-direction: column;
             max-height: 85vh;
             overflow: hidden;
-            text-align: left;
         }
         .modal-privacy.visible .privacy-card,
         .modal-notification.visible .notification-card {
@@ -338,7 +337,7 @@
         }
         .notification-card {
             text-align: center;
-            gap: 20px;
+            gap: 16px;
             padding: 32px;
         }
         .notification-card h2 {
@@ -349,11 +348,19 @@
             background-clip: text;
             color: transparent;
             margin-bottom: 4px;
+            flex-shrink: 0;
         }
-        .notification-card p {
+        .notif-body {
+            flex: 1;
+            overflow-y: auto;
+            margin: 0 -8px 8px;
+            padding: 0 8px;
+        }
+        .notif-body p {
             color: var(--text-dim);
             line-height: 1.6;
             font-size: 1rem;
+            margin: 0;
         }
         .notif-ok-btn {
             background: linear-gradient(145deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
@@ -367,12 +374,18 @@
             transition: 0.3s;
             backdrop-filter: blur(10px);
             align-self: center;
+            flex-shrink: 0;
         }
         .notif-ok-btn:hover {
             transform: translateY(-4px);
             background: rgba(255,255,255,0.3);
             border-color: white;
             box-shadow: 0 20px 30px -12px black;
+        }
+        .privacy-card {
+            text-align: left;
+            gap: 16px;
+            padding: 36px 32px 24px;
         }
         .privacy-title {
             font-size: 1.8rem;
@@ -381,17 +394,18 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            margin-bottom: 16px;
+            margin-bottom: 4px;
             padding-right: 40px;
+            flex-shrink: 0;
         }
         .privacy-scroll {
             flex: 1;
             overflow-y: auto;
-            margin-right: -20px;
-            padding-right: 24px;
+            margin-right: -12px;
+            padding-right: 20px;
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.3) transparent;
-            margin-bottom: 16px;
+            margin-bottom: 8px;
         }
         .privacy-scroll::-webkit-scrollbar {
             width: 6px;
@@ -421,6 +435,7 @@
             transition: 0.3s;
             backdrop-filter: blur(10px);
             align-self: center;
+            flex-shrink: 0;
         }
         .privacy-close-btn:hover {
             transform: translateY(-2px);
@@ -444,6 +459,7 @@
             color: white;
             cursor: pointer;
             transition: 0.2s;
+            z-index: 10;
         }
         .modal-close:hover {
             opacity: 0.8;
@@ -511,7 +527,9 @@
 <div class="modal-notification" id="notificationModal">
     <div class="notification-card">
         <h2 id="notifTitle"></h2>
-        <p id="notifText"></p>
+        <div class="notif-body">
+            <p id="notifText"></p>
+        </div>
         <button class="notif-ok-btn" id="notifOkBtn">Ок</button>
     </div>
 </div>
