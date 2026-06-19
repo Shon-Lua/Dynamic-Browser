@@ -320,22 +320,26 @@
             background: rgba(0,0,0,0.96);
             border: 1px solid rgba(255,255,255,0.2);
             border-radius: 48px;
-            max-width: 560px;
-            width: 90%;
-            padding: 32px;
+            max-width: 620px;
+            width: 92%;
+            padding: 36px 32px 28px;
             position: relative;
             transform: scale(0.95);
             transition: transform 0.3s;
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            text-align: center;
             max-height: 85vh;
             overflow: hidden;
+            text-align: left;
         }
         .modal-privacy.visible .privacy-card,
         .modal-notification.visible .notification-card {
             transform: scale(1);
+        }
+        .notification-card {
+            text-align: center;
+            gap: 20px;
+            padding: 32px;
         }
         .notification-card h2 {
             font-size: 1.8rem;
@@ -344,7 +348,7 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
         .notification-card p {
             color: var(--text-dim);
@@ -370,13 +374,24 @@
             border-color: white;
             box-shadow: 0 20px 30px -12px black;
         }
+        .privacy-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #c0c0c0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 16px;
+            padding-right: 40px;
+        }
         .privacy-scroll {
             flex: 1;
             overflow-y: auto;
             margin-right: -20px;
-            padding-right: 28px;
+            padding-right: 24px;
             scrollbar-width: thin;
-            scrollbar-color: rgba(255,255,255,0.25) transparent;
+            scrollbar-color: rgba(255,255,255,0.3) transparent;
+            margin-bottom: 16px;
         }
         .privacy-scroll::-webkit-scrollbar {
             width: 6px;
@@ -385,8 +400,33 @@
             background: transparent;
         }
         .privacy-scroll::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.3);
             border-radius: 3px;
+        }
+        .privacy-scroll p {
+            color: var(--text-dim);
+            line-height: 1.7;
+            margin-bottom: 18px;
+            font-size: 0.95rem;
+        }
+        .privacy-close-btn {
+            background: linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.03));
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 12px 32px;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+            backdrop-filter: blur(10px);
+            align-self: center;
+        }
+        .privacy-close-btn:hover {
+            transform: translateY(-2px);
+            background: rgba(255,255,255,0.25);
+            border-color: white;
+            box-shadow: 0 12px 24px -10px black;
         }
         .lightbox-img {
             max-width: 90vw;
@@ -403,11 +443,18 @@
             border: none;
             color: white;
             cursor: pointer;
+            transition: 0.2s;
+        }
+        .modal-close:hover {
+            opacity: 0.8;
+            transform: scale(1.1);
         }
         @media (max-width: 720px) {
             .hero-product { flex-direction: column; align-items: center; text-align: center; }
             .action-bar { justify-content: center; }
             .product-title { font-size: 1.8rem; }
+            .privacy-card, .notification-card { padding: 24px 20px 20px; }
+            .privacy-title { font-size: 1.4rem; }
         }
     </style>
 </head>
@@ -453,9 +500,11 @@
 <div class="modal-privacy" id="privacyModal">
     <div class="privacy-card">
         <button class="modal-close" id="closePrivacy">&times;</button>
+        <h2 class="privacy-title">Политика конфиденциальности</h2>
         <div class="privacy-scroll">
-            <div id="privacyContent" style="padding-right:8px;"></div>
+            <div id="privacyContent"></div>
         </div>
+        <button class="privacy-close-btn" id="closePrivacyBtn">Закрыть</button>
     </div>
 </div>
 <div class="lightbox-modal" id="lightboxModal"><button class="lightbox-close" id="closeLightbox">&times;</button><img class="lightbox-img" id="lightboxImg" alt=""></div>
@@ -645,6 +694,7 @@ const privacyModal = document.getElementById('privacyModal');
 const privacyContent = document.getElementById('privacyContent');
 const privacyBtn = document.getElementById('privacyBtn');
 const closePrivacy = document.getElementById('closePrivacy');
+const closePrivacyBtn = document.getElementById('closePrivacyBtn');
 const lightboxModal = document.getElementById('lightboxModal');
 const lightboxImg = document.getElementById('lightboxImg');
 const closeLightbox = document.getElementById('closeLightbox');
@@ -808,27 +858,31 @@ installBtn.addEventListener('click', () => {
     document.body.removeChild(link);
 });
 
-privacyBtn.addEventListener('click', (e) => {
-    e.preventDefault();
+function openPrivacyModal() {
     fetch('POLITICS.txt').then(r => r.ok ? r.text() : Promise.reject())
         .then(txt => {
             const blocks = txt.split('\n\n').filter(b => b.trim());
-            privacyContent.innerHTML = blocks.map(block => `<p style="margin-bottom:16px;">${block.replace(/\n/g, '<br>')}</p>`).join('');
+            privacyContent.innerHTML = blocks.map(block => `<p>${block.replace(/\n/g, '<br>')}</p>`).join('');
         })
         .catch(() => privacyContent.innerHTML = '<p>Политика временно недоступна.</p>');
     privacyModal.classList.add('visible');
     toggleBodyScroll(true);
-});
+}
 
-closePrivacy.addEventListener('click', () => {
+function closePrivacyModal() {
     privacyModal.classList.remove('visible');
     toggleBodyScroll(false);
+}
+
+privacyBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    openPrivacyModal();
 });
+
+closePrivacy.addEventListener('click', closePrivacyModal);
+closePrivacyBtn.addEventListener('click', closePrivacyModal);
 privacyModal.addEventListener('click', (e) => {
-    if (e.target === privacyModal) {
-        privacyModal.classList.remove('visible');
-        toggleBodyScroll(false);
-    }
+    if (e.target === privacyModal) closePrivacyModal();
 });
 
 closeLightbox.addEventListener('click', () => {
