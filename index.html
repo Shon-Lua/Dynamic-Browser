@@ -351,10 +351,8 @@
             flex-shrink: 0;
         }
         .notif-body {
-            flex: 1;
-            overflow-y: auto;
-            margin: 0 -8px 8px;
-            padding: 0 8px;
+            margin: 0 0 8px;
+            padding: 0;
         }
         .notif-body p {
             color: var(--text-dim);
@@ -395,7 +393,6 @@
             background-clip: text;
             color: transparent;
             margin-bottom: 4px;
-            padding-right: 40px;
             flex-shrink: 0;
         }
         .privacy-scroll {
@@ -449,7 +446,7 @@
             border-radius: 28px;
             box-shadow: 0 30px 50px black;
         }
-        .lightbox-close, .modal-close {
+        .lightbox-close {
             position: absolute;
             top: 12px;
             right: 12px;
@@ -460,10 +457,6 @@
             cursor: pointer;
             transition: 0.2s;
             z-index: 10;
-        }
-        .modal-close:hover {
-            opacity: 0.8;
-            transform: scale(1.1);
         }
         @media (max-width: 720px) {
             .hero-product { flex-direction: column; align-items: center; text-align: center; }
@@ -515,7 +508,6 @@
 <div class="toast-message" id="toastMsg"><i class="fas fa-check-circle"></i> <span id="toastText"></span></div>
 <div class="modal-privacy" id="privacyModal">
     <div class="privacy-card">
-        <button class="modal-close" id="closePrivacy">&times;</button>
         <h2 class="privacy-title">Политика конфиденциальности</h2>
         <div class="privacy-scroll">
             <div id="privacyContent"></div>
@@ -711,7 +703,6 @@ const toastTextSpan = document.getElementById('toastText');
 const privacyModal = document.getElementById('privacyModal');
 const privacyContent = document.getElementById('privacyContent');
 const privacyBtn = document.getElementById('privacyBtn');
-const closePrivacy = document.getElementById('closePrivacy');
 const closePrivacyBtn = document.getElementById('closePrivacyBtn');
 const lightboxModal = document.getElementById('lightboxModal');
 const lightboxImg = document.getElementById('lightboxImg');
@@ -897,7 +888,6 @@ privacyBtn.addEventListener('click', (e) => {
     openPrivacyModal();
 });
 
-closePrivacy.addEventListener('click', closePrivacyModal);
 closePrivacyBtn.addEventListener('click', closePrivacyModal);
 privacyModal.addEventListener('click', (e) => {
     if (e.target === privacyModal) closePrivacyModal();
