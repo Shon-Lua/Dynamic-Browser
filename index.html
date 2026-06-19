@@ -492,7 +492,7 @@
         <div class="glass-panel">
             <div class="panel-header"><i class="fas fa-info-circle"></i> ОПИСАНИЕ</div>
             <div class="desc-wrapper" id="descWrap"><div class="desc-text" id="descText"></div></div>
-            <button class="expand-trigger" id="expandDescBtn" style="display:none">Показать полностью</button>
+            <button class="expand-trigger" id="expandDescBtn" style="display:none">Ещё</button>
         </div>
         <div class="glass-panel">
             <div class="panel-header"><i class="fas fa-shield-alt"></i> РАЗРЕШЕНИЯ И ОСОБЕННОСТИ</div>
@@ -730,7 +730,7 @@ function showToastMessage(msg) {
 function resetDescription() {
     descWrap.style.maxHeight = 'none';
     expandDescBtn.style.display = 'none';
-    expandDescBtn.innerText = 'Показать полностью';
+    expandDescBtn.innerText = 'Ущё';
     expandDescBtn.dataset.exp = 'false';
 }
 
@@ -746,7 +746,7 @@ function setupDescription() {
             descWrap.style.maxHeight = maxH + 'px';
             expandDescBtn.style.display = 'inline-block';
             expandDescBtn.dataset.exp = 'false';
-            expandDescBtn.innerText = 'Показать полностью';
+            expandDescBtn.innerText = 'Ещё';
         } else {
             descWrap.style.maxHeight = 'none';
             expandDescBtn.style.display = 'none';
@@ -759,7 +759,7 @@ expandDescBtn.addEventListener('click', () => {
     const lineH = parseFloat(getComputedStyle(descTextSpan).lineHeight);
     if (expanded) {
         descWrap.style.maxHeight = (lineH * 5) + 'px';
-        expandDescBtn.innerText = 'Показать полностью';
+        expandDescBtn.innerText = 'Ещё';
         expandDescBtn.dataset.exp = 'false';
     } else {
         descWrap.style.maxHeight = descTextSpan.scrollHeight + 'px';
@@ -933,7 +933,7 @@ async function initApp() {
     if (remoteVersion !== null) {
         if (storedNum === null) {
             showNotification('Добро пожаловать в Dynamic Installer',
-                'Dynamic Browser - это лёгкий и полностью автономный браузер, который работает без трекинга, телеметрии и скрытых процессов. Он использует компактный интерфейс с динамичной верхней панелью, которая помогает управлять вкладками и действиями без перегруженных меню. Браузер быстро запускается, стабильно работает на любых устройствах и не собирает никаких данных - всё выполняется локально и прозрачно.',
+                'Dynamic Browser - это лёгкий браузер, который работает без трекинга, телеметрии и скрытых процессов. Браузер быстро запускается, стабильно работает на любых устройствах и не собирает никаких данных. Всё выполняется локально и прозрачно.',
                 () => {
                     localStorage.setItem('app_version', remoteVersion);
                     showDashboard();
