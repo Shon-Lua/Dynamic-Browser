@@ -330,6 +330,8 @@
             flex-direction: column;
             gap: 20px;
             text-align: center;
+            max-height: 85vh;
+            overflow: hidden;
         }
         .modal-privacy.visible .privacy-card,
         .modal-notification.visible .notification-card {
@@ -878,7 +880,7 @@ async function initApp() {
         }
         if (storedNum !== remoteVersion) {
             showNotification('Доступна новая версия!',
-                'В это версии были исправлены некоторые ошибки и добавлены новые функции.',
+                'В этой версии были исправлены некоторые ошибки и добавлены новые функции.',
                 () => {
                     localStorage.setItem('app_version', remoteVersion);
                     showDashboard();
