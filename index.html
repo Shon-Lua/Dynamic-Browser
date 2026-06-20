@@ -79,6 +79,11 @@
         .privacy-close-btn:hover{transform:translateY(-2px);background:rgba(255,255,255,0.25);border-color:white;box-shadow:0 12px 24px -10px black}
         .lightbox-img{max-width:90vw;max-height:85vh;border-radius:28px;box-shadow:0 30px 50px black}
         .lightbox-close{position:absolute;top:12px;right:12px;font-size:32px;background:none;border:none;color:white;cursor:pointer;transition:0.2s;z-index:10}
+        .lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.2);color:white;font-size:28px;width:48px;height:48px;border-radius:50%;cursor:pointer;z-index:11;display:flex;align-items:center;justify-content:center;transition:0.2s;backdrop-filter:blur(4px)}
+        .lightbox-nav:hover{background:rgba(255,255,255,0.25)}
+        .lightbox-nav.left{left:20px}
+        .lightbox-nav.right{right:20px}
+        .lightbox-nav.hidden{display:none}
         @media(max-width:720px){
             .hero-product{flex-direction:column;align-items:center;text-align:center}
             .action-bar{justify-content:center}
@@ -87,6 +92,9 @@
             .privacy-title{font-size:1.4rem}
             .screenshot-strip img{height:160px}
             .gallery-arrow{width:32px;height:32px;font-size:18px}
+            .lightbox-nav{width:36px;height:36px;font-size:20px}
+            .lightbox-nav.left{left:8px}
+            .lightbox-nav.right{right:8px}
         }
         #loadingOverlay{position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;transition:opacity 0.6s ease;pointer-events:none}
         #loadingOverlay.hidden{opacity:0}
@@ -150,7 +158,12 @@
         <button class="privacy-close-btn" id="closePrivacyBtn">Закрыть</button>
     </div>
 </div>
-<div class="lightbox-modal" id="lightboxModal"><button class="lightbox-close" id="closeLightbox">&times;</button><img class="lightbox-img" id="lightboxImg" alt=""></div>
+<div class="lightbox-modal" id="lightboxModal">
+    <button class="lightbox-close" id="closeLightbox">&times;</button>
+    <button class="lightbox-nav left" id="lightboxPrev"><i class="fas fa-chevron-left"></i></button>
+    <img class="lightbox-img" id="lightboxImg" alt="">
+    <button class="lightbox-nav right" id="lightboxNext"><i class="fas fa-chevron-right"></i></button>
+</div>
 <div class="modal-notification" id="notificationModal">
     <div class="notification-card">
         <h2 id="notifTitle"></h2>
@@ -342,6 +355,8 @@ const closePrivacyBtn = document.getElementById('closePrivacyBtn');
 const lightboxModal = document.getElementById('lightboxModal');
 const lightboxImg = document.getElementById('lightboxImg');
 const closeLightbox = document.getElementById('closeLightbox');
+const lightboxPrev = document.getElementById('lightboxPrev');
+const lightboxNext = document.getElementById('lightboxNext');
 const notificationModal = document.getElementById('notificationModal');
 const notifTitle = document.getElementById('notifTitle');
 const notifText = document.getElementById('notifText');
@@ -355,6 +370,10 @@ let lastDesc = null;
 const versionURL = 'ITVC%3F';
 let loadedPolicy = '';
 let loadedDesc = '';
+
+// Храним массив скриншотов для навигации в лайтбоксе
+let currentScreenshots = [];
+let lightboxIndex = 0;
 
 function toggleBodyScroll(modalVisible) {
     document.body.classList.toggle('modal-open', modalVisible);
@@ -461,14 +480,14 @@ function updateGalleryArrows() {
 }
 
 function renderScreenshots(images) {
+    currentScreenshots = images; // сохраняем для лайтбокса
     screenshotStrip.innerHTML = images.length
         ? images.map(src => `<img src="${src}" class="screenshot-item" loading="lazy">`).join('')
         : '<div style="color:rgba(255,255,255,0.4); padding:20px;">Нет скриншотов</div>';
-    document.querySelectorAll('.screenshot-item').forEach(img =>
+    document.querySelectorAll('.screenshot-item').forEach((img, idx) =>
         img.addEventListener('click', (e) => {
-            lightboxImg.src = img.src;
-            lightboxModal.classList.add('visible');
-            toggleBodyScroll(true);
+            lightboxIndex = idx;
+            openLightbox(idx);
         })
     );
     requestAnimationFrame(() => updateGalleryArrows());
@@ -486,13 +505,7 @@ async function loadScreenshotsAsync() {
     renderScreenshots(screens);
 }
 
-function refreshUI() {
-    const osData = appMeta[currentOS];
-    appNameSpan.innerText = osData.title;
-    appSubSpan.innerText = osData.short;
-    const desc = loadedDesc || osData.fullDesc;
-    descTextSpan.innerText = desc;
-    permListDiv.innerHTML = osData.permissions.map(p => `<div class="permission-row"><i class="fas fa-check-circle"></i> ${p}</div>`).join('');
+function updateFormatSpecifics() {
     const ver = currentInstruction?.version || '3.2.1';
     if (currentInstruction?.app) {
         currentFileName = currentFormat === 'exe' ? currentInstruction.exe : currentInstruction.zip;
@@ -502,6 +515,16 @@ function refreshUI() {
     document.querySelectorAll('.format-option').forEach(opt => opt.classList.remove('active'));
     const activeOpt = document.querySelector(`.format-option[data-format="${currentFormat}"]`);
     if (activeOpt) activeOpt.classList.add('active');
+}
+
+function refreshUI() {
+    const osData = appMeta[currentOS];
+    appNameSpan.innerText = osData.title;
+    appSubSpan.innerText = osData.short;
+    const desc = loadedDesc || osData.fullDesc;
+    descTextSpan.innerText = desc;
+    permListDiv.innerHTML = osData.permissions.map(p => `<div class="permission-row"><i class="fas fa-check-circle"></i> ${p}</div>`).join('');
+    updateFormatSpecifics();
     setupDescription();
     loadScreenshotsAsync();
 }
@@ -510,9 +533,7 @@ formatGroup.addEventListener('click', (e) => {
     const btn = e.target.closest('.format-option');
     if (btn && btn.dataset.format) {
         currentFormat = btn.dataset.format;
-        document.querySelectorAll('.format-option').forEach(opt => opt.classList.remove('active'));
-        btn.classList.add('active');
-        refreshUI();
+        updateFormatSpecifics();
     }
 });
 
@@ -554,30 +575,76 @@ privacyModal.addEventListener('click', (e) => {
     if (e.target === privacyModal) closePrivacyModal();
 });
 
-closeLightbox.addEventListener('click', () => {
+function openLightbox(index) {
+    if (!currentScreenshots.length) return;
+    lightboxIndex = Math.max(0, Math.min(index, currentScreenshots.length - 1));
+    lightboxImg.src = currentScreenshots[lightboxIndex];
+    lightboxModal.classList.add('visible');
+    toggleBodyScroll(true);
+    updateLightboxNav();
+}
+
+function closeLightboxFn() {
     lightboxModal.classList.remove('visible');
     lightboxImg.src = '';
     toggleBodyScroll(false);
-});
-lightboxModal.addEventListener('click', (e) => {
-    if (e.target === lightboxModal) {
-        lightboxModal.classList.remove('visible');
-        lightboxImg.src = '';
-        toggleBodyScroll(false);
+}
+
+function updateLightboxNav() {
+    if (currentScreenshots.length <= 1) {
+        lightboxPrev.classList.add('hidden');
+        lightboxNext.classList.add('hidden');
+        return;
     }
+    lightboxPrev.classList.toggle('hidden', lightboxIndex === 0);
+    lightboxNext.classList.toggle('hidden', lightboxIndex === currentScreenshots.length - 1);
+}
+
+function lightboxPrevImage() {
+    if (lightboxIndex > 0) {
+        lightboxIndex--;
+        lightboxImg.src = currentScreenshots[lightboxIndex];
+        updateLightboxNav();
+    }
+}
+
+function lightboxNextImage() {
+    if (lightboxIndex < currentScreenshots.length - 1) {
+        lightboxIndex++;
+        lightboxImg.src = currentScreenshots[lightboxIndex];
+        updateLightboxNav();
+    }
+}
+
+lightboxPrev.addEventListener('click', lightboxPrevImage);
+lightboxNext.addEventListener('click', lightboxNextImage);
+closeLightbox.addEventListener('click', closeLightboxFn);
+lightboxModal.addEventListener('click', (e) => {
+    if (e.target === lightboxModal) closeLightboxFn();
 });
 
-function showNotification(title, message, callback) {
-    notifTitle.innerText = title;
-    notifText.innerText = message;
-    notificationModal.classList.add('visible');
-    toggleBodyScroll(true);
-    notifOkBtn.onclick = () => {
-        notificationModal.classList.remove('visible');
-        toggleBodyScroll(false);
-        if (callback) callback();
-    };
-}
+// Клавиатура для лайтбокса
+document.addEventListener('keydown', (e) => {
+    if (!lightboxModal.classList.contains('visible')) return;
+    if (e.key === 'ArrowLeft') lightboxPrevImage();
+    else if (e.key === 'ArrowRight') lightboxNextImage();
+    else if (e.key === 'Escape') closeLightboxFn();
+});
+
+// Свайп для мобильных
+let touchStartX = 0;
+let touchEndX = 0;
+lightboxModal.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+}, {passive: true});
+lightboxModal.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 50) {
+        if (diff > 0) lightboxNextImage();
+        else lightboxPrevImage();
+    }
+}, {passive: true});
 
 function scrollGallery(direction) {
     const el = screenshotStrip;
@@ -650,6 +717,18 @@ async function prepareApp() {
 function showDashboard() {
     storeDash.classList.add('visible');
     refreshUI();
+}
+
+function showNotification(title, message, callback) {
+    notifTitle.innerText = title;
+    notifText.innerText = message;
+    notificationModal.classList.add('visible');
+    toggleBodyScroll(true);
+    notifOkBtn.onclick = () => {
+        notificationModal.classList.remove('visible');
+        toggleBodyScroll(false);
+        if (callback) callback();
+    };
 }
 
 prepareApp();
