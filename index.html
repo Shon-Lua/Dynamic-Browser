@@ -35,10 +35,10 @@
         .download-prime:hover{transform:translateY(-4px);background:rgba(255,255,255,0.3);border-color:white;box-shadow:0 20px 30px -12px black}
         .glass-panel{background:var(--card-bg);backdrop-filter:blur(18px);border-radius:var(--radius-card);padding:24px 28px;border:1px solid var(--glass-border);transition:all 0.2s}
         .panel-header{font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-faint);margin-bottom:20px;display:flex;align-items:center;gap:10px}
-        .gallery-wrapper{position:relative;overflow:hidden;border-radius:16px}
+        .gallery-wrapper{position:relative;overflow:hidden}
         .screenshot-strip{display:flex;gap:18px;overflow-x:auto;scroll-behavior:smooth;padding:6px 44px;scrollbar-width:none}
         .screenshot-strip::-webkit-scrollbar{display:none}
-        .screenshot-strip img{height:240px;width:auto;flex-shrink:0;border-radius:20px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;transition:outline-color 0.2s ease, transform 0.2s;outline:2px solid transparent;outline-offset:2px}
+        .screenshot-strip img{height:240px;width:auto;flex-shrink:0;border-radius:20px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;transition:outline-color 0.2s ease,transform 0.2s;outline:2px solid transparent;outline-offset:2px}
         .screenshot-strip img:hover{outline-color:white;transform:scale(1.02)}
         .screenshot-strip .spinner-wrap{display:flex;justify-content:center;align-items:center;width:100%;min-height:80px}
         .screenshot-strip .spinner-wrap i{font-size:2.5rem;color:rgba(255,255,255,0.4);animation:spin 1s linear infinite}
@@ -77,16 +77,16 @@
         .privacy-scroll p{color:var(--text-dim);line-height:1.7;margin-bottom:18px;font-size:0.95rem}
         .privacy-close-btn{background:linear-gradient(145deg,rgba(255,255,255,0.15),rgba(255,255,255,0.03));border:1px solid rgba(255,255,255,0.4);padding:12px 32px;border-radius:60px;font-weight:700;font-size:0.9rem;color:white;cursor:pointer;transition:0.3s;backdrop-filter:blur(10px);align-self:center;flex-shrink:0}
         .privacy-close-btn:hover{transform:translateY(-2px);background:rgba(255,255,255,0.25);border-color:white;box-shadow:0 12px 24px -10px black}
-        .lightbox-modal{display:flex;align-items:center;justify-content:center;position:fixed}
-        .lightbox-img{max-width:90vw;max-height:85vh;border-radius:28px;box-shadow:0 30px 50px black;transition:opacity 0.35s ease;opacity:1}
+        .lightbox-content{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+        .lightbox-img{max-width:90vw;max-height:85vh;border-radius:28px;box-shadow:0 30px 50px black;transition:opacity 0.3s ease;opacity:1}
         .lightbox-img.fade{opacity:0}
-        .lightbox-close{position:absolute;top:16px;right:16px;font-size:32px;background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.3);color:white;border-radius:50%;width:48px;height:48px;cursor:pointer;z-index:10;display:flex;align-items:center;justify-content:center;transition:0.2s}
-        .lightbox-close:hover{background:rgba(255,255,255,0.2)}
-        .lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.3);color:white;width:48px;height:48px;border-radius:50%;cursor:pointer;z-index:10;font-size:24px;display:flex;align-items:center;justify-content:center;transition:0.2s}
-        .lightbox-nav:hover{background:rgba(255,255,255,0.2)}
+        .lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.2);color:white;font-size:28px;width:50px;height:50px;border-radius:50%;cursor:pointer;z-index:10;display:flex;align-items:center;justify-content:center;transition:0.2s;backdrop-filter:blur(4px)}
+        .lightbox-nav:hover{background:rgba(255,255,255,0.3)}
         .lightbox-nav.prev{left:20px}
         .lightbox-nav.next{right:20px}
-        .lightbox-counter{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.7);font-size:0.9rem;background:rgba(0,0,0,0.5);padding:6px 16px;border-radius:30px;backdrop-filter:blur(4px);z-index:10}
+        .lightbox-close{position:absolute;top:20px;right:20px;font-size:36px;background:none;border:none;color:white;cursor:pointer;z-index:11;transition:0.2s}
+        .lightbox-close:hover{transform:scale(1.1);color:#ccc}
+        .lightbox-counter{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.7);font-size:0.9rem;background:rgba(0,0,0,0.5);padding:6px 16px;border-radius:30px;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.1)}
         @media(max-width:720px){
             .hero-product{flex-direction:column;align-items:center;text-align:center}
             .action-bar{justify-content:center}
@@ -96,10 +96,10 @@
             .screenshot-strip img{height:160px}
             .screenshot-strip{padding:6px 34px}
             .gallery-arrow{width:32px;height:32px;font-size:18px}
-            .lightbox-nav{width:40px;height:40px;font-size:20px}
-            .lightbox-nav.prev{left:8px}
-            .lightbox-nav.next{right:8px}
-            .lightbox-close{width:40px;height:40px;font-size:24px;top:12px;right:12px}
+            .lightbox-nav{width:40px;height:40px;font-size:22px}
+            .lightbox-nav.prev{left:10px}
+            .lightbox-nav.next{right:10px}
+            .lightbox-close{top:10px;right:10px;font-size:28px}
         }
         #loadingOverlay{position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;transition:opacity 0.6s ease;pointer-events:none}
         #loadingOverlay.hidden{opacity:0}
@@ -164,11 +164,13 @@
     </div>
 </div>
 <div class="lightbox-modal" id="lightboxModal">
-    <button class="lightbox-close" id="closeLightbox">&times;</button>
-    <button class="lightbox-nav prev" id="lightboxPrev"><i class="fas fa-chevron-left"></i></button>
-    <img class="lightbox-img" id="lightboxImg" alt="">
-    <button class="lightbox-nav next" id="lightboxNext"><i class="fas fa-chevron-right"></i></button>
-    <div class="lightbox-counter" id="lightboxCounter"></div>
+    <div class="lightbox-content">
+        <button class="lightbox-close" id="closeLightbox">&times;</button>
+        <button class="lightbox-nav prev" id="lightboxPrev"><i class="fas fa-chevron-left"></i></button>
+        <button class="lightbox-nav next" id="lightboxNext"><i class="fas fa-chevron-right"></i></button>
+        <img class="lightbox-img" id="lightboxImg" alt="">
+        <div class="lightbox-counter" id="lightboxCounter"></div>
+    </div>
 </div>
 <div class="modal-notification" id="notificationModal">
     <div class="notification-card">
@@ -360,10 +362,10 @@ const privacyBtn = document.getElementById('privacyBtn');
 const closePrivacyBtn = document.getElementById('closePrivacyBtn');
 const lightboxModal = document.getElementById('lightboxModal');
 const lightboxImg = document.getElementById('lightboxImg');
+const closeLightbox = document.getElementById('closeLightbox');
 const lightboxPrev = document.getElementById('lightboxPrev');
 const lightboxNext = document.getElementById('lightboxNext');
 const lightboxCounter = document.getElementById('lightboxCounter');
-const closeLightbox = document.getElementById('closeLightbox');
 const notificationModal = document.getElementById('notificationModal');
 const notifTitle = document.getElementById('notifTitle');
 const notifText = document.getElementById('notifText');
@@ -377,9 +379,10 @@ let lastDesc = null;
 const versionURL = 'ITVC%3F';
 let loadedPolicy = '';
 let loadedDesc = '';
-let lightboxImages = [];
+
+// Gallery & Lightbox state
+let galleryImages = [];
 let lightboxIndex = 0;
-let lightboxTransitioning = false;
 
 function toggleBodyScroll(modalVisible) {
     document.body.classList.toggle('modal-open', modalVisible);
@@ -486,16 +489,14 @@ function updateGalleryArrows() {
 }
 
 function renderScreenshots(images) {
+    galleryImages = images;
     screenshotStrip.innerHTML = images.length
-        ? images.map(src => `<img src="${src}" class="screenshot-item" loading="lazy">`).join('')
+        ? images.map((src, i) => `<img src="${src}" class="screenshot-item" data-index="${i}" loading="lazy">`).join('')
         : '<div style="color:rgba(255,255,255,0.4); padding:20px;">Нет скриншотов</div>';
-    // сброс скролла в начало
-    screenshotStrip.scrollLeft = 0;
-    document.querySelectorAll('.screenshot-item').forEach((img, idx) =>
+    document.querySelectorAll('.screenshot-item').forEach(img =>
         img.addEventListener('click', (e) => {
-            lightboxImages = images;
-            lightboxIndex = idx;
-            openLightbox();
+            const idx = parseInt(img.dataset.index, 10);
+            openLightbox(idx);
         })
     );
     requestAnimationFrame(() => updateGalleryArrows());
@@ -512,6 +513,114 @@ async function loadScreenshotsAsync() {
     const screens = await loadScreenshots(currentOS, currentInstruction?.Images || null);
     renderScreenshots(screens);
 }
+
+// Gallery navigation: scroll to previous/next image
+function galleryScroll(direction) {
+    const el = screenshotStrip;
+    if (!el || !el.children.length) return;
+    const images = el.querySelectorAll('.screenshot-item');
+    if (!images.length) return;
+    // Find current visible image (closest to left)
+    const containerLeft = el.scrollLeft;
+    let targetIndex = 0;
+    let minDist = Infinity;
+    images.forEach((img, i) => {
+        const rect = img.getBoundingClientRect();
+        const containerRect = el.getBoundingClientRect();
+        const imgLeft = rect.left - containerRect.left + el.scrollLeft;
+        const dist = Math.abs(imgLeft - containerLeft);
+        if (dist < minDist) {
+            minDist = dist;
+            targetIndex = i;
+        }
+    });
+    const newIndex = Math.max(0, Math.min(images.length - 1, targetIndex + direction));
+    if (newIndex === targetIndex && direction !== 0) {
+        // maybe at edge
+        if (direction === 1 && targetIndex === images.length - 1) return;
+        if (direction === -1 && targetIndex === 0) return;
+    }
+    images[newIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    setTimeout(updateGalleryArrows, 300);
+}
+
+galleryLeft.addEventListener('click', () => galleryScroll(-1));
+galleryRight.addEventListener('click', () => galleryScroll(1));
+
+screenshotStrip.addEventListener('scroll', updateGalleryArrows);
+window.addEventListener('resize', updateGalleryArrows);
+
+// Lightbox
+function openLightbox(index) {
+    if (!galleryImages.length) return;
+    lightboxIndex = Math.max(0, Math.min(index, galleryImages.length - 1));
+    lightboxImg.classList.add('fade');
+    setTimeout(() => {
+        lightboxImg.src = galleryImages[lightboxIndex];
+        lightboxImg.onload = () => {
+            lightboxImg.classList.remove('fade');
+        };
+        updateLightboxCounter();
+        lightboxModal.classList.add('visible');
+        toggleBodyScroll(true);
+    }, 200);
+}
+
+function closeLightboxFn() {
+    lightboxModal.classList.remove('visible');
+    lightboxImg.src = '';
+    toggleBodyScroll(false);
+}
+
+function updateLightboxCounter() {
+    lightboxCounter.textContent = `${lightboxIndex + 1} / ${galleryImages.length}`;
+}
+
+function lightboxNavigate(direction) {
+    if (!galleryImages.length) return;
+    const newIndex = lightboxIndex + direction;
+    if (newIndex < 0 || newIndex >= galleryImages.length) return;
+    lightboxIndex = newIndex;
+    lightboxImg.classList.add('fade');
+    setTimeout(() => {
+        lightboxImg.src = galleryImages[lightboxIndex];
+        lightboxImg.onload = () => {
+            lightboxImg.classList.remove('fade');
+        };
+        updateLightboxCounter();
+    }, 200);
+}
+
+lightboxPrev.addEventListener('click', () => lightboxNavigate(-1));
+lightboxNext.addEventListener('click', () => lightboxNavigate(1));
+
+closeLightbox.addEventListener('click', closeLightboxFn);
+lightboxModal.addEventListener('click', (e) => {
+    if (e.target === lightboxModal) closeLightboxFn();
+});
+
+// Swipe support for lightbox
+let touchStartX = 0;
+let touchEndX = 0;
+lightboxModal.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+}, { passive: true });
+lightboxModal.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 40) {
+        if (diff > 0) lightboxNavigate(1);
+        else lightboxNavigate(-1);
+    }
+}, { passive: true });
+
+// Keyboard support for lightbox
+document.addEventListener('keydown', (e) => {
+    if (!lightboxModal.classList.contains('visible')) return;
+    if (e.key === 'ArrowLeft') lightboxNavigate(-1);
+    else if (e.key === 'ArrowRight') lightboxNavigate(1);
+    else if (e.key === 'Escape') closeLightboxFn();
+});
 
 function refreshUI() {
     const osData = appMeta[currentOS];
@@ -579,96 +688,6 @@ privacyBtn.addEventListener('click', (e) => {
 closePrivacyBtn.addEventListener('click', closePrivacyModal);
 privacyModal.addEventListener('click', (e) => {
     if (e.target === privacyModal) closePrivacyModal();
-});
-
-function openLightbox() {
-    if (!lightboxImages.length) return;
-    lightboxImg.classList.remove('fade');
-    lightboxImg.src = lightboxImages[lightboxIndex];
-    updateLightboxCounter();
-    lightboxModal.classList.add('visible');
-    toggleBodyScroll(true);
-    lightboxTransitioning = false;
-}
-
-function closeLightboxFn() {
-    lightboxModal.classList.remove('visible');
-    lightboxImg.src = '';
-    toggleBodyScroll(false);
-}
-
-closeLightbox.addEventListener('click', closeLightboxFn);
-lightboxModal.addEventListener('click', (e) => {
-    if (e.target === lightboxModal) closeLightboxFn();
-});
-
-function updateLightboxCounter() {
-    lightboxCounter.textContent = `${lightboxIndex + 1} / ${lightboxImages.length}`;
-}
-
-function setLightboxImage(index) {
-    if (lightboxTransitioning) return;
-    if (index < 0 || index >= lightboxImages.length) return;
-    lightboxTransitioning = true;
-    lightboxImg.classList.add('fade');
-    setTimeout(() => {
-        lightboxIndex = index;
-        lightboxImg.src = lightboxImages[lightboxIndex];
-        updateLightboxCounter();
-        lightboxImg.classList.remove('fade');
-        setTimeout(() => {
-            lightboxTransitioning = false;
-        }, 350);
-    }, 300);
-}
-
-lightboxPrev.addEventListener('click', () => {
-    setLightboxImage(lightboxIndex - 1);
-});
-lightboxNext.addEventListener('click', () => {
-    setLightboxImage(lightboxIndex + 1);
-});
-
-document.addEventListener('keydown', (e) => {
-    if (!lightboxModal.classList.contains('visible')) return;
-    if (e.key === 'ArrowLeft') setLightboxImage(lightboxIndex - 1);
-    else if (e.key === 'ArrowRight') setLightboxImage(lightboxIndex + 1);
-    else if (e.key === 'Escape') closeLightboxFn();
-});
-
-// Touch swipe for lightbox
-let touchStartX = 0;
-let touchEndX = 0;
-lightboxModal.addEventListener('touchstart', (e) => {
-    touchStartX = e.changedTouches[0].screenX;
-}, { passive: true });
-lightboxModal.addEventListener('touchend', (e) => {
-    touchEndX = e.changedTouches[0].screenX;
-    const diff = touchStartX - touchEndX;
-    if (Math.abs(diff) > 50) {
-        if (diff > 0) setLightboxImage(lightboxIndex + 1);
-        else setLightboxImage(lightboxIndex - 1);
-    }
-}, { passive: true });
-
-function scrollGallery(direction) {
-    const el = screenshotStrip;
-    if (!el) return;
-    const step = el.clientWidth * 0.8;
-    const target = el.scrollLeft + direction * step;
-    el.scrollTo({ left: target, behavior: 'smooth' });
-    setTimeout(updateGalleryArrows, 350);
-}
-
-galleryLeft.addEventListener('click', () => scrollGallery(-1));
-galleryRight.addEventListener('click', () => scrollGallery(1));
-
-screenshotStrip.addEventListener('scroll', () => {
-    updateGalleryArrows();
-});
-
-window.addEventListener('resize', () => {
-    updateGalleryArrows();
 });
 
 function showNotification(title, message, callback) {
