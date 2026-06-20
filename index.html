@@ -675,19 +675,6 @@ document.addEventListener('visibilitychange', () => {
 
 initThree();
 
-const appMeta = {
-    Windows: {
-        title: 'Dynamic Browser',
-        short: 'Молниеносный, безопасный, минималистичный.',
-        fullDesc: 'nil',
-        formats: ['exe', 'zip'],
-        defaultFormat: 'exe',
-        permissions: ['Интернет', 'Хранилище', 'Поверх всех приложений']
-    }
-};
-let currentOS = 'Windows';
-let currentFormat = 'exe';
-let currentFileName = '';
 const storeDash = document.getElementById('storeDashboard');
 const appNameSpan = document.getElementById('appName');
 const appSubSpan = document.getElementById('appSub');
@@ -713,8 +700,9 @@ const notifText = document.getElementById('notifText');
 const notifOkBtn = document.getElementById('notifOkBtn');
 
 let currentInstruction = null;
+let currentFormat = 'exe';
+let currentFileName = '';
 let lastDesc = null;
-const versionURL = 'https://raw.githubusercontent.com/Shon-Lua/Dynamic-Browser/refs/heads/main/ITVC%3F';
 
 function toggleBodyScroll(modalVisible) {
     document.body.classList.toggle('modal-open', modalVisible);
@@ -786,8 +774,8 @@ async function fetchText(url) {
     }
 }
 
-async function loadInstruction(os) {
-    return await fetchJSON(`${os}/instruction.json`);
+async function loadInstruction() {
+    return await fetchJSON('App/instruction.json');
 }
 
 async function loadScreenshots(base, imagesMap) {
@@ -821,26 +809,23 @@ function renderScreenshots(images) {
 }
 
 async function refreshUI() {
-    const osData = appMeta[currentOS];
-    appNameSpan.innerText = osData.title;
-    appSubSpan.innerText = osData.short;
-    currentInstruction = await loadInstruction(currentOS);
-    let desc = osData.fullDesc;
+    currentInstruction = await loadInstruction();
+    const title = currentInstruction?.title || 'Dynamic Browser';
+    const short = currentInstruction?.short || '';
+    const permissions = currentInstruction?.permissions || [];
+    appNameSpan.innerText = title;
+    appSubSpan.innerText = short;
+    let desc = '';
     if (currentInstruction?.desc) {
-        const fetched = await fetchText(`${currentOS}/${currentInstruction.desc}`);
+        const fetched = await fetchText(`App/${currentInstruction.desc}`);
         if (fetched) desc = fetched;
     }
     descTextSpan.innerText = desc;
-    permListDiv.innerHTML = osData.permissions.map(p => `<div class="permission-row"><i class="fas fa-check-circle"></i> ${p}</div>`).join('');
-    const ver = currentInstruction?.version || '3.2.1';
-    if (currentInstruction?.app) {
-        currentFileName = currentFormat === 'exe' ? currentInstruction.exe : currentInstruction.zip;
-    } else {
-        currentFileName = currentFormat === 'exe' ? `dynamic-browser-setup-${ver}.exe` : `dynamic-browser-portable-${ver}.zip`;
-    }
+    permListDiv.innerHTML = permissions.map(p => `<div class="permission-row"><i class="fas fa-check-circle"></i> ${p}</div>`).join('');
+    currentFileName = (currentFormat === 'exe' ? currentInstruction?.exe : currentInstruction?.zip) || '';
     const activeOpt = document.querySelector(`.format-option[data-format="${currentFormat}"]`);
     if (activeOpt) activeOpt.classList.add('active');
-    const screens = await loadScreenshots(currentOS, currentInstruction?.Images || null);
+    const screens = await loadScreenshots('App', currentInstruction?.Images || null);
     renderScreenshots(screens);
     setupDescription();
 }
@@ -921,7 +906,7 @@ function showNotification(title, message, callback) {
 async function initApp() {
     let remoteVersion = null;
     try {
-        const resp = await fetch(versionURL);
+        const resp = await fetch('ITVC?/version');
         const text = await resp.text();
         remoteVersion = parseInt(text.trim(), 10);
         if (isNaN(remoteVersion)) remoteVersion = null;
