@@ -1,0 +1,12 @@
+{
+    "app_1": "Dynamic_Browser.exe",
+    "app_2": "Dynamic_Browser.zip",
+    "desc": "desc.txt",
+    "Images": {
+    "Image_1": "Screenshots/1.png",
+    "Image_2": "Screenshots/2.png",
+    "Image_3": "Screenshots/3.png",
+    "Image_4": "Screenshots/4.png",
+    "Image_5": "Screenshots/5.png"
+   }
+  }
