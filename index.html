@@ -86,13 +86,16 @@
         .lightbox-nav.right{right:20px}
         .lightbox-nav.hidden{display:none}
         @media(max-width:720px){
-            .hero-product{flex-direction:column;align-items:center;text-align:center}
+            .hero-product{flex-direction:column;align-items:center;text-align:center;padding:20px}
             .action-bar{justify-content:center}
             .product-title{font-size:1.8rem}
             .privacy-card,.notification-card{padding:24px 20px 20px}
             .privacy-title{font-size:1.4rem}
             .screenshot-strip img{height:160px}
-            .gallery-arrow{width:32px;height:32px;font-size:18px}
+            .gallery-arrow{display:none}
+            .glass-panel{padding:16px 18px}
+            body{padding:16px 12px}
+            .store-dashboard{gap:20px}
             .lightbox-nav{width:36px;height:36px;font-size:20px}
             .lightbox-nav.left{left:8px}
             .lightbox-nav.right{right:8px}
@@ -496,7 +499,6 @@ function renderScreenshots(images) {
         img.onerror = () => updateGalleryArrows();
     });
     
-    // Обновляем стрелки после вставки и загрузки изображений
     requestAnimationFrame(() => updateGalleryArrows());
     setTimeout(updateGalleryArrows, 300);
     setTimeout(updateGalleryArrows, 800);
