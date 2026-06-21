@@ -192,16 +192,16 @@ function initThree() {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
     if (!isMobile) scene.fog = new THREE.FogExp2(0x000000, 0.008);
-    
+
     camera = new THREE.PerspectiveCamera(isMobile ? 50 : 42, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(isMobile ? 10 : 11, isMobile ? 6.5 : 7.5, isMobile ? 12 : 13);
     camera.lookAt(0, 0.2, 0);
-    
+
     const pixelRatio = isMobile ? Math.min(window.devicePixelRatio, 1.2) : Math.min(window.devicePixelRatio, 2);
     renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: !isMobile, powerPreference: isMobile ? "low-power" : "high-performance" });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(pixelRatio);
-    
+
     canvas.addEventListener('webglcontextlost', (e) => {
         e.preventDefault();
         contextLostFlag = true;
@@ -212,7 +212,7 @@ function initThree() {
         contextLostFlag = false;
         initThree();
     });
-    
+
     const widthSeg = isMobile ? 20 : 45;
     const heightSeg = isMobile ? 20 : 45;
     const planeSize = isMobile ? 16 : 19;
@@ -220,7 +220,7 @@ function initThree() {
     geometry.rotateX(-Math.PI / 2);
     const positions = geometry.attributes.position.array;
     for (let i = 0; i < positions.length / 3; i++) positions[i*3+1] = 0;
-    
+
     const wireframeMat = new THREE.MeshStandardMaterial({
         color: 0xffffff,
         wireframe: true,
@@ -230,7 +230,7 @@ function initThree() {
     });
     waveMesh = new THREE.Mesh(geometry, wireframeMat);
     scene.add(waveMesh);
-    
+
     const ambient = new THREE.AmbientLight(0x222222);
     scene.add(ambient);
     const dirLight = new THREE.DirectionalLight(0xffffff, isMobile ? 0.9 : 1.2);
@@ -241,13 +241,13 @@ function initThree() {
         fillLight.position.set(-2, 3, 4);
         scene.add(fillLight);
     }
-    
+
     const grid = new THREE.GridHelper(isMobile ? 20 : 28, isMobile ? 16 : 24, 0xffffff, 0x3a3a3a);
     grid.position.y = -2.0;
     grid.material.transparent = true;
     grid.material.opacity = isMobile ? 0.1 : 0.18;
     scene.add(grid);
-    
+
     if (!isMobile) {
         const starCount = 500;
         const starGeo = new THREE.BufferGeometry();
@@ -261,7 +261,7 @@ function initThree() {
         stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.07, transparent: true, opacity: 0.55 }));
         scene.add(stars);
     }
-    
+
     animate();
 }
 
@@ -377,6 +377,9 @@ let currentScreenshots = [];
 let lightboxIndex = 0;
 let isLightboxTransitioning = false;
 let galleryAnimationId = null;
+let lightboxFadeOutTimer = null;
+let lightboxLoadTimer = null;
+let lightboxTransitionId = 0;
 
 function toggleBodyScroll(modalVisible) {
     document.body.classList.toggle('modal-open', modalVisible);
@@ -517,7 +520,7 @@ function renderScreenshots(images) {
     screenshotStrip.innerHTML = images.length
         ? images.map(src => `<img src="${src}" class="screenshot-item" loading="lazy">`).join('')
         : '<div style="color:rgba(255,255,255,0.4); padding:20px;">Нет скриншотов</div>';
-    
+
     const imgs = document.querySelectorAll('.screenshot-item');
     imgs.forEach((img, idx) => {
         img.addEventListener('click', () => {
@@ -527,7 +530,7 @@ function renderScreenshots(images) {
         img.onload = () => updateGalleryArrows();
         img.onerror = () => updateGalleryArrows();
     });
-    
+
     requestAnimationFrame(() => updateGalleryArrows());
     setTimeout(updateGalleryArrows, 300);
     setTimeout(updateGalleryArrows, 800);
@@ -615,41 +618,58 @@ privacyModal.addEventListener('click', (e) => {
     if (e.target === privacyModal) closePrivacyModal();
 });
 
-function transitionLightboxImage(newSrc, callback) {
-    if (isLightboxTransitioning) return;
+function setLightboxImage(src, callback) {
+    if (lightboxImg.src === src && !isLightboxTransitioning) {
+        if (callback) callback();
+        return;
+    }
+
+    const transitionId = ++lightboxTransitionId;
+
+    if (lightboxFadeOutTimer) {
+        clearTimeout(lightboxFadeOutTimer);
+        lightboxFadeOutTimer = null;
+    }
+    if (lightboxLoadTimer) {
+        clearTimeout(lightboxLoadTimer);
+        lightboxLoadTimer = null;
+    }
+    lightboxImg.classList.remove('fade-out');
+    isLightboxTransitioning = false;
+
+    lightboxImg.classList.add('fade-out');
     isLightboxTransitioning = true;
 
-    const onTransitionEnd = (e) => {
-        if (e.propertyName !== 'opacity') return;
-        lightboxImg.removeEventListener('transitionend', onTransitionEnd);
-        lightboxImg.src = newSrc;
-        lightboxImg.classList.remove('fade-out');
-        const onLoad = () => {
-            lightboxImg.removeEventListener('load', onLoad);
-            isLightboxTransitioning = false;
-            if (callback) callback();
-        };
-        lightboxImg.addEventListener('load', onLoad);
-        setTimeout(() => {
-            if (isLightboxTransitioning) {
-                lightboxImg.removeEventListener('load', onLoad);
-                isLightboxTransitioning = false;
-                if (callback) callback();
-            }
-        }, 600);
-    };
+    lightboxFadeOutTimer = setTimeout(() => {
+        if (transitionId !== lightboxTransitionId) return;
+        lightboxFadeOutTimer = null;
 
-    lightboxImg.addEventListener('transitionend', onTransitionEnd);
-    lightboxImg.classList.add('fade-out');
-    setTimeout(() => {
-        if (isLightboxTransitioning) {
-            lightboxImg.removeEventListener('transitionend', onTransitionEnd);
-            lightboxImg.src = newSrc;
+        lightboxImg.src = src;
+        let loaded = false;
+
+        lightboxImg.onload = () => {
+            if (loaded) return;
+            if (transitionId !== lightboxTransitionId) return;
+            loaded = true;
             lightboxImg.classList.remove('fade-out');
             isLightboxTransitioning = false;
+            if (lightboxLoadTimer) {
+                clearTimeout(lightboxLoadTimer);
+                lightboxLoadTimer = null;
+            }
             if (callback) callback();
-        }
-    }, 600);
+        };
+
+        lightboxLoadTimer = setTimeout(() => {
+            if (loaded) return;
+            if (transitionId !== lightboxTransitionId) return;
+            loaded = true;
+            lightboxImg.classList.remove('fade-out');
+            isLightboxTransitioning = false;
+            lightboxLoadTimer = null;
+            if (callback) callback();
+        }, 500);
+    }, 280);
 }
 
 function openLightbox(index) {
@@ -657,6 +677,15 @@ function openLightbox(index) {
     lightboxIndex = Math.max(0, Math.min(index, currentScreenshots.length - 1));
     lightboxImg.src = currentScreenshots[lightboxIndex];
     lightboxImg.classList.remove('fade-out');
+    isLightboxTransitioning = false;
+    if (lightboxFadeOutTimer) {
+        clearTimeout(lightboxFadeOutTimer);
+        lightboxFadeOutTimer = null;
+    }
+    if (lightboxLoadTimer) {
+        clearTimeout(lightboxLoadTimer);
+        lightboxLoadTimer = null;
+    }
     lightboxModal.classList.add('visible');
     toggleBodyScroll(true);
     updateLightboxNav();
@@ -664,10 +693,17 @@ function openLightbox(index) {
 
 function closeLightboxFn() {
     lightboxModal.classList.remove('visible');
-    lightboxImg.src = '';
+    if (lightboxFadeOutTimer) {
+        clearTimeout(lightboxFadeOutTimer);
+        lightboxFadeOutTimer = null;
+    }
+    if (lightboxLoadTimer) {
+        clearTimeout(lightboxLoadTimer);
+        lightboxLoadTimer = null;
+    }
     lightboxImg.classList.remove('fade-out');
-    toggleBodyScroll(false);
     isLightboxTransitioning = false;
+    toggleBodyScroll(false);
 }
 
 function updateLightboxNav() {
@@ -681,16 +717,16 @@ function updateLightboxNav() {
 }
 
 function lightboxPrevImage() {
-    if (lightboxIndex > 0 && !isLightboxTransitioning) {
+    if (lightboxIndex > 0) {
         lightboxIndex--;
-        transitionLightboxImage(currentScreenshots[lightboxIndex], updateLightboxNav);
+        setLightboxImage(currentScreenshots[lightboxIndex], updateLightboxNav);
     }
 }
 
 function lightboxNextImage() {
-    if (lightboxIndex < currentScreenshots.length - 1 && !isLightboxTransitioning) {
+    if (lightboxIndex < currentScreenshots.length - 1) {
         lightboxIndex++;
-        transitionLightboxImage(currentScreenshots[lightboxIndex], updateLightboxNav);
+        setLightboxImage(currentScreenshots[lightboxIndex], updateLightboxNav);
     }
 }
 
@@ -740,22 +776,22 @@ async function prepareApp() {
         remoteVersion = parseInt(text.trim(), 10);
         if (isNaN(remoteVersion)) remoteVersion = null;
     } catch {}
-    
+
     const storedVersion = localStorage.getItem('app_version');
     const storedNum = storedVersion ? parseInt(storedVersion, 10) : null;
-    
+
     const policyText = await fetchText('POLITICS.txt');
     if (policyText) loadedPolicy = policyText;
-    
+
     currentInstruction = await loadInstruction(currentOS);
     if (currentInstruction?.desc) {
         const fetched = await fetchText(`${currentOS}/${currentInstruction.desc}`);
         if (fetched) loadedDesc = fetched;
     }
     if (!loadedDesc) loadedDesc = appMeta[currentOS].fullDesc;
-    
+
     loadingOverlay.classList.add('hidden');
-    
+
     if (remoteVersion !== null) {
         if (storedNum === null) {
             showNotification('Добро пожаловать в Dynamic Installer',
