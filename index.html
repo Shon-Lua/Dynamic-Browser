@@ -33,20 +33,14 @@
             color-scheme: dark;
             scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
             scrollbar-width: thin;
-            overflow: hidden;
         }
         body {
             font-family: 'Inter', system-ui, sans-serif;
             background: var(--bg-deep);
             color: var(--text-main);
-            min-height: 100vh;
             height: 100vh;
-            display: flex;
-            align-items: stretch;
-            justify-content: center;
-            position: relative;
             overflow: hidden;
-            flex-direction: column;
+            position: relative;
         }
         body.modal-open {
             overflow: hidden;
@@ -65,6 +59,7 @@
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.45);
         }
+
         canvas#wave-canvas {
             position: fixed;
             top: 0;
@@ -75,24 +70,22 @@
             pointer-events: none;
             filter: brightness(0.9) contrast(1.2);
         }
-        .app-wrapper {
+
+        .page-container {
             position: relative;
             z-index: 2;
             width: 100%;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
+            height: 100vh;
             overflow: hidden;
         }
-        .store-dashboard {
+
+        .sections-wrapper {
             position: relative;
             width: 100%;
             height: 100%;
-            overflow: hidden;
-            display: flex;
-            align-items: stretch;
         }
-        .dashboard-section {
+
+        .section {
             position: absolute;
             top: 0;
             left: 0;
@@ -102,41 +95,49 @@
             align-items: center;
             justify-content: center;
             opacity: 0;
-            transition: opacity 0.6s ease, transform 0.6s ease;
-            transform: translateY(40px);
+            transform: translateY(50px);
+            transition: opacity 0.7s cubic-bezier(0.2, 0.9, 0.4, 1.1), transform 0.7s cubic-bezier(0.2, 0.9, 0.4, 1.1);
             pointer-events: none;
-            padding: 20px;
+            padding: 24px;
         }
-        .dashboard-section.active {
+        .section.active {
             opacity: 1;
             transform: translateY(0);
             pointer-events: auto;
-            z-index: 2;
+            z-index: 1;
         }
-        .dashboard-section.exit-up {
+        .section.leaving {
             opacity: 0;
-            transform: translateY(-40px);
+            transform: translateY(-50px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            z-index: 0;
         }
-        .dashboard-section.exit-down {
+        .section.entering {
             opacity: 0;
-            transform: translateY(40px);
+            transform: translateY(50px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
         }
-        .section-content {
-            max-width: 1200px;
+
+        .fixed-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
             width: 100%;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(14px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 24px;
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--text-faint);
         }
-        @keyframes fadeSlideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-                filter: blur(6px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-                filter: blur(0);
-            }
+        .fixed-footer a {
+            color: white;
+            margin: 0 10px;
+            text-decoration: none;
         }
+
         .hero-product {
             display: flex;
             gap: 32px;
@@ -147,6 +148,8 @@
             border: 1px solid var(--glass-border);
             box-shadow: var(--shadow-premium);
             flex-wrap: wrap;
+            max-width: 720px;
+            width: 100%;
         }
         .product-icon {
             width: 120px;
@@ -225,13 +228,15 @@
             border-color: white;
             box-shadow: 0 20px 30px -12px black;
         }
+
         .glass-panel {
             background: var(--card-bg);
             backdrop-filter: blur(18px);
             border-radius: var(--radius-card);
             padding: 24px 28px;
             border: 1px solid var(--glass-border);
-            transition: all 0.2s;
+            width: 100%;
+            max-width: 800px;
         }
         .panel-header {
             font-size: 0.75rem;
@@ -244,6 +249,7 @@
             align-items: center;
             gap: 10px;
         }
+
         .gallery-wrapper {
             position: relative;
             overflow: hidden;
@@ -328,6 +334,7 @@
             opacity: 0.3;
             pointer-events: none;
         }
+
         .desc-wrapper {
             overflow: hidden;
             transition: max-height 0.45s var(--transition-smooth);
@@ -347,6 +354,7 @@
             cursor: pointer;
             opacity: 0.7;
         }
+
         .permission-list {
             display: flex;
             flex-direction: column;
@@ -361,32 +369,10 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             padding: 8px 0;
         }
-        .fixed-footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            z-index: 20;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 12px 24px;
-            text-align: center;
-            font-size: 0.7rem;
-            color: var(--text-faint);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-        }
-        .fixed-footer a {
-            color: white;
-            text-decoration: none;
-            margin: 0 4px;
-        }
+
         .toast-message {
             position: fixed;
-            bottom: 90px;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%) translateY(90px);
             background: rgba(0, 0, 0, 0.9);
@@ -404,6 +390,7 @@
         .toast-message.visible {
             transform: translateX(-50%) translateY(0);
         }
+
         .modal-privacy,
         .lightbox-modal,
         .modal-notification {
@@ -425,6 +412,7 @@
             opacity: 1;
             visibility: visible;
         }
+
         .privacy-card,
         .notification-card {
             background: rgba(0, 0, 0, 0.96);
@@ -550,6 +538,7 @@
             border-color: white;
             box-shadow: 0 12px 24px -10px black;
         }
+
         .lightbox-img {
             max-width: 90vw;
             max-height: 85vh;
@@ -604,6 +593,7 @@
         .lightbox-nav.hidden {
             display: none;
         }
+
         #loadingOverlay {
             position: fixed;
             inset: 0;
@@ -634,6 +624,7 @@
             font-weight: 400;
             letter-spacing: 0.06em;
         }
+
         @media (max-width: 720px) {
             .hero-product {
                 flex-direction: column;
@@ -663,81 +654,77 @@
             .glass-panel {
                 padding: 16px 18px;
             }
-            body {
+            .section {
                 padding: 16px 12px;
-            }
-            .store-dashboard {
-                gap: 20px;
-            }
-            .lightbox-nav {
-                display: none;
             }
         }
     </style>
 </head>
 <body>
 <canvas id="wave-canvas"></canvas>
+
 <div id="loadingOverlay">
     <div class="spinner"></div>
     <p>Загрузка данных...</p>
 </div>
-<div class="app-wrapper">
-    <div class="store-dashboard" id="storeDashboard">
-        <div class="dashboard-section" data-index="0">
-            <div class="section-content">
-                <div class="hero-product">
-                    <img src="Logo.png" alt="Dynamic Browser" class="product-icon" id="appIcon">
-                    <div class="product-info">
-                        <div class="product-title" id="appName">Dynamic Browser</div>
-                        <div class="product-sub" id="appSub"></div>
-                        <div class="action-bar">
-                            <div class="format-group" id="formatGroup">
-                                <button class="format-option active" data-format="exe">EXE</button>
-                                <button class="format-option" data-format="zip">ZIP</button>
-                            </div>
-                            <button class="download-prime" id="installBtn"><i class="fas fa-download"></i> Скачать</button>
+
+<div class="page-container" id="pageContainer">
+    <div class="sections-wrapper">
+        <section class="section active" id="heroSection">
+            <div class="hero-product">
+                <img src="Logo.png" alt="Dynamic Browser" class="product-icon" id="appIcon">
+                <div class="product-info">
+                    <div class="product-title" id="appName">Dynamic Browser</div>
+                    <div class="product-sub" id="appSub"></div>
+                    <div class="action-bar">
+                        <div class="format-group" id="formatGroup">
+                            <button class="format-option active" data-format="exe">EXE</button>
+                            <button class="format-option" data-format="zip">ZIP</button>
                         </div>
+                        <button class="download-prime" id="installBtn"><i class="fas fa-download"></i> Скачать</button>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="dashboard-section" data-index="1">
-            <div class="section-content">
-                <div class="glass-panel">
-                    <div class="panel-header"><i class="fas fa-camera"></i> ГАЛЕРЕЯ</div>
-                    <div class="gallery-wrapper">
-                        <div class="screenshot-strip" id="screenshotStrip"></div>
-                        <button class="gallery-arrow left" id="galleryLeft"><i class="fas fa-chevron-left"></i></button>
-                        <button class="gallery-arrow right" id="galleryRight"><i class="fas fa-chevron-right"></i></button>
-                    </div>
+        </section>
+
+        <section class="section" id="gallerySection">
+            <div class="glass-panel">
+                <div class="panel-header"><i class="fas fa-camera"></i> ГАЛЕРЕЯ</div>
+                <div class="gallery-wrapper">
+                    <div class="screenshot-strip" id="screenshotStrip"></div>
+                    <button class="gallery-arrow left" id="galleryLeft"><i class="fas fa-chevron-left"></i></button>
+                    <button class="gallery-arrow right" id="galleryRight"><i class="fas fa-chevron-right"></i></button>
                 </div>
             </div>
-        </div>
-        <div class="dashboard-section" data-index="2">
-            <div class="section-content">
-                <div class="glass-panel">
-                    <div class="panel-header"><i class="fas fa-info-circle"></i> ОПИСАНИЕ</div>
-                    <div class="desc-wrapper" id="descWrap"><div class="desc-text" id="descText"></div></div>
-                    <button class="expand-trigger" id="expandDescBtn" style="display:none">Ещё</button>
+        </section>
+
+        <section class="section" id="descSection">
+            <div class="glass-panel">
+                <div class="panel-header"><i class="fas fa-info-circle"></i> ОПИСАНИЕ</div>
+                <div class="desc-wrapper" id="descWrap">
+                    <div class="desc-text" id="descText"></div>
                 </div>
+                <button class="expand-trigger" id="expandDescBtn" style="display:none">Ещё</button>
             </div>
-        </div>
-        <div class="dashboard-section" data-index="3">
-            <div class="section-content">
-                <div class="glass-panel">
-                    <div class="panel-header"><i class="fas fa-shield-alt"></i> РАЗРЕШЕНИЯ И ОСОБЕННОСТИ</div>
-                    <div class="permission-list" id="permissionList"></div>
-                </div>
+        </section>
+
+        <section class="section" id="permSection">
+            <div class="glass-panel">
+                <div class="panel-header"><i class="fas fa-shield-alt"></i> РАЗРЕШЕНИЯ И ОСОБЕННОСТИ</div>
+                <div class="permission-list" id="permissionList"></div>
             </div>
-        </div>
+        </section>
     </div>
 </div>
+
 <footer class="fixed-footer">
-    <span>© 2026 Dynamic Browser</span>
+    © 2026 Dynamic Browser —
     <a href="#" id="privacyBtn">Политика конфиденциальности</a>
     <a href="https://github.com/Shon-Lua/Dynamic-Browser" target="_blank">GitHub</a>
 </footer>
+
 <div class="toast-message" id="toastMsg"><i class="fas fa-check-circle"></i> <span id="toastText"></span></div>
+
 <div class="modal-privacy" id="privacyModal">
     <div class="privacy-card">
         <h2 class="privacy-title">Политика конфиденциальности</h2>
@@ -747,12 +734,14 @@
         <button class="privacy-close-btn" id="closePrivacyBtn">Закрыть</button>
     </div>
 </div>
+
 <div class="lightbox-modal" id="lightboxModal">
     <button class="lightbox-close" id="closeLightbox">&times;</button>
     <button class="lightbox-nav left" id="lightboxPrev"><i class="fas fa-chevron-left"></i></button>
     <img class="lightbox-img" id="lightboxImg" alt="">
     <button class="lightbox-nav right" id="lightboxNext"><i class="fas fa-chevron-right"></i></button>
 </div>
+
 <div class="modal-notification" id="notificationModal">
     <div class="notification-card">
         <h2 id="notifTitle"></h2>
@@ -763,7 +752,9 @@
     </div>
 </div>
 
-<script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }</script>
+<script type="importmap">
+    { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
+</script>
 <script type="module">
 import * as THREE from 'three';
 
@@ -779,16 +770,16 @@ function initThree() {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
     if (!isMobile) scene.fog = new THREE.FogExp2(0x000000, 0.008);
-    
+
     camera = new THREE.PerspectiveCamera(isMobile ? 50 : 42, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(isMobile ? 10 : 11, isMobile ? 6.5 : 7.5, isMobile ? 12 : 13);
     camera.lookAt(0, 0.2, 0);
-    
+
     const pixelRatio = isMobile ? Math.min(window.devicePixelRatio, 1.2) : Math.min(window.devicePixelRatio, 2);
     renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: !isMobile, powerPreference: isMobile ? "low-power" : "high-performance" });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(pixelRatio);
-    
+
     canvas.addEventListener('webglcontextlost', (e) => {
         e.preventDefault();
         contextLostFlag = true;
@@ -799,7 +790,7 @@ function initThree() {
         contextLostFlag = false;
         initThree();
     });
-    
+
     const widthSeg = isMobile ? 20 : 45;
     const heightSeg = isMobile ? 20 : 45;
     const planeSize = isMobile ? 16 : 19;
@@ -807,7 +798,7 @@ function initThree() {
     geometry.rotateX(-Math.PI / 2);
     const positions = geometry.attributes.position.array;
     for (let i = 0; i < positions.length / 3; i++) positions[i*3+1] = 0;
-    
+
     const wireframeMat = new THREE.MeshStandardMaterial({
         color: 0xffffff,
         wireframe: true,
@@ -817,7 +808,7 @@ function initThree() {
     });
     waveMesh = new THREE.Mesh(geometry, wireframeMat);
     scene.add(waveMesh);
-    
+
     const ambient = new THREE.AmbientLight(0x222222);
     scene.add(ambient);
     const dirLight = new THREE.DirectionalLight(0xffffff, isMobile ? 0.9 : 1.2);
@@ -828,13 +819,13 @@ function initThree() {
         fillLight.position.set(-2, 3, 4);
         scene.add(fillLight);
     }
-    
+
     const grid = new THREE.GridHelper(isMobile ? 20 : 28, isMobile ? 16 : 24, 0xffffff, 0x3a3a3a);
     grid.position.y = -2.0;
     grid.material.transparent = true;
     grid.material.opacity = isMobile ? 0.1 : 0.18;
     scene.add(grid);
-    
+
     if (!isMobile) {
         const starCount = 500;
         const starGeo = new THREE.BufferGeometry();
@@ -848,7 +839,7 @@ function initThree() {
         stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.07, transparent: true, opacity: 0.55 }));
         scene.add(stars);
     }
-    
+
     animate();
 }
 
@@ -925,7 +916,7 @@ const appMeta = {
 let currentOS = 'App';
 let currentFormat = 'exe';
 let currentFileName = '';
-const storeDash = document.getElementById('storeDashboard');
+
 const appNameSpan = document.getElementById('appName');
 const appSubSpan = document.getElementById('appSub');
 const descTextSpan = document.getElementById('descText');
@@ -965,52 +956,70 @@ let lightboxIndex = 0;
 let isLightboxTransitioning = false;
 let galleryAnimationId = null;
 
+const sections = [
+    document.getElementById('heroSection'),
+    document.getElementById('gallerySection'),
+    document.getElementById('descSection'),
+    document.getElementById('permSection')
+];
 let currentSectionIndex = 0;
-const sections = document.querySelectorAll('.dashboard-section');
-const totalSections = sections.length;
 let isTransitioning = false;
 
-function goToSection(index, direction = 'next') {
-    if (isTransitioning || index === currentSectionIndex || index < 0 || index >= totalSections) return;
+function changeSection(direction) {
+    if (isTransitioning) return;
+    const newIndex = currentSectionIndex + direction;
+    if (newIndex < 0 || newIndex >= sections.length) return;
+
+    const currentSection = sections[currentSectionIndex];
+    const nextSection = sections[newIndex];
+
     isTransitioning = true;
-    const oldSection = sections[currentSectionIndex];
-    const newSection = sections[index];
-    const exitClass = direction === 'next' ? 'exit-up' : 'exit-down';
-    oldSection.classList.remove('active');
-    oldSection.classList.add(exitClass);
-    newSection.classList.add('active');
-    const cleanup = () => {
-        oldSection.classList.remove(exitClass);
+
+    currentSection.classList.add('leaving');
+    currentSection.classList.remove('active');
+    nextSection.classList.add('entering');
+
+    const onTransitionEnd = (e) => {
+        if (e.target !== nextSection) return;
+        nextSection.removeEventListener('transitionend', onTransitionEnd);
+        nextSection.classList.remove('entering');
+        nextSection.classList.add('active');
+        currentSection.classList.remove('leaving');
+        currentSectionIndex = newIndex;
         isTransitioning = false;
-        currentSectionIndex = index;
     };
-    setTimeout(cleanup, 600);
+
+    nextSection.addEventListener('transitionend', onTransitionEnd, { once: false });
+    requestAnimationFrame(() => {
+        nextSection.classList.remove('entering');
+    });
 }
 
 function handleWheel(e) {
+    if (e.target.closest('.screenshot-strip') || e.target.closest('.privacy-scroll') || e.target.closest('.desc-wrapper')) return;
     if (isTransitioning) return;
-    if (e.deltaY > 20 && currentSectionIndex < totalSections - 1) {
-        goToSection(currentSectionIndex + 1, 'next');
-    } else if (e.deltaY < -20 && currentSectionIndex > 0) {
-        goToSection(currentSectionIndex - 1, 'prev');
-    }
+    if (Math.abs(e.deltaY) < 30) return;
+    if (e.deltaY > 0) changeSection(1);
+    else if (e.deltaY < 0) changeSection(-1);
 }
 
 let touchStartY = 0;
 function handleTouchStart(e) {
-    touchStartY = e.touches[0].clientY;
+    if (e.target.closest('.screenshot-strip') || e.target.closest('.privacy-scroll') || e.target.closest('.desc-wrapper')) return;
+    touchStartY = e.changedTouches[0].screenY;
 }
 function handleTouchEnd(e) {
     if (isTransitioning) return;
-    const diff = touchStartY - e.changedTouches[0].clientY;
-    if (Math.abs(diff) > 50) {
-        if (diff > 0 && currentSectionIndex < totalSections - 1) {
-            goToSection(currentSectionIndex + 1, 'next');
-        } else if (diff < 0 && currentSectionIndex > 0) {
-            goToSection(currentSectionIndex - 1, 'prev');
-        }
+    const deltaY = touchStartY - e.changedTouches[0].screenY;
+    if (Math.abs(deltaY) > 50) {
+        if (deltaY > 0) changeSection(1);
+        else changeSection(-1);
     }
 }
+
+document.addEventListener('wheel', handleWheel, { passive: false });
+document.addEventListener('touchstart', handleTouchStart, { passive: true });
+document.addEventListener('touchend', handleTouchEnd, { passive: true });
 
 function toggleBodyScroll(modalVisible) {
     document.body.classList.toggle('modal-open', modalVisible);
@@ -1151,7 +1160,7 @@ function renderScreenshots(images) {
     screenshotStrip.innerHTML = images.length
         ? images.map(src => `<img src="${src}" class="screenshot-item" loading="lazy">`).join('')
         : '<div style="color:rgba(255,255,255,0.4); padding:20px;">Нет скриншотов</div>';
-    
+
     const imgs = document.querySelectorAll('.screenshot-item');
     imgs.forEach((img, idx) => {
         img.addEventListener('click', () => {
@@ -1161,7 +1170,7 @@ function renderScreenshots(images) {
         img.onload = () => updateGalleryArrows();
         img.onerror = () => updateGalleryArrows();
     });
-    
+
     requestAnimationFrame(() => updateGalleryArrows());
     setTimeout(updateGalleryArrows, 300);
     setTimeout(updateGalleryArrows, 800);
@@ -1243,7 +1252,6 @@ privacyBtn.addEventListener('click', (e) => {
     e.preventDefault();
     openPrivacyModal();
 });
-
 closePrivacyBtn.addEventListener('click', closePrivacyModal);
 privacyModal.addEventListener('click', (e) => {
     if (e.target === privacyModal) closePrivacyModal();
@@ -1324,32 +1332,10 @@ document.addEventListener('keydown', (e) => {
     else if (e.key === 'Escape') closeLightboxFn();
 });
 
-let touchStartLX = 0;
-lightboxModal.addEventListener('touchstart', (e) => {
-    touchStartLX = e.changedTouches[0].screenX;
-}, {passive: true});
-lightboxModal.addEventListener('touchend', (e) => {
-    const diff = touchStartLX - e.changedTouches[0].screenX;
-    if (Math.abs(diff) > 50) {
-        if (diff > 0) lightboxNextImage();
-        else lightboxPrevImage();
-    }
-}, {passive: true});
-
 galleryLeft.addEventListener('click', () => scrollGallery(-1));
 galleryRight.addEventListener('click', () => scrollGallery(1));
-
-screenshotStrip.addEventListener('scroll', () => {
-    updateGalleryArrows();
-});
-
-window.addEventListener('resize', () => {
-    updateGalleryArrows();
-});
-
-window.addEventListener('wheel', handleWheel, { passive: false });
-window.addEventListener('touchstart', handleTouchStart, { passive: true });
-window.addEventListener('touchend', handleTouchEnd, { passive: true });
+screenshotStrip.addEventListener('scroll', () => updateGalleryArrows());
+window.addEventListener('resize', () => updateGalleryArrows());
 
 async function prepareApp() {
     loadingOverlay.classList.remove('hidden');
@@ -1360,29 +1346,29 @@ async function prepareApp() {
         remoteVersion = parseInt(text.trim(), 10);
         if (isNaN(remoteVersion)) remoteVersion = null;
     } catch {}
-    
+
     const storedVersion = localStorage.getItem('app_version');
     const storedNum = storedVersion ? parseInt(storedVersion, 10) : null;
-    
+
     const policyText = await fetchText('POLITICS.txt');
     if (policyText) loadedPolicy = policyText;
-    
+
     currentInstruction = await loadInstruction(currentOS);
     if (currentInstruction?.desc) {
         const fetched = await fetchText(`${currentOS}/${currentInstruction.desc}`);
         if (fetched) loadedDesc = fetched;
     }
     if (!loadedDesc) loadedDesc = appMeta[currentOS].fullDesc;
-    
+
     loadingOverlay.classList.add('hidden');
-    
+
     if (remoteVersion !== null) {
         if (storedNum === null) {
             showNotification('Добро пожаловать в Dynamic Installer',
-                'Dynamic Browser - это лёгкий браузер, который работает без трекинга, телеметрии и скрытых процессов. Браузер быстро запускается, стабильно работает на любых устройствах и не собирает никаких данных. Всё выполняется локально и прозрачно.',
+                'Dynamic Browser - это лёгкий браузер, который работает без трекинга, телеметрии и скрытых процессов.',
                 () => {
                     localStorage.setItem('app_version', remoteVersion);
-                    showDashboard();
+                    refreshUI();
                 });
             return;
         }
@@ -1391,18 +1377,11 @@ async function prepareApp() {
                 'В этой версии были исправлены некоторые ошибки и добавлены новые функции.',
                 () => {
                     localStorage.setItem('app_version', remoteVersion);
-                    showDashboard();
+                    refreshUI();
                 });
             return;
         }
     }
-    showDashboard();
-}
-
-function showDashboard() {
-    storeDash.style.display = 'flex';
-    sections[0].classList.add('active');
-    currentSectionIndex = 0;
     refreshUI();
 }
 
