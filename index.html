@@ -376,6 +376,7 @@ let loadedDesc = '';
 let currentScreenshots = [];
 let lightboxIndex = 0;
 let isLightboxTransitioning = false;
+let galleryAnimationId = null;
 
 function toggleBodyScroll(modalVisible) {
     document.body.classList.toggle('modal-open', modalVisible);
@@ -391,7 +392,7 @@ function showToastMessage(msg) {
 function resetDescription() {
     descWrap.style.maxHeight = 'none';
     expandDescBtn.style.display = 'none';
-    expandDescBtn.innerText = 'Ущё';
+    expandDescBtn.innerText = 'Ещё';
     expandDescBtn.dataset.exp = 'false';
 }
 
@@ -481,6 +482,36 @@ function updateGalleryArrows() {
     galleryRight.classList.toggle('visible', canScrollRight);
 }
 
+function animateScroll(element, target, duration = 400) {
+    const start = element.scrollLeft;
+    const change = target - start;
+    if (Math.abs(change) < 1) return;
+    const startTime = performance.now();
+    if (galleryAnimationId) cancelAnimationFrame(galleryAnimationId);
+    function step(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const ease = progress < 0.5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+        element.scrollLeft = start + change * ease;
+        if (progress < 1) {
+            galleryAnimationId = requestAnimationFrame(step);
+        } else {
+            galleryAnimationId = null;
+            updateGalleryArrows();
+        }
+    }
+    galleryAnimationId = requestAnimationFrame(step);
+}
+
+function scrollGallery(direction) {
+    const el = screenshotStrip;
+    if (!el) return;
+    const step = el.clientWidth * 0.85;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    const target = Math.max(0, Math.min(el.scrollLeft + direction * step, maxScroll));
+    animateScroll(el, target, 400);
+}
+
 function renderScreenshots(images) {
     currentScreenshots = images;
     screenshotStrip.innerHTML = images.length
@@ -489,7 +520,7 @@ function renderScreenshots(images) {
     
     const imgs = document.querySelectorAll('.screenshot-item');
     imgs.forEach((img, idx) => {
-        img.addEventListener('click', (e) => {
+        img.addEventListener('click', () => {
             lightboxIndex = idx;
             openLightbox(idx);
         });
@@ -670,15 +701,6 @@ lightboxModal.addEventListener('touchend', (e) => {
         else lightboxPrevImage();
     }
 }, {passive: true});
-
-function scrollGallery(direction) {
-    const el = screenshotStrip;
-    if (!el) return;
-    const step = el.clientWidth * 0.85;
-    const target = el.scrollLeft + direction * step;
-    el.scrollTo({ left: target, behavior: 'smooth' });
-    setTimeout(updateGalleryArrows, 400);
-}
 
 galleryLeft.addEventListener('click', () => scrollGallery(-1));
 galleryRight.addEventListener('click', () => scrollGallery(1));
