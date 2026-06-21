@@ -615,25 +615,41 @@ privacyModal.addEventListener('click', (e) => {
     if (e.target === privacyModal) closePrivacyModal();
 });
 
-function setLightboxImage(src, callback) {
+function transitionLightboxImage(newSrc, callback) {
     if (isLightboxTransitioning) return;
     isLightboxTransitioning = true;
-    lightboxImg.classList.add('fade-out');
-    setTimeout(() => {
-        lightboxImg.src = src;
-        lightboxImg.onload = () => {
-            lightboxImg.classList.remove('fade-out');
+
+    const onTransitionEnd = (e) => {
+        if (e.propertyName !== 'opacity') return;
+        lightboxImg.removeEventListener('transitionend', onTransitionEnd);
+        lightboxImg.src = newSrc;
+        lightboxImg.classList.remove('fade-out');
+        const onLoad = () => {
+            lightboxImg.removeEventListener('load', onLoad);
             isLightboxTransitioning = false;
             if (callback) callback();
         };
+        lightboxImg.addEventListener('load', onLoad);
         setTimeout(() => {
             if (isLightboxTransitioning) {
-                lightboxImg.classList.remove('fade-out');
+                lightboxImg.removeEventListener('load', onLoad);
                 isLightboxTransitioning = false;
                 if (callback) callback();
             }
         }, 600);
-    }, 300);
+    };
+
+    lightboxImg.addEventListener('transitionend', onTransitionEnd);
+    lightboxImg.classList.add('fade-out');
+    setTimeout(() => {
+        if (isLightboxTransitioning) {
+            lightboxImg.removeEventListener('transitionend', onTransitionEnd);
+            lightboxImg.src = newSrc;
+            lightboxImg.classList.remove('fade-out');
+            isLightboxTransitioning = false;
+            if (callback) callback();
+        }
+    }, 600);
 }
 
 function openLightbox(index) {
@@ -649,7 +665,9 @@ function openLightbox(index) {
 function closeLightboxFn() {
     lightboxModal.classList.remove('visible');
     lightboxImg.src = '';
+    lightboxImg.classList.remove('fade-out');
     toggleBodyScroll(false);
+    isLightboxTransitioning = false;
 }
 
 function updateLightboxNav() {
@@ -665,14 +683,14 @@ function updateLightboxNav() {
 function lightboxPrevImage() {
     if (lightboxIndex > 0 && !isLightboxTransitioning) {
         lightboxIndex--;
-        setLightboxImage(currentScreenshots[lightboxIndex], updateLightboxNav);
+        transitionLightboxImage(currentScreenshots[lightboxIndex], updateLightboxNav);
     }
 }
 
 function lightboxNextImage() {
     if (lightboxIndex < currentScreenshots.length - 1 && !isLightboxTransitioning) {
         lightboxIndex++;
-        setLightboxImage(currentScreenshots[lightboxIndex], updateLightboxNav);
+        transitionLightboxImage(currentScreenshots[lightboxIndex], updateLightboxNav);
     }
 }
 
