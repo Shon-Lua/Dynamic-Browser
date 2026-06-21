@@ -485,13 +485,21 @@ function renderScreenshots(images) {
     screenshotStrip.innerHTML = images.length
         ? images.map(src => `<img src="${src}" class="screenshot-item" loading="lazy">`).join('')
         : '<div style="color:rgba(255,255,255,0.4); padding:20px;">Нет скриншотов</div>';
-    document.querySelectorAll('.screenshot-item').forEach((img, idx) =>
+    
+    const imgs = document.querySelectorAll('.screenshot-item');
+    imgs.forEach((img, idx) => {
         img.addEventListener('click', (e) => {
             lightboxIndex = idx;
             openLightbox(idx);
-        })
-    );
+        });
+        img.onload = () => updateGalleryArrows();
+        img.onerror = () => updateGalleryArrows();
+    });
+    
+    // Обновляем стрелки после вставки и загрузки изображений
     requestAnimationFrame(() => updateGalleryArrows());
+    setTimeout(updateGalleryArrows, 300);
+    setTimeout(updateGalleryArrows, 800);
 }
 
 function showScreenshotSpinner() {
@@ -587,7 +595,6 @@ function setLightboxImage(src, callback) {
             isLightboxTransitioning = false;
             if (callback) callback();
         };
-        // fallback если долго грузится
         setTimeout(() => {
             if (isLightboxTransitioning) {
                 lightboxImg.classList.remove('fade-out');
