@@ -485,7 +485,7 @@ const appMeta = {
 };
 let currentOS = 'App';
 let currentFormat = 'exe';
-let currentFileName = '';
+let currentDownloadUrl = '';
 const storeDash = document.getElementById('storeDashboard');
 const appNameSpan = document.getElementById('appName');
 const appSubSpan = document.getElementById('appSub');
@@ -599,7 +599,7 @@ async function fetchText(url) {
 }
 
 async function loadInstruction(os) {
-    return await fetchJSON(`${os}/instruction.json`);
+    return await fetchJSON(`${os}/instructions.json`);
 }
 
 async function loadScreenshots(base, imagesMap) {
@@ -696,11 +696,13 @@ async function loadScreenshotsAsync() {
 }
 
 function updateFormatSpecifics() {
-    const ver = currentInstruction?.version || '3.2.1';
-    if (currentInstruction?.app) {
-        currentFileName = currentFormat === 'exe' ? currentInstruction.exe : currentInstruction.zip;
-    } else {
-        currentFileName = currentFormat === 'exe' ? `dynamic-browser-setup-${ver}.exe` : `dynamic-browser-portable-${ver}.zip`;
+    currentDownloadUrl = '';
+    if (currentInstruction) {
+        if (currentFormat === 'exe') {
+            currentDownloadUrl = currentInstruction.exe || currentInstruction.app_1 || '';
+        } else {
+            currentDownloadUrl = currentInstruction.zip || currentInstruction.app_2 || '';
+        }
     }
     document.querySelectorAll('.format-option').forEach(opt => opt.classList.remove('active'));
     const activeOpt = document.querySelector(`.format-option[data-format="${currentFormat}"]`);
@@ -728,11 +730,14 @@ formatGroup.addEventListener('click', (e) => {
 });
 
 installBtn.addEventListener('click', () => {
-    if (!currentFileName) return;
-    showToastMessage(`Начинается загрузка`);
+    if (!currentDownloadUrl) {
+        showToastMessage('Ссылка для загрузки недоступна для выбранного формата');
+        return;
+    }
+    showToastMessage('Начинается загрузка');
     const link = document.createElement('a');
-    link.href = `https://dynamicbrowser.app/dl/${currentFileName}`;
-    link.download = currentFileName;
+    link.href = currentDownloadUrl;
+    link.target = '_blank';
     link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
